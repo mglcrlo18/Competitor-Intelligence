@@ -186,12 +186,17 @@ def save_signals_to_db(signals_list: List[Dict[str, Any]], competitor: str):
     conn.commit()
     conn.close()
 
-def get_all_signals_for_competitor(competitor: str, limit: int = 50) -> List[Dict[str, Any]]:
+def get_all_signals_for_competitor(competitor: Optional[str] = None, limit: int = 50) -> List[Dict[str, Any]]:
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("""
-    SELECT * FROM signals WHERE LOWER(competitor) LIKE ? ORDER BY id DESC LIMIT ?
-    """, (f"%{competitor.lower()}%", limit))
+    if competitor and competitor != "All Competitors":
+        cursor.execute("""
+        SELECT * FROM signals WHERE LOWER(competitor) LIKE ? ORDER BY id DESC LIMIT ?
+        """, (f"%{competitor.lower()}%", limit))
+    else:
+        cursor.execute("""
+        SELECT * FROM signals ORDER BY id DESC LIMIT ?
+        """, (limit,))
     rows = [dict(r) for r in cursor.fetchall()]
     conn.close()
     return rows

@@ -4,7 +4,7 @@ Executive Intelligence Briefing Generator for GoNano Leadership.
 Produces a strict, professional 1-page intelligence report covering:
 1. Updates on Significant News
 2. Strategic Findings & Tactical Playbook
-Completely void of emojis. Formatted in both Plain Text and High-Fidelity Executive HTML.
+Completely void of emojis. Formatted in both Plain Text and High-Fidelity Executive HTML with GoNano Brand Colors.
 """
 import sqlite3
 import os
@@ -22,7 +22,7 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
     """
     Synthesizes current intelligence into a concise, professional 1-page executive brief.
     Returns a dictionary with 'plain_text' and 'html' representations.
-    Strictly zero emojis.
+    Strictly zero emojis. Follows official GoNano brand colors.
     Section 1: Updates on Significant News
     Section 2: Strategic Findings & Tactical Playbook
     """
@@ -80,9 +80,6 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
 
     conn.close()
 
-    env_cc = (os.getenv("CC_EMAILS") or "").strip()
-    active_cc = cc_recipients or env_cc or "None"
-
     # -------------------------------------------------------------------------
     # PLAIN TEXT FORMATTING (Strict 1-Pager, No Emojis)
     # -------------------------------------------------------------------------
@@ -91,10 +88,6 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
     text_lines.append("COMPETITOR INTELLIGENCE BRIEFING: EXECUTIVE 1-PAGE SUMMARY")
     text_lines.append("============================================================================")
     text_lines.append(f"SUBJECT: Competitor Updates as of {timestamp_pht}")
-    text_lines.append(f"DATE & TIME: {timestamp_pht}")
-    text_lines.append("TO: GoNano Executive Leadership / C-Suite")
-    text_lines.append("FROM: Market Intelligence Unit")
-    text_lines.append(f"CC: {active_cc}")
     text_lines.append(f"MONITORED ROSTER: {total_comps} Active Competitor Profiles Across North America")
     text_lines.append(f"THREAT POSTURE: {critical_threats} High/Critical Inherent Threats Under Continuous Surveillance")
     text_lines.append("----------------------------------------------------------------------------")
@@ -139,21 +132,21 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
     plain_text = "\n".join(text_lines)
 
     # -------------------------------------------------------------------------
-    # HTML FORMATTING (Executive Montserrat Design System, Strict No Emojis)
+    # HTML FORMATTING (Executive Montserrat Design System with GoNano Palette)
     # -------------------------------------------------------------------------
     html_news_items = ""
     for idx, s in enumerate(recent_signals, 1):
         clean_snip = re.sub(r'<[^>]+>', ' ', s.get("snippet", "")).replace("&nbsp;", " ")
         snip_html = re.sub(r'\s+', ' ', clean_snip).strip()
         html_news_items += f"""
-        <div style="background:#FFFFFF; border:1px solid #CBD5E1; border-left:4px solid #0F1E3A; padding:12px; margin-bottom:10px;">
-            <div style="font-family:'Montserrat', sans-serif; font-size:11px; font-weight:700; color:#0F1E3A; text-transform:uppercase;">
+        <div style="background:#FFFFFF; border:1px solid #E2E0FA; border-left:4px solid #675CE7; padding:12px; margin-bottom:10px; border-radius:3px;">
+            <div style="font-family:'Montserrat', sans-serif; font-size:11px; font-weight:700; color:#675CE7; text-transform:uppercase; letter-spacing:0.5px;">
                 [{idx}] {s.get('competitor', '').upper()} - {s.get('platform', 'NEWS')}
             </div>
-            <div style="font-size:13px; font-weight:700; color:#0284C7; margin:4px 0;">
-                <a href="{s.get('url', '#')}" target="_blank" style="color:#0284C7; text-decoration:none;">{s.get('title', '')}</a>
+            <div style="font-size:13px; font-weight:700; margin:4px 0;">
+                <a href="{s.get('url', '#')}" target="_blank" style="color:#1B1C36; text-decoration:none; font-family:'Montserrat', sans-serif;">{s.get('title', '')}</a>
             </div>
-            <div style="font-size:11px; color:#334155; line-height:1.4;">
+            <div style="font-size:11px; color:#4A4B68; line-height:1.4; font-family:'Montserrat', sans-serif;">
                 {snip_html}
             </div>
         </div>
@@ -167,8 +160,8 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
         <style>
             body {{
                 font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-                background-color: #F8FAFC;
-                color: #0F1E3A;
+                background-color: #F8F8FD;
+                color: #1B1C36;
                 margin: 0;
                 padding: 20px;
             }}
@@ -176,16 +169,18 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
                 max-width: 820px;
                 margin: 0 auto;
                 background-color: #FFFFFF;
-                border: 1px solid #0F1E3A;
-                border-top: 5px solid #0F1E3A;
+                border: 1px solid #E2E0FA;
+                border-top: 5px solid #675CE7;
                 padding: 24px;
+                border-radius: 4px;
             }}
             .header-bar {{
-                background-color: #0A192F;
-                border-left: 4px solid #38BDF8;
-                padding: 14px 18px;
-                color: #F8FAFC;
+                background-color: #1B1C36;
+                border-left: 5px solid #675CE7;
+                padding: 16px 20px;
+                color: #FFFFFF;
                 margin-bottom: 20px;
+                border-radius: 2px;
             }}
             .header-title {{
                 font-family: 'Montserrat', sans-serif;
@@ -193,23 +188,18 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
                 font-weight: 700;
                 letter-spacing: 0.5px;
                 margin: 0;
-            }}
-            .header-meta {{
-                font-family: 'Montserrat', sans-serif;
-                font-size: 11px;
-                color: #94A3B8;
-                margin-top: 4px;
+                color: #FFFFFF;
             }}
             .section-label {{
                 font-family: 'Montserrat', sans-serif;
                 font-size: 12px;
                 font-weight: 700;
-                color: #0F1E3A;
+                color: #1B1C36;
                 text-transform: uppercase;
                 letter-spacing: 0.8px;
-                border-bottom: 2px solid #0F1E3A;
+                border-bottom: 2px solid #675CE7;
                 padding-bottom: 4px;
-                margin-top: 20px;
+                margin-top: 22px;
                 margin-bottom: 12px;
             }}
             .metric-grid {{
@@ -219,39 +209,55 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
                 margin-bottom: 16px;
             }}
             .metric-box {{
-                background: #F1F5F9;
-                border: 1px solid #CBD5E1;
-                border-left: 3px solid #0F1E3A;
-                padding: 10px;
+                background: #F8F8FD;
+                border: 1px solid #E2E0FA;
+                border-left: 4px solid #675CE7;
+                padding: 12px;
+                border-radius: 3px;
             }}
             .metric-num {{
                 font-family: 'Montserrat', sans-serif;
-                font-size: 20px;
+                font-size: 22px;
                 font-weight: 700;
-                color: #0F1E3A;
+                color: #1B1C36;
             }}
             .metric-lbl {{
                 font-family: 'Montserrat', sans-serif;
                 font-size: 10px;
-                color: #64748B;
+                color: #63668E;
                 text-transform: uppercase;
+                font-weight: 600;
+                letter-spacing: 0.5px;
             }}
             .action-box {{
-                background: #F8FAFC;
-                border: 1px solid #CBD5E1;
-                border-left: 3px solid #16A34A;
-                padding: 12px;
+                background: #F8F8FD;
+                border: 1px solid #E2E0FA;
+                border-left: 4px solid #8583F2;
+                padding: 12px 14px;
                 margin-top: 10px;
                 font-size: 12px;
                 line-height: 1.5;
+                color: #1B1C36;
+                border-radius: 3px;
+            }}
+            .tactical-box {{
+                background: #F3F1FD;
+                border: 1px solid #D6D2F9;
+                border-left: 4px solid #675CE7;
+                padding: 12px 14px;
+                margin-top: 10px;
+                font-size: 12px;
+                line-height: 1.5;
+                color: #1B1C36;
+                border-radius: 3px;
             }}
             .footer {{
                 margin-top: 24px;
                 padding-top: 12px;
-                border-top: 1px solid #E2E8F0;
+                border-top: 1px solid #E2E0FA;
                 font-family: 'Montserrat', sans-serif;
                 font-size: 10px;
-                color: #64748B;
+                color: #7B7C98;
                 display: flex;
                 justify-content: space-between;
             }}
@@ -261,10 +267,6 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
         <div class="report-card">
             <div class="header-bar">
                 <div class="header-title">Competitor Updates as of {timestamp_pht}</div>
-                <div class="header-meta">
-                    <strong>To:</strong> GoNano C-Suite & Leadership &nbsp;|&nbsp; <strong>CC:</strong> {active_cc}<br>
-                    <strong>Scope:</strong> North America &nbsp;|&nbsp; <strong>Framework:</strong> ISO 31000 & COSO ERM
-                </div>
             </div>
 
             <div class="metric-grid">
@@ -290,8 +292,8 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
                 <strong>Finding 2: Climate Stress Evaporation Under UV</strong><br>
                 Bio-oils swell surface bitumen without cross-linking to the fiberglass mat. In summer heat and freeze-thaw cycles, volatile plant oils evaporate within 12-18 months. Insurance adjusters are declining policy renewals for aging shingle roofs treated with bio-oils.
             </div>
-            <div class="action-box" style="border-left-color:#0284C7; background:#F0F9FF;">
-                <strong>Tactical Action for GoNano Field Sales:</strong><br>
+            <div class="tactical-box">
+                <strong style="color:#675CE7;">Tactical Action for GoNano Field Sales:</strong><br>
                 Arm GoNano certified applicators with ASTM D3462 nail tear-strength certifications proving structural matrix reinforcement. Contrast GoNano's transparent 15-Year non-prorated performance warranty against rival prorated exclusions.
             </div>
 

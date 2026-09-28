@@ -269,9 +269,9 @@ time_horizon = st.sidebar.selectbox(
     help="Filters signals, risk metrics, and threat heatmaps across the selected time horizon."
 )
 
-# Maintain active target in session state
+# Maintain active target in session state (default is None unless searched)
 if "active_target" not in st.session_state:
-    st.session_state.active_target = "RoofLife Canada"
+    st.session_state.active_target = None
 
 st.sidebar.markdown("**Target Competitor**")
 search_term = st.sidebar.text_input(
@@ -286,7 +286,13 @@ if search_term.strip():
     st.session_state.active_target = search_term.strip()
 
 active_target = st.session_state.active_target
-st.sidebar.caption(f"Active Subject: **{active_target}**")
+if active_target:
+    st.sidebar.caption(f"Active Subject: **{active_target}**")
+else:
+    st.sidebar.caption("Active Subject: *None (Search to isolate)*")
+
+# Safe fallback for analytical engines when in Global/Unselected mode
+lookup_target = active_target if active_target else (ALL_COMPETITORS[0] if ALL_COMPETITORS else "RoofLife Canada")
 
 # Quick Expand Tool: Add any custom competitor to monitor
 with st.sidebar.expander("Add Custom Competitor"):
@@ -331,10 +337,11 @@ st.sidebar.markdown(f"Local Store: `competitor_store.db`")
 # -----------------------------------------------------------------------------
 # TOP EXECUTIVE TERMINAL BANNER
 # -----------------------------------------------------------------------------
+subject_str = active_target.upper() if active_target else "ALL COMPETITORS (GLOBAL OVERVIEW)"
 st.html(f"""
 <div class="terminal-header">
     <div class="terminal-title">COMPETITOR INTELLIGENCE TOOL</div>
-    <div class="terminal-sub">Active Subject: {active_target.upper()} | Time Window: {time_horizon.upper()} | ISO 31000 / COSO ERM Framework | {p_count} Competitors Synced from Google Sheets</div>
+    <div class="terminal-sub">Active Subject: {subject_str} | Time Window: {time_horizon.upper()} | ISO 31000 / COSO ERM Framework | {p_count} Competitors Synced from Google Sheets</div>
 </div>
 """)
 
@@ -349,10 +356,11 @@ with top_c1:
         label_visibility="collapsed"
     )
     if top_search.strip():
-        active_target = top_search.strip()
+        st.session_state.active_target = top_search.strip()
+        active_target = st.session_state.active_target
 with top_c2:
-    if st.button("Reset to Benchmark", use_container_width=True):
-        active_target = "GoNano (Your Brand)"
+    if st.button("Clear Active Subject", use_container_width=True):
+        st.session_state.active_target = None
         st.rerun()
 
 # -----------------------------------------------------------------------------
@@ -382,8 +390,10 @@ tabs = st.tabs([
 # -----------------------------------------------------------------------------
 with tabs[0]:
     st.markdown("### Risk Analysis")
+    if not active_target:
+        st.info("💡 **Global Market Mode:** No individual competitor is actively selected. Displaying portfolio risk register across all monitored entities below. Search or select a competitor in the sidebar to isolate individual ERM metrics.")
 
-    erm = calculate_erm_threat_matrix(active_target)
+    erm = calculate_erm_threat_matrix(lookup_target)
     
     r1, r2, r3, r4 = st.columns(4)
     with r1:
@@ -474,10 +484,13 @@ with tabs[0]:
 # TAB 2: DYNAMIC SALES BATTLECARDS & OBJECTION PLAYBOOKS
 # -----------------------------------------------------------------------------
 with tabs[1]:
-    st.markdown(f"#### Sales Battlecards & Objection Playbook: {active_target}")
+    target_header = active_target if active_target else f"Select Competitor (Preview: {lookup_target})"
+    st.markdown(f"#### Sales Battlecards & Objection Playbook: {target_header}")
     st.caption("Actionable counter-arguments, fact-checked rebuttals, and landmine questions for field sales reps.")
+    if not active_target:
+        st.info("💡 **Battlecard Search:** Type any competitor name in the search box to load its dedicated sales objection playbook.")
 
-    bcard = get_battlecard(active_target)
+    bcard = get_battlecard(lookup_target)
     
     b_col1, b_col2 = st.columns([1.2, 1])
     with b_col1:
@@ -635,10 +648,11 @@ with tabs[3]:
 # TAB 5: SILENT WEBSITE & PRICING DIFF DETECTOR
 # -----------------------------------------------------------------------------
 with tabs[4]:
-    st.markdown(f"#### Website Change Radar - Stealth Changes: {active_target}")
+    target_diff_title = active_target if active_target else f"Select Competitor (Preview: {lookup_target})"
+    st.markdown(f"#### Website Change Radar - Stealth Changes: {target_diff_title}")
     st.caption("Detects unannounced competitor warranty changes, price increases, and stealth terms modifications.")
 
-    diff_data = compute_text_diff(active_target)
+    diff_data = compute_text_diff(lookup_target)
     
     st.markdown(f"**Target Monitored Endpoint:** [{diff_data['url']}]({diff_data['url']})")
     st.caption(f"Comparing **{diff_data['baseline_date']}** against **{diff_data['current_date']}**")
@@ -669,9 +683,10 @@ with tabs[5]:
     st.markdown("#### Intellectual Property - Patent & Trademark Radar")
     st.caption("Tracking competitor patent filings, molecular claims, and IP moats across USPTO, WIPO, and CIPO.")
 
-    ip_records = get_competitor_ip_records(active_target)
+    ip_target = active_target if active_target else lookup_target
+    ip_records = get_competitor_ip_records(ip_target)
     if not ip_records:
-        st.info(f"No proprietary patent filings found for '{active_target}'. Competitor operates primarily with unpatented off-the-shelf formulations or regional trade secrets.")
+        st.info(f"No proprietary patent filings found for '{ip_target}'. Competitor operates primarily with unpatented off-the-shelf formulations or regional trade secrets.")
     else:
         for ip in ip_records:
             st.html(f"""
@@ -897,20 +912,21 @@ with tabs[10]:
 # TAB 12: YOUTUBE & OSINT MULTI-SOURCE FEED (WITH IN-APP EMBEDS)
 # -----------------------------------------------------------------------------
 with tabs[11]:
-    st.markdown(f"#### Real-Time Intelligence Stream: {active_target}")
+    st.markdown(f"#### Real-Time Intelligence Stream: {active_target if active_target else f'All Monitored Competitors (Preview: {lookup_target})'}")
     st.caption("Live video uploads, Reddit discussions, News articles, and active advertising campaigns.")
 
     feed_type = st.radio("FEED_CHANNEL", ["All Channels", "YouTube Videos Only", "Reddit & Web Discussions", "Active Advertisements"], horizontal=True)
 
     if st.button("EXECUTE LIVE OSINT SCRAPE & PERSIST TO SQLITE"):
-        with st.spinner(f"Ingesting real-time signals for {active_target}..."):
-            vids = search_youtube_videos(active_target, limit=6)
-            reds = fetch_reddit_mentions(active_target, limit=6)
-            news = fetch_web_and_news_signals(active_target, limit=6)
+        scrape_target = active_target if active_target else lookup_target
+        with st.spinner(f"Ingesting real-time signals for {scrape_target}..."):
+            vids = search_youtube_videos(scrape_target, limit=6)
+            reds = fetch_reddit_mentions(scrape_target, limit=6)
+            news = fetch_web_and_news_signals(scrape_target, limit=6)
             
-            save_signals_to_db(vids, active_target)
-            save_signals_to_db(reds, active_target)
-            save_signals_to_db(news, active_target)
+            save_signals_to_db(vids, scrape_target)
+            save_signals_to_db(reds, scrape_target)
+            save_signals_to_db(news, scrape_target)
             st.success(f"Ingested and committed {len(vids) + len(reds) + len(news)} signals to competitor_store.db")
 
     persisted_signals = get_all_signals_for_competitor(active_target, limit=30)
@@ -955,8 +971,9 @@ with tabs[12]:
     )
 
     if st.button("SIMULATE RIVAL EXECUTIVE COUNTER-ATTACK"):
-        with st.spinner(f"Simulating {active_target} executive war room reaction..."):
-            war_room_output = simulate_rival_counter_attack(active_target, gonano_action_input)
+        sim_target = active_target if active_target else lookup_target
+        with st.spinner(f"Simulating {sim_target} executive war room reaction..."):
+            war_room_output = simulate_rival_counter_attack(sim_target, gonano_action_input)
             st.html(f"""
             <div class="pulso-tile-dark">
                 {war_room_output}
@@ -977,7 +994,7 @@ with tabs[13]:
         kci_name = st.selectbox("Triggered KCI", ["PPC Ad Spend Spike (>25%)", "Rival Dealer Recruitment Surge", "Warranty Denial Customer Spike", "Unannounced Price Drop"])
         
         if st.button("Test Send Webhook Alert"):
-            test_payload = format_alert_payload(active_target, kci_name, "Threshold breached: competitor launched 12 new video ad sets.", "CRITICAL")
+            test_payload = format_alert_payload(active_target if active_target else lookup_target, kci_name, "Threshold breached: competitor launched 12 new video ad sets.", "CRITICAL")
             res = dispatch_webhook_alert(webhook_input, test_payload)
             if res["status"] == "success":
                 st.success("Alert payload successfully delivered.")
@@ -990,7 +1007,7 @@ with tabs[13]:
         chat_id_input = st.text_input("Telegram Chat ID", placeholder="-1001234567890")
         
         if st.button("Test Send Telegram Alert"):
-            test_payload = format_alert_payload(active_target, kci_name, "Automated daily monitoring detected rival territory expansion.", "HIGH")
+            test_payload = format_alert_payload(active_target if active_target else lookup_target, kci_name, "Automated daily monitoring detected rival territory expansion.", "HIGH")
             t_res = dispatch_telegram_alert(bot_token_input, chat_id_input, test_payload)
             if t_res["status"] == "success":
                 st.success("Telegram alert message delivered.")
@@ -1065,6 +1082,10 @@ with tabs[14]:
 
     exp_col1, exp_col2, exp_col3 = st.columns(3)
     
+    target_slug = active_target.replace(' ', '_') if active_target else "Global_Portfolio"
+    target_memo_name = active_target if active_target else lookup_target
+    audit_label = f"{active_target[:20]} Audit" if active_target else "Global Market Audit"
+
     with exp_col1:
         st.html("""
         <div class="pulso-tile">
@@ -1078,7 +1099,7 @@ with tabs[14]:
         st.download_button(
             label="Download Excel (.CSV)",
             data=csv_bytes,
-            file_name=f"GoNano_Competitive_ERM_Risk_Register_{active_target.replace(' ', '_')}.csv",
+            file_name=f"GoNano_Competitive_ERM_Risk_Register_{target_slug}.csv",
             mime="text/csv"
         )
 
@@ -1090,11 +1111,11 @@ with tabs[14]:
         </div>
         """)
         
-        xls_str = generate_spreadsheetml_xls(erm_export_df, f"{active_target[:20]} Audit")
+        xls_str = generate_spreadsheetml_xls(erm_export_df, audit_label)
         st.download_button(
             label="Download SpreadsheetML (.xls)",
             data=xls_str.encode("utf-8"),
-            file_name=f"GoNano_Executive_Spreadsheet_{active_target.replace(' ', '_')}.xls",
+            file_name=f"GoNano_Executive_Spreadsheet_{target_slug}.xls",
             mime="application/vnd.ms-excel"
         )
 
@@ -1106,11 +1127,11 @@ with tabs[14]:
         </div>
         """)
         
-        memo_str = generate_csuite_markdown_memo(active_target)
+        memo_str = generate_csuite_markdown_memo(target_memo_name)
         st.download_button(
             label="Download Memo (.md)",
             data=memo_str.encode("utf-8"),
-            file_name=f"GoNano_Executive_Memo_{active_target.replace(' ', '_')}.md",
+            file_name=f"GoNano_Executive_Memo_{target_slug}.md",
             mime="text/markdown"
         )
 

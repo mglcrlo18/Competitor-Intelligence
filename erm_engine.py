@@ -79,6 +79,9 @@ def calculate_erm_threat_matrix(competitor_name: str) -> Dict[str, Any]:
     """
     Computes CRO quantitative risk metrics dynamically for any monitored entity.
     """
+    if not competitor_name:
+        competitor_name = "RoofLife Canada"
+
     # Check manual cache first
     for key, p in PROFILES_CACHE.items():
         if key.lower() in competitor_name.lower():
