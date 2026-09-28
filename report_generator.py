@@ -2,9 +2,10 @@
 report_generator.py
 Executive Intelligence Briefing Generator for GoNano Leadership.
 Produces a strict, professional 1-page intelligence report covering:
-1. Updates on Significant News
+1. Updates on Significant News & Market Signals (with Executive Summary before headlines)
 2. Strategic Findings & Tactical Playbook
 Completely void of emojis. Formatted in both Plain Text and High-Fidelity Executive HTML with GoNano Brand Colors.
+Enforces a maximum of 200 words on headlines and summaries.
 """
 import sqlite3
 import os
@@ -18,12 +19,21 @@ from db_manager import (
     get_marketing_gaps
 )
 
+def truncate_words(text: str, max_words: int = 200) -> str:
+    """Enforces a strict maximum word count on text."""
+    if not text:
+        return ""
+    words = str(text).split()
+    if len(words) > max_words:
+        return " ".join(words[:max_words]) + "..."
+    return " ".join(words)
+
 def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors", cc_recipients: str = "") -> Dict[str, str]:
     """
     Synthesizes current intelligence into a concise, professional 1-page executive brief.
     Returns a dictionary with 'plain_text' and 'html' representations.
     Strictly zero emojis. Follows official GoNano brand colors.
-    Section 1: Updates on Significant News
+    Section 1: Updates on Significant News & Market Signals (with summary before headlines, max 200 words per headline)
     Section 2: Strategic Findings & Tactical Playbook
     """
     timestamp_pht = datetime.now().strftime("%Y-%m-%d %H:%M PHT")
@@ -81,6 +91,19 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
     conn.close()
 
     # -------------------------------------------------------------------------
+    # SECTION 1 EXECUTIVE SUMMARY (Max 200 Words)
+    # -------------------------------------------------------------------------
+    section1_summary_raw = (
+        "Recent market surveillance indicates accelerating regional contractor adoption across rival "
+        "roof rejuvenation brands, highlighted by RoofLife Canada's strategic partnership with Cleroux Roofing "
+        "in Ontario and intensive broadcast/YouTube campaigns marketing up to 75% cost savings over replacement. "
+        "Concurrently, technical and underwriting scrutiny is mounting: forensic insurance adjusters and "
+        "regional inspectors in storm-exposed territories are increasingly questioning topical bio-oil durability "
+        "and warranty enforceability in the absence of ASTM-certified structural matrix reinforcement."
+    )
+    section1_summary = truncate_words(section1_summary_raw, 200)
+
+    # -------------------------------------------------------------------------
     # PLAIN TEXT FORMATTING (Strict 1-Pager, No Emojis)
     # -------------------------------------------------------------------------
     text_lines = []
@@ -93,19 +116,23 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
     text_lines.append("----------------------------------------------------------------------------")
     text_lines.append("")
     
-    text_lines.append("SECTION 1: UPDATES ON SIGNIFICANT NEWS")
+    text_lines.append("SECTION 1: UPDATES ON SIGNIFICANT NEWS & MARKET SIGNALS")
+    text_lines.append("----------------------------------------------------------------------------")
+    text_lines.append("SUMMARY OF FINDINGS:")
+    text_lines.append(section1_summary)
     text_lines.append("----------------------------------------------------------------------------")
     for idx, s in enumerate(recent_signals, 1):
         comp = s.get("competitor", "Industry")
-        title = s.get("title", "Market Update")
+        raw_title = s.get("title", "Market Update")
+        title = truncate_words(raw_title, 200)
         outlet = s.get("platform", "Verified News")
         raw_snip = s.get("snippet", "")
         clean_snip = re.sub(r'<[^>]+>', ' ', raw_snip).replace("&nbsp;", " ")
-        snip = re.sub(r'\s+', ' ', clean_snip).strip()
-        text_lines.append(f"[{idx}] {comp.upper()} ({outlet})")
+        snip = truncate_words(re.sub(r'\s+', ' ', clean_snip).strip(), 200)
+        text_lines.append(f"[{idx}] {comp.upper()} - {outlet.upper()}")
         text_lines.append(f"    Headline: {title}")
         if snip:
-            text_lines.append(f"    Intelligence: {snip[:220]}")
+            text_lines.append(f"    Intelligence: {snip}")
         text_lines.append("")
 
     text_lines.append("SECTION 2: STRATEGIC FINDINGS & TACTICAL PLAYBOOK")
@@ -136,19 +163,23 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
     # -------------------------------------------------------------------------
     html_news_items = ""
     for idx, s in enumerate(recent_signals, 1):
-        clean_snip = re.sub(r'<[^>]+>', ' ', s.get("snippet", "")).replace("&nbsp;", " ")
-        snip_html = re.sub(r'\s+', ' ', clean_snip).strip()
+        raw_title = s.get("title", "")
+        title = truncate_words(raw_title, 200)
+        raw_snip = s.get("snippet", "")
+        clean_snip = re.sub(r'<[^>]+>', ' ', raw_snip).replace("&nbsp;", " ")
+        snip_html = truncate_words(re.sub(r'\s+', ' ', clean_snip).strip(), 200)
+        
+        snip_block = f"""<div style="font-size:11px; color:#4A4B68; line-height:1.4; font-family:'Montserrat', sans-serif; margin-top:4px;">{snip_html}</div>""" if snip_html else ""
+
         html_news_items += f"""
-        <div style="background:#FFFFFF; border:1px solid #E2E0FA; border-left:4px solid #675CE7; padding:12px; margin-bottom:10px; border-radius:3px;">
-            <div style="font-family:'Montserrat', sans-serif; font-size:11px; font-weight:700; color:#675CE7; text-transform:uppercase; letter-spacing:0.5px;">
-                [{idx}] {s.get('competitor', '').upper()} - {s.get('platform', 'NEWS')}
+        <div style="background:#FFFFFF; border:1px solid #E2E0FA; border-left:4px solid #675CE7; padding:12px 14px; margin-bottom:10px; border-radius:3px;">
+            <div style="font-family:'Montserrat', sans-serif; font-size:11px; font-weight:700; color:#675CE7; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">
+                [{idx}] {s.get('competitor', '').upper()} - {s.get('platform', 'NEWS').upper()}
             </div>
-            <div style="font-size:13px; font-weight:700; margin:4px 0;">
-                <a href="{s.get('url', '#')}" target="_blank" style="color:#1B1C36; text-decoration:none; font-family:'Montserrat', sans-serif;">{s.get('title', '')}</a>
+            <div style="font-size:13px; font-weight:700; line-height:1.4; font-family:'Montserrat', sans-serif;">
+                <a href="{s.get('url', '#')}" target="_blank" style="color:#1B1C36; text-decoration:none;">{title}</a>
             </div>
-            <div style="font-size:11px; color:#4A4B68; line-height:1.4; font-family:'Montserrat', sans-serif;">
-                {snip_html}
-            </div>
+            {snip_block}
         </div>
         """
 
@@ -201,6 +232,14 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
                 padding-bottom: 4px;
                 margin-top: 22px;
                 margin-bottom: 12px;
+            }}
+            .section-summary {{
+                font-family: 'Montserrat', sans-serif;
+                font-size: 14px;
+                color: #1B1C36;
+                line-height: 1.6;
+                font-weight: 500;
+                margin: 12px 0 16px 0;
             }}
             .metric-grid {{
                 display: grid;
@@ -280,10 +319,14 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
                 </div>
             </div>
 
-            <div class="section-label">1. Updates on Significant News & Market Signals</div>
+            <div class="section-label">1. UPDATES ON SIGNIFICANT NEWS & MARKET SIGNALS</div>
+            <div class="section-summary">
+                {section1_summary}
+            </div>
+            <hr style="border: 0; border-top: 1.5px solid #675CE7; margin-bottom: 18px; opacity: 0.7;">
             {html_news_items}
 
-            <div class="section-label">2. Strategic Findings & Tactical Playbook</div>
+            <div class="section-label">2. STRATEGIC FINDINGS & TACTICAL PLAYBOOK</div>
             <div class="action-box">
                 <strong>Finding 1: Bio-Oil Market Saturation vs. Warranty Rejection</strong><br>
                 Rival firms (RoofLife Canada, Roof Maxx, RevivaRoof) continue pushing aggressive D2C video funnels undercutting roof replacement. However, field contractor and homeowner data shows substantial warranty claim rejections citing pre-existing conditions and granular loss.
