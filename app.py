@@ -3,7 +3,7 @@ app.py
 PULSO-Standard Competitor Intelligence & Market Risk Terminal (Full Executive Edition).
 Enforces Boxy Navy Blue Terminal Design System (0-radius geometry, monospaced typography).
 Includes:
-1. Executive Terminal UI (0-radius borders, Navy #0F1E3A, Monospaced)
+1. Executive Terminal UI (0-radius borders, Navy #0A1E3F, Monospaced)
 2. Embedded SQLite Evidence Persistence (competitor_store.db)
 3. CRO / ERM Risk Framework (ISO 31000 & COSO - Inherent vs Residual Threat, KCIs, RST, Polarity-VaR)
 4. Head-to-Head Scorecard with Evidence Citations (Clean HTML links, NO code-block leakage)
@@ -123,7 +123,7 @@ st.html("""
     .terminal-header {
         background-color: #0A192F;
         border: 1px solid #1E293B;
-        border-left: 4px solid #38BDF8;
+        border-left: 4px solid #00A3FF;
         padding: 14px 20px;
         margin-bottom: 20px;
         color: #F8FAFC;
@@ -147,15 +147,15 @@ st.html("""
     /* Boxy Terminal Tiles */
     .pulso-tile {
         background-color: #FFFFFF;
-        border: 1px solid #0F1E3A;
-        border-left: 4px solid #0F1E3A;
+        border: 1px solid #0A1E3F;
+        border-left: 4px solid #0A1E3F;
         padding: 16px;
         margin-bottom: 16px;
     }
     .pulso-tile-dark {
         background-color: #0A192F;
         border: 1px solid #1E293B;
-        border-left: 4px solid #38BDF8;
+        border-left: 4px solid #00A3FF;
         padding: 16px;
         color: #F8FAFC;
         margin-bottom: 16px;
@@ -173,7 +173,7 @@ st.html("""
         font-family: 'Montserrat', sans-serif;
         font-size: 11px;
         font-weight: 700;
-        color: #38BDF8;
+        color: #00A3FF;
         text-transform: uppercase;
         letter-spacing: 0.8px;
         margin-bottom: 6px;
@@ -188,7 +188,7 @@ st.html("""
         padding: 2px 6px;
         border: 1px solid #CBD5E1;
         background-color: #F1F5F9;
-        color: #0F1E3A;
+        color: #0A1E3F;
         text-transform: uppercase;
         margin-right: 6px;
     }
@@ -212,7 +212,7 @@ st.html("""
     .mention-card {
         background: #FFFFFF;
         border: 1px solid #E2E8F0;
-        border-left: 3px solid #0F1E3A;
+        border-left: 3px solid #0A1E3F;
         padding: 14px;
         margin-bottom: 12px;
     }
@@ -390,7 +390,7 @@ with tabs[0]:
         st.html(f"""
         <div class="pulso-tile">
             <div class="tile-header">Inherent Competitive Threat</div>
-            <div style="font-family:'Montserrat', sans-serif; font-size:26px; font-weight:700; color:#0F1E3A;">
+            <div style="font-family:'Montserrat', sans-serif; font-size:26px; font-weight:700; color:#0A1E3F;">
                 {erm['inherent_threat_score']}/10.0
             </div>
             <span class="badge-terminal badge-critical">LEVEL: {erm['inherent_threat_level']}</span>
@@ -400,7 +400,7 @@ with tabs[0]:
         st.html(f"""
         <div class="pulso-tile">
             <div class="tile-header">GoNano Control Moat Efficacy</div>
-            <div style="font-family:'Montserrat', sans-serif; font-size:26px; font-weight:700; color:#0F1E3A;">
+            <div style="font-family:'Montserrat', sans-serif; font-size:26px; font-weight:700; color:#0A1E3F;">
                 {erm['control_efficacy_score']}/10.0
             </div>
             <span class="badge-terminal badge-safe">DEFENSE: {erm['control_efficacy_level']}</span>
@@ -410,7 +410,7 @@ with tabs[0]:
         st.html(f"""
         <div class="pulso-tile">
             <div class="tile-header">Residual Threat Rating</div>
-            <div style="font-family:'Montserrat', sans-serif; font-size:26px; font-weight:700; color:#0F1E3A;">
+            <div style="font-family:'Montserrat', sans-serif; font-size:26px; font-weight:700; color:#0A1E3F;">
                 {erm['residual_threat_score']}/10.0
             </div>
             <span class="badge-terminal badge-moderate">NET EXPOSURE: {erm['residual_threat_level']}</span>
@@ -434,7 +434,7 @@ with tabs[0]:
         for kci in erm["kcis"]:
             kci_sev = 'badge-critical' if kci.get('severity')=='CRITICAL' else 'badge-moderate'
             st.html(f"""
-            <div style="background:#FFFFFF; border:1px solid #CBD5E1; border-left:3px solid #0F1E3A; padding:10px; margin-bottom:8px;">
+            <div style="background:#FFFFFF; border:1px solid #CBD5E1; border-left:3px solid #0A1E3F; padding:10px; margin-bottom:8px;">
                 <div style="display:flex; justify-content:space-between;">
                     <strong style="font-family:'Montserrat', sans-serif; font-size:12px;">{kci['indicator']}</strong>
                     <span class="badge-terminal {kci_sev}">{kci['status']}</span>
@@ -484,7 +484,7 @@ with tabs[1]:
         st.html(f"""
         <div class="pulso-tile">
             <div class="tile-header">Rival Commercial Positioning & Pricing Anchor</div>
-            <div style="font-size:13px; font-weight:700; color:#0F1E3A;">Target: {bcard['competitor_name']} ({bcard['category']})</div>
+            <div style="font-size:13px; font-weight:700; color:#0A1E3F;">Target: {bcard['competitor_name']} ({bcard['category']})</div>
             <div style="font-family:'Montserrat', sans-serif; font-size:12px; color:#0284C7; margin:6px 0;">Estimated Pricing: {bcard['rival_pricing_anchor']}</div>
             <div style="font-size:12px; font-style:italic; color:#475569; background:#F8FAFC; border:1px solid #E2E8F0; padding:8px;">"{bcard['rival_core_hook']}"</div>
             <div style="margin-top:10px; font-size:12px; line-height:1.5;"><strong>Executive Rebuttal:</strong><br>{bcard['quick_rebuttal']}</div>
@@ -551,7 +551,7 @@ with tabs[2]:
     with c_a:
         st.html(f"""
         <div class="pulso-tile">
-            <div style="font-family:'Montserrat', sans-serif; font-size:14px; font-weight:700; color:#0F1E3A; border-bottom:2px solid #0F1E3A; padding-bottom:4px; margin-bottom:12px;">{comp_a} - Baseline Profile</div>
+            <div style="font-family:'Montserrat', sans-serif; font-size:14px; font-weight:700; color:#0A1E3F; border-bottom:2px solid #0A1E3F; padding-bottom:4px; margin-bottom:12px;">{comp_a} - Baseline Profile</div>
             <p style="font-size:12px; margin:4px 0;"><strong>Core Chemistry / Tech:</strong><br>{da['technology_class']}</p>
             <p style="font-size:12px; margin:4px 0;"><strong>Durability & Warranty:</strong><br>{da['durability_warranty']}</p>
             <p style="font-size:12px; margin:4px 0;"><strong>Impact & Hail Resistance:</strong><br>{da['impact_hail_rating']}</p>
@@ -565,7 +565,7 @@ with tabs[2]:
     with c_b:
         st.html(f"""
         <div class="pulso-tile">
-            <div style="font-family:'Montserrat', sans-serif; font-size:14px; font-weight:700; color:#0F1E3A; border-bottom:2px solid #0F1E3A; padding-bottom:4px; margin-bottom:12px;">{comp_b} - Rival Profile</div>
+            <div style="font-family:'Montserrat', sans-serif; font-size:14px; font-weight:700; color:#0A1E3F; border-bottom:2px solid #0A1E3F; padding-bottom:4px; margin-bottom:12px;">{comp_b} - Rival Profile</div>
             <p style="font-size:12px; margin:4px 0;"><strong>Core Chemistry / Tech:</strong><br>{db['technology_class']}</p>
             <p style="font-size:12px; margin:4px 0;"><strong>Durability & Warranty:</strong><br>{db['durability_warranty']}</p>
             <p style="font-size:12px; margin:4px 0;"><strong>Impact & Hail Resistance:</strong><br>{db['impact_hail_rating']}</p>
@@ -600,9 +600,9 @@ with tabs[3]:
     # Render each gap report card via st.html() to guarantee 0 code leakage
     for g in gaps:
         sev_class = "badge-critical" if g.get("gap_severity") == "CRITICAL" else ("badge-moderate" if g.get("gap_severity") == "HIGH" else "badge-terminal")
-        gap_card_html = f"""<div style="background:#FFFFFF; border:1px solid #CBD5E1; border-left:4px solid #0F1E3A; padding:16px; margin-bottom:16px;">
+        gap_card_html = f"""<div style="background:#FFFFFF; border:1px solid #CBD5E1; border-left:4px solid #0A1E3F; padding:16px; margin-bottom:16px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <span style="font-family:'Montserrat', sans-serif; font-weight:700; font-size:13px; color:#0F1E3A;">{g.get('competitor', '').upper()} // GAP_REPORT</span>
+                <span style="font-family:'Montserrat', sans-serif; font-weight:700; font-size:13px; color:#0A1E3F;">{g.get('competitor', '')} - Gap Analysis</span>
                 <div>
                     <span class="badge-terminal {sev_class}">SEVERITY: {g.get('gap_severity', 'MODERATE')}</span>
                     <span class="badge-terminal">DIVERGENCE: {g.get('divergence_score', 50)}%</span>
@@ -626,7 +626,7 @@ with tabs[3]:
             </div>
 
             <div style="background:#F8FAFC; border:1px solid #E2E8F0; padding:10px; font-size:12px;">
-                <strong style="font-family:'Montserrat', sans-serif; color:#0F1E3A;">GONANO STRATEGIC EXPLOITATION:</strong> {g.get('strategic_takeaway', '')}
+                <strong style="font-family:'Montserrat', sans-serif; color:#0A1E3F;">GONANO STRATEGIC EXPLOITATION:</strong> {g.get('strategic_takeaway', '')}
             </div>
         </div>"""
         st.html(gap_card_html)
@@ -675,9 +675,9 @@ with tabs[5]:
     else:
         for ip in ip_records:
             st.html(f"""
-            <div style="background:#FFFFFF; border:1px solid #CBD5E1; border-left:4px solid #0F1E3A; padding:16px; margin-bottom:12px;">
+            <div style="background:#FFFFFF; border:1px solid #CBD5E1; border-left:4px solid #0A1E3F; padding:16px; margin-bottom:12px;">
                 <div style="display:flex; justify-content:space-between;">
-                    <strong style="font-family:'Montserrat', sans-serif; font-size:13px; color:#0F1E3A;">{ip['competitor'].upper()} // {ip['doc_number']}</strong>
+                    <strong style="font-family:'Montserrat', sans-serif; font-size:13px; color:#0A1E3F;">{ip['competitor'].upper()} // {ip['doc_number']}</strong>
                     <span class="badge-terminal">{ip['status']}</span>
                 </div>
                 <div style="font-size:14px; font-weight:700; color:#0369A1; margin:6px 0;">{ip['patent_title']}</div>
@@ -686,7 +686,7 @@ with tabs[5]:
                     <strong>Abstract & Chemical Claim:</strong><br>{ip['chemical_claim']}
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-family:'Montserrat', sans-serif; font-size:11px; font-weight:700; color:#0F1E3A;">MOAT DEFENSE: {ip['moat_defense_score']}</span>
+                    <span style="font-family:'Montserrat', sans-serif; font-size:11px; font-weight:700; color:#0A1E3F;">MOAT DEFENSE: {ip['moat_defense_score']}</span>
                     <a href="{ip['patent_url']}" target="_blank" class="citation-link">VIEW_USPTO_PATENT_DOCUMENT -></a>
                 </div>
             </div>
@@ -702,9 +702,9 @@ with tabs[6]:
     dealers = get_dealer_intel_records()
     for dl in dealers:
         st.html(f"""
-        <div style="background:#FFFFFF; border:1px solid #CBD5E1; border-left:4px solid #0F1E3A; padding:16px; margin-bottom:12px;">
+        <div style="background:#FFFFFF; border:1px solid #CBD5E1; border-left:4px solid #0A1E3F; padding:16px; margin-bottom:12px;">
             <div style="display:flex; justify-content:space-between;">
-                <strong style="font-family:'Montserrat', sans-serif; font-size:13px; color:#0F1E3A;">[{dl['contractor_id']}] {dl['region'].upper()} // {dl['current_rival_brand']}</strong>
+                <strong style="font-family:'Montserrat', sans-serif; font-size:13px; color:#0A1E3F;">[{dl['contractor_id']}] {dl['region'].upper()} // {dl['current_rival_brand']}</strong>
                 <span class="badge-terminal">{dl['sentiment_status']}</span>
             </div>
             <div style="font-size:12px; color:#DC2626; margin:6px 0;"><strong>Reported Field Friction:</strong> {dl['reported_friction']}</div>
@@ -780,7 +780,7 @@ with tabs[8]:
         st.html(f"""
         <div class="pulso-tile">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-family:'Montserrat', sans-serif; font-size:14px; font-weight:700; color:#0F1E3A;">{region.upper()} // {sentiment}</span>
+                <span style="font-family:'Montserrat', sans-serif; font-size:14px; font-weight:700; color:#0A1E3F;">{region.upper()} // {sentiment}</span>
                 <span class="badge-terminal">MARKET VOLUME SHARE: {volume}</span>
             </div>
             <div style="font-size:12px; margin:6px 0;"><strong>Active Competitor Threat:</strong> {dominant}</div>
@@ -811,7 +811,7 @@ with tabs[9]:
         st.html(f"""
         <div class="pulso-tile">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-family:'Montserrat', sans-serif; font-size:13px; font-weight:700; color:#0F1E3A;">ERA ({year}): {era.get('era_name', '').upper()}</span>
+                <span style="font-family:'Montserrat', sans-serif; font-size:13px; font-weight:700; color:#0A1E3F;">ERA ({year}): {era.get('era_name', '').upper()}</span>
                 <span class="badge-terminal">MILESTONE: {year}</span>
             </div>
             <div style="font-size:12px; color:#334155; margin:6px 0;"><strong>Technology Paradigm:</strong> {era.get('technology_paradigm', '')}</div>
@@ -928,7 +928,7 @@ with tabs[11]:
                     <span class="badge-terminal">{s['platform'].upper()}</span>
                     <span style="font-family:'Montserrat', sans-serif; font-size:11px; color:#64748B;">{s['timestamp']}</span>
                 </div>
-                <div style="font-weight:700; font-size:14px; margin:6px 0;"><a href="{s['url']}" target="_blank" style="color:#0F1E3A; text-decoration:none;">{s['title']}</a></div>
+                <div style="font-weight:700; font-size:14px; margin:6px 0;"><a href="{s['url']}" target="_blank" style="color:#0A1E3F; text-decoration:none;">{s['title']}</a></div>
                 <div style="font-size:12px; color:#334155; line-height:1.4;">{s['snippet']}</div>
                 <div style="margin-top:6px;"><a href="{s['url']}" target="_blank" class="citation-link">OPEN_SOURCE_EVIDENCE -></a></div>
             </div>
