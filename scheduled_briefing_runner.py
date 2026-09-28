@@ -1,12 +1,15 @@
 """
 scheduled_briefing_runner.py
-Automated Scheduled Runner for Bi-Daily Competitor Intelligence Briefings.
-Triggered automatically at 9:00 PM PHT (21:00) and 00:00 H PHT (Midnight).
+Automated Scheduled Runner for GoNano Competitor Intelligence Briefings.
+Triggered automatically at 00:00 H PHT (Midnight).
 Performs:
 1. Live competitive signal scan
 2. Google Sheets tracker synchronization
 3. Generates 1-page executive brief (Updates on News, Strategic Findings)
-4. Headless email dispatch without opening macOS Mail.app
+4. Headless email dispatch from miguel.gonzales@gonano.com to:
+   - TO: joel@gonano.com, charles@gonano.com, jonathan@gonano.com
+   - CC: ryan@gonano.com, mathieu.vallieres@gonano.com, jason@gonano.com,
+         alamin.abuhajjeh@gonano.com, cody.loeffler@gonano.com, john.silvernail@gonano.com
 """
 import os
 import sys
@@ -27,7 +30,7 @@ def log(msg: str):
         f.write(line + "\n")
 
 def run_scheduled_briefing():
-    log("Starting automated scheduled intelligence scan...")
+    log("Starting automated scheduled intelligence scan (00:00 H PHT)...")
 
     # 1. Sync latest Google Sheets tracker data
     try:
@@ -50,10 +53,11 @@ def run_scheduled_briefing():
     except Exception as e:
         log(f"Warning: News scan encountered exception: {e}")
 
-    # 3. Retrieve SMTP and CC config
+    # 3. Retrieve SMTP, recipient, and CC config
     cfg = get_smtp_config()
-    recipient = cfg["recipient"] or "gonzalesmiguelcarlo@gmail.com"
-    cc_emails = cfg.get("cc", "")
+    recipient = cfg.get("recipient") or "joel@gonano.com, charles@gonano.com, jonathan@gonano.com"
+    cc_emails = cfg.get("cc") or "ryan@gonano.com, mathieu.vallieres@gonano.com, jason@gonano.com, alamin.abuhajjeh@gonano.com, cody.loeffler@gonano.com, john.silvernail@gonano.com"
+    from_addr = cfg.get("from_email") or "miguel.gonzales@gonano.com"
 
     # 4. Generate 1-page executive report (Zero emojis, strict professional structure)
     log("Compiling executive 1-page report...")
@@ -65,17 +69,20 @@ def run_scheduled_briefing():
     # 5. Subject: Competitor Updates as of [Date and Time]
     subject = f"Competitor Updates as of {timestamp}"
 
-    log(f"Dispatching headless email to {recipient} (CC: {cc_emails or 'None'}) without launching Mail.app...")
+    log(f"Dispatching headless email from {from_addr} to {recipient} (CC: {cc_emails})...")
     result = send_headless_email(
         to_email=recipient,
         subject=subject,
         plain_text=plain_text,
         html_content=html_content,
-        cc_emails=cc_emails
+        cc_emails=cc_emails,
+        from_email=from_addr
     )
 
     if result["status"] == "success":
-        log(f"SUCCESS: Intelligence briefing delivered to {recipient} via {result['method']}.")
+        to_str = ", ".join(result.get("to_recipients", [recipient]))
+        cc_str = ", ".join(result.get("cc_recipients", []))
+        log(f"SUCCESS: Intelligence briefing delivered from {result.get('from', from_addr)} to [{to_str}] (CC: [{cc_str}]) via {result['method']}.")
     elif result["status"] == "config_needed":
         log(f"CONFIG NOTICE: {result['message']}. Local report saved to {result.get('local_path')}.")
     else:

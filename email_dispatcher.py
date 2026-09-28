@@ -4,9 +4,10 @@ Headless SMTP Email Dispatcher for Competitor Intelligence Tool.
 Dispatches intelligence briefings silently in the background without opening the macOS Mail application.
 Supports:
 1. Headless SMTP over TLS/SSL (e.g. Gmail App Password, Corporate SMTP)
-2. Unlimited CC recipients (comma-separated list)
-3. Dual-mode payload delivery (Multipart Plain Text + Formatted Executive HTML)
-4. Fallback archival of generated 1-pager reports
+2. Multiple primary TO recipients (comma-separated list)
+3. Multiple CC recipients (comma-separated list)
+4. Dual-mode payload delivery (Multipart Plain Text + Formatted Executive HTML)
+5. Fallback archival of generated 1-pager reports
 """
 import os
 import re
@@ -16,7 +17,9 @@ from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 
-DEFAULT_RECIPIENT = "gonzalesmiguelcarlo@gmail.com"
+DEFAULT_RECIPIENT = "joel@gonano.com, charles@gonano.com, jonathan@gonano.com"
+DEFAULT_CC = "ryan@gonano.com, mathieu.vallieres@gonano.com, jason@gonano.com, alamin.abuhajjeh@gonano.com, cody.loeffler@gonano.com, john.silvernail@gonano.com"
+DEFAULT_FROM = "miguel.gonzales@gonano.com"
 
 def get_smtp_config() -> Dict[str, Any]:
     """Retrieves SMTP configuration from environment variables or .env file."""
@@ -30,12 +33,13 @@ def get_smtp_config() -> Dict[str, Any]:
                     k, v = line.split("=", 1)
                     env_vars[k.strip()] = v.strip().strip('"').strip("'")
 
-    user = (os.getenv("SMTP_USER") or env_vars.get("SMTP_USER", "")).strip()
+    user = (os.getenv("SMTP_USER") or env_vars.get("SMTP_USER", DEFAULT_FROM)).strip()
     password = (os.getenv("SMTP_PASSWORD") or env_vars.get("SMTP_PASSWORD", "")).replace(" ", "").strip()
     host = os.getenv("SMTP_HOST") or env_vars.get("SMTP_HOST", "smtp.gmail.com")
     port = int(os.getenv("SMTP_PORT") or env_vars.get("SMTP_PORT", 587))
     recipient = (os.getenv("RECIPIENT_EMAIL") or env_vars.get("RECIPIENT_EMAIL", DEFAULT_RECIPIENT)).strip()
-    cc = (os.getenv("CC_EMAILS") or env_vars.get("CC_EMAILS", "")).strip()
+    cc = (os.getenv("CC_EMAILS") or env_vars.get("CC_EMAILS", DEFAULT_CC)).strip()
+    from_email = (os.getenv("FROM_EMAIL") or env_vars.get("FROM_EMAIL", DEFAULT_FROM)).strip()
 
     return {
         "user": user,
@@ -43,7 +47,8 @@ def get_smtp_config() -> Dict[str, Any]:
         "host": host,
         "port": port,
         "recipient": recipient,
-        "cc": cc
+        "cc": cc,
+        "from_email": from_email
     }
 
 def parse_email_list(raw_input: Optional[str]) -> List[str]:
@@ -54,25 +59,30 @@ def parse_email_list(raw_input: Optional[str]) -> List[str]:
     cleaned = []
     for it in items:
         addr = it.strip()
+        # Handle format like "Name <email@domain.com>"
+        match = re.search(r"<([^>]+)>", addr)
+        if match:
+            addr = match.group(1).strip()
         if addr and "@" in addr and "." in addr:
-            if addr not in cleaned:
+            if addr.lower() not in [c.lower() for c in cleaned]:
                 cleaned.append(addr)
     return cleaned
 
 def send_headless_email(
-    to_email: str,
-    subject: str,
-    plain_text: str,
+    to_email: Optional[str] = None,
+    subject: str = "Competitor Updates",
+    plain_text: str = "",
     html_content: Optional[str] = None,
     cc_emails: Optional[str] = None,
     smtp_user: str = "",
     smtp_pass: str = "",
     smtp_host: str = "smtp.gmail.com",
-    smtp_port: int = 587
+    smtp_port: int = 587,
+    from_email: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Sends an email completely headlessly via Python smtplib.
-    Supports freely adding any number of CC recipients.
+    Supports multiple TO recipients and multiple CC recipients.
     Guaranteed: NEVER opens macOS Mail.app or interrupts the user's desktop.
     """
     cfg = get_smtp_config()
@@ -80,14 +90,19 @@ def send_headless_email(
     password = smtp_pass or cfg["password"]
     host = smtp_host or cfg["host"]
     port = smtp_port or cfg["port"]
-    dest = to_email or cfg["recipient"]
+    sender_addr = from_email or cfg.get("from_email") or user or DEFAULT_FROM
 
-    # Parse CC recipients freely
-    cc_raw = cc_emails if cc_emails is not None else cfg.get("cc", "")
+    # Parse primary TO recipients
+    dest_raw = to_email if to_email is not None else cfg.get("recipient", DEFAULT_RECIPIENT)
+    to_list = parse_email_list(dest_raw)
+    if not to_list:
+        to_list = parse_email_list(DEFAULT_RECIPIENT)
+
+    # Parse CC recipients
+    cc_raw = cc_emails if cc_emails is not None else cfg.get("cc", DEFAULT_CC)
     cc_list = parse_email_list(cc_raw)
 
     # Save local copy of report regardless
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     report_txt_path = os.path.join(os.path.dirname(__file__), "latest_scheduled_report.txt")
     with open(report_txt_path, "w", encoding="utf-8") as f:
         f.write(plain_text)
@@ -103,13 +118,15 @@ def send_headless_email(
         return {
             "status": "config_needed",
             "message": msg,
-            "local_path": report_txt_path
+            "local_path": report_txt_path,
+            "to_recipients": to_list,
+            "cc_recipients": cc_list
         }
 
     try:
         msg = MIMEMultipart("alternative")
-        msg["From"] = f"GoNano Competitor Intelligence <{user}>"
-        msg["To"] = dest
+        msg["From"] = f"Miguel Gonzales <{sender_addr}>"
+        msg["To"] = ", ".join(to_list)
         if cc_list:
             msg["Cc"] = ", ".join(cc_list)
         msg["Subject"] = subject
@@ -129,17 +146,24 @@ def send_headless_email(
 
         server.login(user, password)
         
-        # Deliver to dest + all CC recipients
-        all_recipients = [dest] + [c for c in cc_list if c.lower() != dest.lower()]
-        server.sendmail(user, all_recipients, msg.as_string())
+        # Deliver to all unique TO + CC recipients
+        to_lower = [t.lower() for t in to_list]
+        all_recipients = list(to_list)
+        for c in cc_list:
+            if c.lower() not in to_lower and c.lower() not in [a.lower() for a in all_recipients]:
+                all_recipients.append(c)
+
+        server.sendmail(sender_addr, all_recipients, msg.as_string())
         server.quit()
 
+        to_summary = ", ".join(to_list)
         cc_summary = f" (CC: {', '.join(cc_list)})" if cc_list else ""
-        log_entry(f"[SUCCESS] Dispatched headless email to {dest}{cc_summary} via {host}:{port}")
+        log_entry(f"[SUCCESS] Dispatched headless email from {sender_addr} to {to_summary}{cc_summary} via {host}:{port}")
         return {
             "status": "success",
             "method": f"Headless SMTP ({host}:{port})",
-            "recipient": dest,
+            "from": sender_addr,
+            "to_recipients": to_list,
             "cc_recipients": cc_list,
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S PHT")
         }
@@ -149,7 +173,9 @@ def send_headless_email(
         return {
             "status": "error",
             "message": err_msg,
-            "local_path": report_txt_path
+            "local_path": report_txt_path,
+            "to_recipients": to_list,
+            "cc_recipients": cc_list
         }
 
 def log_entry(text: str):
