@@ -86,14 +86,14 @@ st.set_page_config(
 # -----------------------------------------------------------------------------
 st.html("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-    html, body, [class*="css"] {
-        font-family: 'Inter', -apple-system, sans-serif;
+    html, body, [class*="css"], .stMarkdown, p, div, span, h1, h2, h3, h4, h5, h6, button, input, select, textarea, [data-testid="stMetricValue"], [data-testid="stMetricLabel"], .stSelectbox, .stTextInput {
+        font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
     }
     
-    code, pre, .terminal-mono, [data-testid="stMetricValue"], [data-testid="stMetricLabel"] {
-        font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace !important;
+    code, pre, .terminal-mono {
+        font-family: 'Montserrat', monospace !important;
     }
 
     /* Enforce 0-radius rectangular geometry across all elements */
@@ -111,7 +111,7 @@ st.html("""
         color: #F8FAFC;
     }
     .terminal-title {
-        font-family: 'JetBrains Mono', monospace;
+        font-family: 'Montserrat', sans-serif;
         font-size: 18px;
         font-weight: 700;
         letter-spacing: 0.5px;
@@ -119,7 +119,7 @@ st.html("""
         margin: 0;
     }
     .terminal-sub {
-        font-family: 'JetBrains Mono', monospace;
+        font-family: 'Montserrat', sans-serif;
         font-size: 11px;
         color: #94A3B8;
         margin-top: 4px;
@@ -143,7 +143,7 @@ st.html("""
         margin-bottom: 16px;
     }
     .tile-header {
-        font-family: 'JetBrains Mono', monospace;
+        font-family: 'Montserrat', sans-serif;
         font-size: 11px;
         font-weight: 700;
         color: #64748B;
@@ -152,7 +152,7 @@ st.html("""
         margin-bottom: 6px;
     }
     .tile-header-dark {
-        font-family: 'JetBrains Mono', monospace;
+        font-family: 'Montserrat', sans-serif;
         font-size: 11px;
         font-weight: 700;
         color: #38BDF8;
@@ -164,7 +164,7 @@ st.html("""
     /* Monospaced Badges */
     .badge-terminal {
         display: inline-block;
-        font-family: 'JetBrains Mono', monospace;
+        font-family: 'Montserrat', sans-serif;
         font-size: 10px;
         font-weight: 700;
         padding: 2px 6px;
@@ -219,7 +219,7 @@ st.html("""
         text-decoration: underline;
     }
     .citation-tag {
-        font-family: 'JetBrains Mono', monospace;
+        font-family: 'Montserrat', sans-serif;
         font-size: 10px;
         font-weight: 700;
         color: #0284C7;
@@ -235,15 +235,15 @@ st.html("""
 # -----------------------------------------------------------------------------
 st.sidebar.html("""
 <div style="background-color:#0A192F; padding:12px; border:1px solid #1E293B; border-left:3px solid #38BDF8; margin-bottom:14px;">
-    <div style="font-family:'JetBrains Mono'; font-weight:700; color:#F8FAFC; font-size:13px;">COMPETITOR INTELLIGENCE TOOL</div>
-    <div style="font-family:'JetBrains Mono'; font-size:10px; color:#94A3B8;">GONANO ENTERPRISE SUITE V5.0</div>
+    <div style="font-family:'Montserrat', sans-serif; font-weight:700; color:#F8FAFC; font-size:13px;">COMPETITOR INTELLIGENCE TOOL</div>
+    <div style="font-family:'Montserrat', sans-serif; font-size:10px; color:#94A3B8;">GONANO ENTERPRISE SUITE V5.0</div>
 </div>
 """)
 
 # Load ALL monitored competitors dynamically from database / Google Sheet
 ALL_COMPETITORS = get_all_competitor_names()
 
-st.sidebar.markdown("**[CHRONO_WINDOW // TIME_HORIZON]**")
+st.sidebar.markdown("**Time Horizon**")
 time_horizon = st.sidebar.selectbox(
     "TIME_HORIZON_FILTER",
     ["24 Hours", "7 Days", "30 Days", "90 Days", "1 Year", "All Time"],
@@ -251,7 +251,7 @@ time_horizon = st.sidebar.selectbox(
     help="Filters signals, risk metrics, and threat heatmaps across the selected time horizon."
 )
 
-st.sidebar.markdown("**[TARGET_ENTITY // FLEXIBLE SEARCH & SELECT]**")
+st.sidebar.markdown("**Target Competitor Selection**")
 search_term = st.sidebar.text_input(
     "SEARCH_OR_FILTER_COMPETITOR",
     value="",
@@ -296,7 +296,7 @@ with st.sidebar.expander("EXPAND ROSTER / ADD TARGET"):
             st.rerun()
 
 st.sidebar.markdown("---")
-st.sidebar.markdown("**[SYSTEM // DATABASE_STATUS]**")
+st.sidebar.markdown("**Database Status**")
 conn = get_connection()
 c_count = conn.cursor().execute("SELECT COUNT(*) as c FROM signals").fetchone()["c"]
 p_count = conn.cursor().execute("SELECT COUNT(*) as c FROM competitor_profiles").fetchone()["c"]
@@ -315,7 +315,7 @@ if st.sidebar.button("RE-INDEX EVIDENCE DATABASE"):
     st.rerun()
 
 st.sidebar.markdown("---")
-st.sidebar.markdown("**[INTEGRATIONS // EXTERNAL]**")
+st.sidebar.markdown("**External Integrations**")
 st.sidebar.markdown(f"[Competitor Tracker (Google Sheet)]({SPREADSHEET_URL})")
 st.sidebar.markdown(f"Local Store: `competitor_store.db`")
 
@@ -342,7 +342,7 @@ with top_c1:
     if top_search.strip() and top_search.strip() != active_target:
         active_target = top_search.strip()
 with top_c2:
-    if st.button("RESET TO BENCHMARK", use_container_width=True):
+    if st.button("Reset to Benchmark", use_container_width=True):
         active_target = "GoNano (Your Brand)"
         st.rerun()
 
@@ -350,7 +350,7 @@ with top_c2:
 # TAB NAVIGATION (COMPREHENSIVE 16-ENGINE ARCHITECTURE)
 # -----------------------------------------------------------------------------
 tabs = st.tabs([
-    "1. ERM Risk Matrix (CRO)",
+    "1. Risk Analysis",
     "2. Sales Battlecards",
     "3. Head-to-Head Scorecard",
     "4. Brand Promise vs Reality",
@@ -372,8 +372,7 @@ tabs = st.tabs([
 # TAB 1: ERM RISK MATRIX & CRO ANALYSIS ENGINE
 # -----------------------------------------------------------------------------
 with tabs[0]:
-    st.markdown("#### [CHIEF_RISK_OFFICER // INHERENT_VS_RESIDUAL_THREAT_MATRIX]")
-    st.caption("Quantitative stress-testing evaluating market vulnerability, control moats, and downside VaR across all monitored competitors.")
+    st.markdown("### Risk Analysis")
 
     erm = calculate_erm_threat_matrix(active_target)
     
@@ -382,7 +381,7 @@ with tabs[0]:
         st.html(f"""
         <div class="pulso-tile">
             <div class="tile-header">Inherent Competitive Threat</div>
-            <div style="font-family:'JetBrains Mono', monospace; font-size:26px; font-weight:700; color:#0F1E3A;">
+            <div style="font-family:'Montserrat', sans-serif; font-size:26px; font-weight:700; color:#0F1E3A;">
                 {erm['inherent_threat_score']}/10.0
             </div>
             <span class="badge-terminal badge-critical">LEVEL: {erm['inherent_threat_level']}</span>
@@ -392,7 +391,7 @@ with tabs[0]:
         st.html(f"""
         <div class="pulso-tile">
             <div class="tile-header">GoNano Control Moat Efficacy</div>
-            <div style="font-family:'JetBrains Mono', monospace; font-size:26px; font-weight:700; color:#0F1E3A;">
+            <div style="font-family:'Montserrat', sans-serif; font-size:26px; font-weight:700; color:#0F1E3A;">
                 {erm['control_efficacy_score']}/10.0
             </div>
             <span class="badge-terminal badge-safe">DEFENSE: {erm['control_efficacy_level']}</span>
@@ -402,7 +401,7 @@ with tabs[0]:
         st.html(f"""
         <div class="pulso-tile">
             <div class="tile-header">Residual Threat Rating</div>
-            <div style="font-family:'JetBrains Mono', monospace; font-size:26px; font-weight:700; color:#0F1E3A;">
+            <div style="font-family:'Montserrat', sans-serif; font-size:26px; font-weight:700; color:#0F1E3A;">
                 {erm['residual_threat_score']}/10.0
             </div>
             <span class="badge-terminal badge-moderate">NET EXPOSURE: {erm['residual_threat_level']}</span>
@@ -412,7 +411,7 @@ with tabs[0]:
         st.html(f"""
         <div class="pulso-tile">
             <div class="tile-header">Polarity-VaR (90-Day Downside)</div>
-            <div style="font-family:'JetBrains Mono', monospace; font-size:26px; font-weight:700; color:#DC2626;">
+            <div style="font-family:'Montserrat', sans-serif; font-size:26px; font-weight:700; color:#DC2626;">
                 -{erm['polarity_var_90d']}%
             </div>
             <span class="badge-terminal">MARKET SHARE AT RISK</span>
@@ -421,24 +420,24 @@ with tabs[0]:
 
     col_kci, col_rst = st.columns([1.2, 1])
     with col_kci:
-        st.markdown("##### [KEY_COMPETITIVE_INDICATORS // EARLY_WARNING_THRESHOLDS]")
+        st.markdown("##### Key Competitive Indicators - Early Warning Thresholds")
         st.markdown(f"**Primary Disruption Vector:** `{erm['primary_exposure']}`")
         for kci in erm["kcis"]:
             kci_sev = 'badge-critical' if kci.get('severity')=='CRITICAL' else 'badge-moderate'
             st.html(f"""
             <div style="background:#FFFFFF; border:1px solid #CBD5E1; border-left:3px solid #0F1E3A; padding:10px; margin-bottom:8px;">
                 <div style="display:flex; justify-content:space-between;">
-                    <strong style="font-family:'JetBrains Mono', monospace; font-size:12px;">{kci['indicator']}</strong>
+                    <strong style="font-family:'Montserrat', sans-serif; font-size:12px;">{kci['indicator']}</strong>
                     <span class="badge-terminal {kci_sev}">{kci['status']}</span>
                 </div>
-                <div style="font-family:'JetBrains Mono', monospace; font-size:11px; color:#64748B; margin-top:4px;">
+                <div style="font-family:'Montserrat', sans-serif; font-size:11px; color:#64748B; margin-top:4px;">
                     Trigger Threshold: {kci['threshold']}
                 </div>
             </div>
             """)
 
     with col_rst:
-        st.markdown("##### [REVERSE_STRESS_TESTING // FAILURE_SCENARIO]")
+        st.markdown("##### Reverse Stress Testing - Failure Scenarios")
         st.html(f"""
         <div class="pulso-tile-dark">
             <div class="tile-header-dark">Severe Failure Scenario (RST)</div>
@@ -449,7 +448,7 @@ with tabs[0]:
         """)
 
     st.markdown("---")
-    st.markdown(f"##### [ENTERPRISE_RISK_REGISTER // ALL_MONITORED_ENTITIES ({p_count} ROSTER)]")
+    st.markdown(f"##### Enterprise Risk Register - All Monitored Entities ({p_count} Roster)")
     erm_search = st.text_input("FILTER_RISK_REGISTER", placeholder="Search by competitor name, category, or risk rating...")
     erm_df = generate_erm_kpi_table()
     if erm_search.strip():
@@ -466,7 +465,7 @@ with tabs[0]:
 # TAB 2: DYNAMIC SALES BATTLECARDS & OBJECTION PLAYBOOKS
 # -----------------------------------------------------------------------------
 with tabs[1]:
-    st.markdown(f"#### [SALES_BATTLECARDS // OBJECTION_PLAYBOOK: {active_target.upper()}]")
+    st.markdown(f"#### Sales Battlecards & Objection Playbook: {active_target}")
     st.caption("Actionable counter-arguments, fact-checked rebuttals, and landmine questions for field sales reps.")
 
     bcard = get_battlecard(active_target)
@@ -477,13 +476,13 @@ with tabs[1]:
         <div class="pulso-tile">
             <div class="tile-header">Rival Commercial Positioning & Pricing Anchor</div>
             <div style="font-size:13px; font-weight:700; color:#0F1E3A;">Target: {bcard['competitor_name']} ({bcard['category']})</div>
-            <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#0284C7; margin:6px 0;">Estimated Pricing: {bcard['rival_pricing_anchor']}</div>
+            <div style="font-family:'Montserrat', sans-serif; font-size:12px; color:#0284C7; margin:6px 0;">Estimated Pricing: {bcard['rival_pricing_anchor']}</div>
             <div style="font-size:12px; font-style:italic; color:#475569; background:#F8FAFC; border:1px solid #E2E8F0; padding:8px;">"{bcard['rival_core_hook']}"</div>
             <div style="margin-top:10px; font-size:12px; line-height:1.5;"><strong>Executive Rebuttal:</strong><br>{bcard['quick_rebuttal']}</div>
         </div>
         """)
 
-        st.markdown("##### [FACT_CHECKED_REBUTTAL_MATRIX]")
+        st.markdown("##### Fact-Checked Rebuttal Matrix")
         for item in bcard["claims_vs_facts"]:
             st.html(f"""
             <div style="background:#FFFFFF; border:1px solid #CBD5E1; border-left:3px solid #DC2626; padding:10px; margin-bottom:10px;">
@@ -493,16 +492,16 @@ with tabs[1]:
             """)
 
     with b_col2:
-        st.markdown("##### [LANDMINES_TO_PLANT_FOR_HOMEOWNERS]")
+        st.markdown("##### Strategic Landmines for Buyers")
         st.caption("Advise the customer or property manager to ask the competitor these direct technical questions:")
         for lm in bcard["landmines_to_plant"]:
             st.html(f"""
             <div style="background:#FFFBEB; border:1px solid #FCD34D; border-left:3px solid #D97706; padding:10px; margin-bottom:8px; font-size:12px; color:#92400E; font-weight:600;">
-                [LANDMINE] {lm}
+                Key Question: {lm}
             </div>
             """)
 
-        st.markdown("##### [OBJECTION_HANDLING_SCRIPTS]")
+        st.markdown("##### Objection Handling Scripts")
         for obj in bcard["objection_handling"]:
             with st.expander(f"Q: '{obj['objection'][:45]}...'"):
                 obj_txt = obj['objection']
@@ -514,7 +513,7 @@ with tabs[1]:
 # TAB 3: HEAD-TO-HEAD COMPARATIVE SCORECARD (CLEAN CITATIONS)
 # -----------------------------------------------------------------------------
 with tabs[2]:
-    st.markdown("#### [HEAD_TO_HEAD_SCORECARD // EMPIRICAL_BENCHMARK]")
+    st.markdown("#### Head-to-Head Scorecard - Empirical Benchmark")
     st.caption("Side-by-side scorecard where every single metric is backed by verified evidence citations. Flexible selection across all 60+ monitored entities.")
 
     h2h_c1, h2h_c2 = st.columns(2)
@@ -543,13 +542,13 @@ with tabs[2]:
     with c_a:
         st.html(f"""
         <div class="pulso-tile">
-            <div style="font-family:'JetBrains Mono', monospace; font-size:14px; font-weight:700; color:#0F1E3A; border-bottom:2px solid #0F1E3A; padding-bottom:4px; margin-bottom:12px;">{comp_a.upper()} // BASELINE PROFILE</div>
+            <div style="font-family:'Montserrat', sans-serif; font-size:14px; font-weight:700; color:#0F1E3A; border-bottom:2px solid #0F1E3A; padding-bottom:4px; margin-bottom:12px;">{comp_a} - Baseline Profile</div>
             <p style="font-size:12px; margin:4px 0;"><strong>Core Chemistry / Tech:</strong><br>{da['technology_class']}</p>
             <p style="font-size:12px; margin:4px 0;"><strong>Durability & Warranty:</strong><br>{da['durability_warranty']}</p>
             <p style="font-size:12px; margin:4px 0;"><strong>Impact & Hail Resistance:</strong><br>{da['impact_hail_rating']}</p>
             <p style="font-size:12px; margin:4px 0;"><strong>Insurance Compliance:</strong><br>{da['insurance_compliance']}</p>
             <p style="font-size:12px; margin:4px 0;"><strong>Estimated Cost / Sq.Ft:</strong><br>{da['avg_sqft_cost']}</p>
-            <p style="font-size:12px; margin:4px 0;"><strong>Net Polarity Index:</strong> <span style="font-family:'JetBrains Mono', monospace; font-weight:700; color:#0284C7;">{da['net_polarity_index']}</span></p>
+            <p style="font-size:12px; margin:4px 0;"><strong>Net Polarity Index:</strong> <span style="font-family:'Montserrat', sans-serif; font-weight:700; color:#0284C7;">{da['net_polarity_index']}</span></p>
             {render_citations_html(da['evidence_citations'])}
         </div>
         """)
@@ -557,13 +556,13 @@ with tabs[2]:
     with c_b:
         st.html(f"""
         <div class="pulso-tile">
-            <div style="font-family:'JetBrains Mono', monospace; font-size:14px; font-weight:700; color:#0F1E3A; border-bottom:2px solid #0F1E3A; padding-bottom:4px; margin-bottom:12px;">{comp_b.upper()} // RIVAL PROFILE</div>
+            <div style="font-family:'Montserrat', sans-serif; font-size:14px; font-weight:700; color:#0F1E3A; border-bottom:2px solid #0F1E3A; padding-bottom:4px; margin-bottom:12px;">{comp_b} - Rival Profile</div>
             <p style="font-size:12px; margin:4px 0;"><strong>Core Chemistry / Tech:</strong><br>{db['technology_class']}</p>
             <p style="font-size:12px; margin:4px 0;"><strong>Durability & Warranty:</strong><br>{db['durability_warranty']}</p>
             <p style="font-size:12px; margin:4px 0;"><strong>Impact & Hail Resistance:</strong><br>{db['impact_hail_rating']}</p>
             <p style="font-size:12px; margin:4px 0;"><strong>Insurance Compliance:</strong><br>{db['insurance_compliance']}</p>
             <p style="font-size:12px; margin:4px 0;"><strong>Estimated Cost / Sq.Ft:</strong><br>{db['avg_sqft_cost']}</p>
-            <p style="font-size:12px; margin:4px 0;"><strong>Net Polarity Index:</strong> <span style="font-family:'JetBrains Mono', monospace; font-weight:700; color:#DC2626;">{db['net_polarity_index']}</span></p>
+            <p style="font-size:12px; margin:4px 0;"><strong>Net Polarity Index:</strong> <span style="font-family:'Montserrat', sans-serif; font-weight:700; color:#DC2626;">{db['net_polarity_index']}</span></p>
             {render_citations_html(db['evidence_citations'])}
         </div>
         """)
@@ -572,7 +571,7 @@ with tabs[2]:
 # TAB 4: BRAND PROMISE VS. CUSTOMER REALITY (MARKETING REALITY GAP)
 # -----------------------------------------------------------------------------
 with tabs[3]:
-    st.markdown("#### [MARKETING_REALITY_GAP // NARRATIVE_DIVERGENCE_INDEX]")
+    st.markdown("#### Marketing Reality Gap - Narrative Divergence Index")
     st.caption("Contrasting official brand assertions against ground-level customer feedback to calculate narrative divergence. Completely rendered via native HTML cards to prevent markdown code leakage.")
 
     col_g1, col_g2 = st.columns([1.5, 1])
@@ -594,7 +593,7 @@ with tabs[3]:
         sev_class = "badge-critical" if g.get("gap_severity") == "CRITICAL" else ("badge-moderate" if g.get("gap_severity") == "HIGH" else "badge-terminal")
         gap_card_html = f"""<div style="background:#FFFFFF; border:1px solid #CBD5E1; border-left:4px solid #0F1E3A; padding:16px; margin-bottom:16px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <span style="font-family:'JetBrains Mono', monospace; font-weight:700; font-size:13px; color:#0F1E3A;">{g.get('competitor', '').upper()} // GAP_REPORT</span>
+                <span style="font-family:'Montserrat', sans-serif; font-weight:700; font-size:13px; color:#0F1E3A;">{g.get('competitor', '').upper()} // GAP_REPORT</span>
                 <div>
                     <span class="badge-terminal {sev_class}">SEVERITY: {g.get('gap_severity', 'MODERATE')}</span>
                     <span class="badge-terminal">DIVERGENCE: {g.get('divergence_score', 50)}%</span>
@@ -603,14 +602,14 @@ with tabs[3]:
             
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin:12px 0;">
                 <div style="background:#F0FDF4; border:1px solid #BBF7D0; padding:12px;">
-                    <div style="font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:700; color:#166534; text-transform:uppercase;">Official Brand Promise</div>
+                    <div style="font-family:'Montserrat', sans-serif; font-size:11px; font-weight:700; color:#166534; text-transform:uppercase;">Official Brand Promise</div>
                     <div style="font-size:13px; font-weight:600; color:#14532D; margin:4px 0;">"{g.get('claim_headline', '')}"</div>
                     <div style="font-size:11px; color:#166534; line-height:1.4;">{g.get('claim_quote', '')}</div>
                     <div style="margin-top:6px;"><a href="{g.get('claim_url', '#')}" target="_blank" class="citation-link">{g.get('claim_source', 'Official Source')} <span class="citation-tag">CLAIM_SOURCE -></span></a></div>
                 </div>
 
                 <div style="background:#FEF2F2; border:1px solid #FECACA; padding:12px;">
-                    <div style="font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:700; color:#991B1B; text-transform:uppercase;">Customer & Market Reality</div>
+                    <div style="font-family:'Montserrat', sans-serif; font-size:11px; font-weight:700; color:#991B1B; text-transform:uppercase;">Customer & Market Reality</div>
                     <div style="font-size:13px; font-weight:600; color:#7F1D1D; margin:4px 0;">"{g.get('reality_headline', '')}"</div>
                     <div style="font-size:11px; color:#991B1B; line-height:1.4;">{g.get('reality_quote', '')}</div>
                     <div style="margin-top:6px;"><a href="{g.get('reality_url', '#')}" target="_blank" class="citation-link">{g.get('reality_source', 'Customer Audit')} <span class="citation-tag">EVIDENCE_SOURCE -></span></a></div>
@@ -618,7 +617,7 @@ with tabs[3]:
             </div>
 
             <div style="background:#F8FAFC; border:1px solid #E2E8F0; padding:10px; font-size:12px;">
-                <strong style="font-family:'JetBrains Mono', monospace; color:#0F1E3A;">GONANO STRATEGIC EXPLOITATION:</strong> {g.get('strategic_takeaway', '')}
+                <strong style="font-family:'Montserrat', sans-serif; color:#0F1E3A;">GONANO STRATEGIC EXPLOITATION:</strong> {g.get('strategic_takeaway', '')}
             </div>
         </div>"""
         st.html(gap_card_html)
@@ -627,7 +626,7 @@ with tabs[3]:
 # TAB 5: SILENT WEBSITE & PRICING DIFF DETECTOR
 # -----------------------------------------------------------------------------
 with tabs[4]:
-    st.markdown(f"#### [DOM_DIFF_RADAR // STEALTH_CHANGES: {active_target.upper()}]")
+    st.markdown(f"#### Website Change Radar - Stealth Changes: {active_target}")
     st.caption("Detects unannounced competitor warranty changes, price increases, and stealth terms modifications.")
 
     diff_data = compute_text_diff(active_target)
@@ -637,19 +636,19 @@ with tabs[4]:
 
     d_col1, d_col2 = st.columns(2)
     with d_col1:
-        st.markdown("##### [DELETIONS // REMOVED_OR_WEAKENED_CLAUSES]")
+        st.markdown("##### Deletions - Removed or Weakened Clauses")
         for del_line in diff_data["deletions"]:
             st.html(f"""
-            <div style="background:#FEF2F2; border:1px solid #F87171; border-left:3px solid #DC2626; padding:8px; margin-bottom:6px; font-family:'JetBrains Mono', monospace; font-size:11px; color:#991B1B;">
+            <div style="background:#FEF2F2; border:1px solid #F87171; border-left:3px solid #DC2626; padding:8px; margin-bottom:6px; font-family:'Montserrat', sans-serif; font-size:11px; color:#991B1B;">
                 - {del_line}
             </div>
             """)
             
     with d_col2:
-        st.markdown("##### [ADDITIONS // SILENT_PRICING_&_EXCLUSIONS]")
+        st.markdown("##### Additions - Silent Pricing and Exclusions")
         for add_line in diff_data["additions"]:
             st.html(f"""
-            <div style="background:#F0FDF4; border:1px solid #86EFAC; border-left:3px solid #16A34A; padding:8px; margin-bottom:6px; font-family:'JetBrains Mono', monospace; font-size:11px; color:#166534;">
+            <div style="background:#F0FDF4; border:1px solid #86EFAC; border-left:3px solid #16A34A; padding:8px; margin-bottom:6px; font-family:'Montserrat', sans-serif; font-size:11px; color:#166534;">
                 + {add_line}
             </div>
             """)
@@ -658,7 +657,7 @@ with tabs[4]:
 # TAB 6: PATENT, TRADEMARK & IP MOAT RADAR
 # -----------------------------------------------------------------------------
 with tabs[5]:
-    st.markdown("#### [INTELLECTUAL_PROPERTY // PATENT_&_TRADEMARK_RADAR]")
+    st.markdown("#### Intellectual Property - Patent & Trademark Radar")
     st.caption("Tracking competitor patent filings, molecular claims, and IP moats across USPTO, WIPO, and CIPO.")
 
     ip_records = get_competitor_ip_records(active_target)
@@ -669,7 +668,7 @@ with tabs[5]:
             st.html(f"""
             <div style="background:#FFFFFF; border:1px solid #CBD5E1; border-left:4px solid #0F1E3A; padding:16px; margin-bottom:12px;">
                 <div style="display:flex; justify-content:space-between;">
-                    <strong style="font-family:'JetBrains Mono', monospace; font-size:13px; color:#0F1E3A;">{ip['competitor'].upper()} // {ip['doc_number']}</strong>
+                    <strong style="font-family:'Montserrat', sans-serif; font-size:13px; color:#0F1E3A;">{ip['competitor'].upper()} // {ip['doc_number']}</strong>
                     <span class="badge-terminal">{ip['status']}</span>
                 </div>
                 <div style="font-size:14px; font-weight:700; color:#0369A1; margin:6px 0;">{ip['patent_title']}</div>
@@ -678,7 +677,7 @@ with tabs[5]:
                     <strong>Abstract & Chemical Claim:</strong><br>{ip['chemical_claim']}
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:700; color:#0F1E3A;">MOAT DEFENSE: {ip['moat_defense_score']}</span>
+                    <span style="font-family:'Montserrat', sans-serif; font-size:11px; font-weight:700; color:#0F1E3A;">MOAT DEFENSE: {ip['moat_defense_score']}</span>
                     <a href="{ip['patent_url']}" target="_blank" class="citation-link">VIEW_USPTO_PATENT_DOCUMENT -></a>
                 </div>
             </div>
@@ -688,7 +687,7 @@ with tabs[5]:
 # TAB 7: CONTRACTOR & DEALER CHANNEL INTEL
 # -----------------------------------------------------------------------------
 with tabs[6]:
-    st.markdown("#### [DEALER_INTELLIGENCE // APPLICATOR_CHURN_&_POACHING_RADAR]")
+    st.markdown("#### Dealer Intelligence - Applicator Churn & Poaching Radar")
     st.caption("Detects contractor dissatisfaction with rival products to identify prime certified applicator recruitment targets.")
 
     dealers = get_dealer_intel_records()
@@ -696,7 +695,7 @@ with tabs[6]:
         st.html(f"""
         <div style="background:#FFFFFF; border:1px solid #CBD5E1; border-left:4px solid #0F1E3A; padding:16px; margin-bottom:12px;">
             <div style="display:flex; justify-content:space-between;">
-                <strong style="font-family:'JetBrains Mono', monospace; font-size:13px; color:#0F1E3A;">[{dl['contractor_id']}] {dl['region'].upper()} // {dl['current_rival_brand']}</strong>
+                <strong style="font-family:'Montserrat', sans-serif; font-size:13px; color:#0F1E3A;">[{dl['contractor_id']}] {dl['region'].upper()} // {dl['current_rival_brand']}</strong>
                 <span class="badge-terminal">{dl['sentiment_status']}</span>
             </div>
             <div style="font-size:12px; color:#DC2626; margin:6px 0;"><strong>Reported Field Friction:</strong> {dl['reported_friction']}</div>
@@ -713,13 +712,13 @@ with tabs[6]:
 # TAB 8: TECHNICAL FORMULATION & ASTM LABORATORY TEARDOWN LAB
 # -----------------------------------------------------------------------------
 with tabs[7]:
-    st.markdown("#### [TECHNICAL_LABORATORY // ASTM_ENGINEERING_BENCHMARKS]")
+    st.markdown("#### Technical Laboratory - ASTM Engineering Benchmarks")
     st.caption("Hard physical testing standards: ASTM D3462 (Tear), ASTM D3161 (Wind Uplift), UL 2218 (Hail Impact).")
 
     astm_df = get_astm_teardown_df()
     st.dataframe(astm_df, hide_index=True, use_container_width=True)
 
-    st.markdown("##### [MOLECULAR_CROSS_LINKING_VS_BIO_OIL_SWIFT_AUDIT]")
+    st.markdown("##### Molecular Cross-Linking vs Bio-Oil Audit")
     st.html("""
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:10px;">
         <div class="pulso-tile">
@@ -747,7 +746,7 @@ with tabs[7]:
 # TAB 9: REGIONAL GEOGRAPHIC TERRITORY AUDIT
 # -----------------------------------------------------------------------------
 with tabs[8]:
-    st.markdown("#### [REGIONAL_AUDIT // GEOGRAPHIC_MARKET_DYNAMICS]")
+    st.markdown("#### Regional Audit - Geographic Market Dynamics")
     st.caption("Competitive concentration and weather vulnerability mapping across key market territories.")
 
     territory_data = get_territory_audit_data()
@@ -772,7 +771,7 @@ with tabs[8]:
         st.html(f"""
         <div class="pulso-tile">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-family:'JetBrains Mono', monospace; font-size:14px; font-weight:700; color:#0F1E3A;">{region.upper()} // {sentiment}</span>
+                <span style="font-family:'Montserrat', sans-serif; font-size:14px; font-weight:700; color:#0F1E3A;">{region.upper()} // {sentiment}</span>
                 <span class="badge-terminal">MARKET VOLUME SHARE: {volume}</span>
             </div>
             <div style="font-size:12px; margin:6px 0;"><strong>Active Competitor Threat:</strong> {dominant}</div>
@@ -789,7 +788,7 @@ with tabs[8]:
 # TAB 10: HISTORICAL TREND ANALYSIS (1900 TO PRESENT)
 # -----------------------------------------------------------------------------
 with tabs[9]:
-    st.markdown("#### [HISTORICAL_ANALYSIS // LIFECYCLE_EVOLUTION_1900_PRESENT]")
+    st.markdown("#### Historical Analysis - Lifecycle Evolution")
     st.caption("Strategic perspective charting roofing technology transitions across historical market eras.")
 
     for year, era in sorted(HISTORICAL_ERA_DATABASE.items()):
@@ -803,7 +802,7 @@ with tabs[9]:
         st.html(f"""
         <div class="pulso-tile">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-family:'JetBrains Mono', monospace; font-size:13px; font-weight:700; color:#0F1E3A;">ERA ({year}): {era.get('era_name', '').upper()}</span>
+                <span style="font-family:'Montserrat', sans-serif; font-size:13px; font-weight:700; color:#0F1E3A;">ERA ({year}): {era.get('era_name', '').upper()}</span>
                 <span class="badge-terminal">MILESTONE: {year}</span>
             </div>
             <div style="font-size:12px; color:#334155; margin:6px 0;"><strong>Technology Paradigm:</strong> {era.get('technology_paradigm', '')}</div>
@@ -817,13 +816,13 @@ with tabs[9]:
 # TAB 11: DOMAIN ANALYTICS & GOOGLE SHEETS COMPETITOR TRACKER
 # -----------------------------------------------------------------------------
 with tabs[10]:
-    st.markdown("#### [INTELLIGENCE_INTEGRATION // DOMAIN_RISK_&_SHEET_TRACKER]")
+    st.markdown("#### Intelligence Integration - Domain Risk and Sheet Tracker")
     st.caption("Unified command center bridging structured business domain risks with the live Google Sheets Competitor Tracker.")
 
     sub_t1, sub_t2 = st.tabs(["Google Sheets Competitor Tracker (Live Roster)", "Enterprise Domain Analytics"])
 
     with sub_t1:
-        st.markdown(f"##### [LIVE_TRACKER // COMPETITOR_REPORT_TRACKER]")
+        st.markdown("##### Live Competitor Report Tracker")
         st.markdown(f"Direct integration with: [{SPREADSHEET_URL}]({SPREADSHEET_URL})")
 
         sc1, sc2, sc3 = st.columns(3)
@@ -875,7 +874,7 @@ with tabs[10]:
         st.dataframe(pd.DataFrame(tracker_df_data), hide_index=True, use_container_width=True)
 
     with sub_t2:
-        st.markdown("##### [VERTICAL_RISK_AUDIT // 5_ENTERPRISE_DOMAINS]")
+        st.markdown("##### Vertical Risk Audit - 5 Enterprise Domains")
         domains = get_domain_analytics()
         for d in domains:
             with st.expander(f"[{d['domain_id']}] {d['domain_name'].upper()} // {d['risk_level']} (Signals: {d['volume_mentions']})"):
@@ -889,7 +888,7 @@ with tabs[10]:
 # TAB 12: YOUTUBE & OSINT MULTI-SOURCE FEED (WITH IN-APP EMBEDS)
 # -----------------------------------------------------------------------------
 with tabs[11]:
-    st.markdown(f"#### [OSINT_FEED // REAL_TIME_STREAM: {active_target.upper()}]")
+    st.markdown(f"#### Real-Time Intelligence Stream: {active_target}")
     st.caption("Live video uploads, Reddit discussions, News articles, and active advertising campaigns.")
 
     feed_type = st.radio("FEED_CHANNEL", ["All Channels", "YouTube Videos Only", "Reddit & Web Discussions", "Active Advertisements"], horizontal=True)
@@ -918,7 +917,7 @@ with tabs[11]:
             <div class="mention-card">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <span class="badge-terminal">{s['platform'].upper()}</span>
-                    <span style="font-family:'JetBrains Mono', monospace; font-size:11px; color:#64748B;">{s['timestamp']}</span>
+                    <span style="font-family:'Montserrat', sans-serif; font-size:11px; color:#64748B;">{s['timestamp']}</span>
                 </div>
                 <div style="font-weight:700; font-size:14px; margin:6px 0;"><a href="{s['url']}" target="_blank" style="color:#0F1E3A; text-decoration:none;">{s['title']}</a></div>
                 <div style="font-size:12px; color:#334155; line-height:1.4;">{s['snippet']}</div>
@@ -937,7 +936,7 @@ with tabs[11]:
 # TAB 13: COMPETITOR "RED TEAM" WAR ROOM SIMULATOR
 # -----------------------------------------------------------------------------
 with tabs[12]:
-    st.markdown("#### [RED_TEAM_WAR_ROOM // RIVAL_EXECUTIVE_SIMULATOR]")
+    st.markdown("#### Red Team War Room - Rival Executive Simulator")
     st.caption("Roleplay as the CEO/CSO of the rival firm to stress-test GoNano's strategic offensive moves.")
 
     gonano_action_input = st.text_area(
@@ -959,16 +958,16 @@ with tabs[12]:
 # TAB 14: C-SUITE AUTOMATED ALERTING & WEBHOOK ENGINE
 # -----------------------------------------------------------------------------
 with tabs[13]:
-    st.markdown("#### [ALERT_DISPATCHER // C_SUITE_PUSH_NOTIFICATION_CENTER]")
+    st.markdown("#### Alert Dispatcher - Executive Push Notification Center")
     st.caption("Sends real-time alerts to Telegram, Slack, or Webhook endpoints when critical KCI thresholds are breached.")
 
     alert_col1, alert_col2, alert_col3 = st.columns(3)
     with alert_col1:
-        st.markdown("##### [DISPATCH_WEBHOOK_ALERT]")
+        st.markdown("##### Dispatch Webhook Alert")
         webhook_input = st.text_input("Webhook URL (Slack, Discord, Custom)", placeholder="https://hooks.slack.com/services/...")
         kci_name = st.selectbox("Triggered KCI", ["PPC Ad Spend Spike (>25%)", "Rival Dealer Recruitment Surge", "Warranty Denial Customer Spike", "Unannounced Price Drop"])
         
-        if st.button("TEST SEND WEBHOOK ALERT"):
+        if st.button("Test Send Webhook Alert"):
             test_payload = format_alert_payload(active_target, kci_name, "Threshold breached: competitor launched 12 new video ad sets.", "CRITICAL")
             res = dispatch_webhook_alert(webhook_input, test_payload)
             if res["status"] == "success":
@@ -977,11 +976,11 @@ with tabs[13]:
                 st.error(f"Webhook dispatch failed: {res['message']}")
 
     with alert_col2:
-        st.markdown("##### [DISPATCH_TELEGRAM_BOT_ALERT]")
+        st.markdown("##### Dispatch Telegram Bot Alert")
         bot_token_input = st.text_input("Telegram Bot Token", type="password", placeholder="123456:ABC-DEF...")
         chat_id_input = st.text_input("Telegram Chat ID", placeholder="-1001234567890")
         
-        if st.button("TEST SEND TELEGRAM ALERT"):
+        if st.button("Test Send Telegram Alert"):
             test_payload = format_alert_payload(active_target, kci_name, "Automated daily monitoring detected rival territory expansion.", "HIGH")
             t_res = dispatch_telegram_alert(bot_token_input, chat_id_input, test_payload)
             if t_res["status"] == "success":
@@ -990,21 +989,21 @@ with tabs[13]:
                 st.error(f"Telegram dispatch failed: {t_res['message']}")
 
     with alert_col3:
-        st.markdown("##### [HEADLESS_EMAIL_DISPATCHER // 1_PAGE_REPORT]")
+        st.markdown("##### Headless Email Dispatcher - 1-Page Report")
         st.caption("Dispatches silent background updates at 9:00 PM PHT & 00:00 H PHT. Never opens macOS Mail.app.")
         email_recipient = st.text_input("Recipient Email Address", value="gonzalesmiguelcarlo@gmail.com")
         
         smtp_u = st.text_input("SMTP User / Gmail Address", placeholder="e.g. gonzalesmiguelcarlo@gmail.com")
         smtp_p = st.text_input("Google App Password (16-char token)", type="password", placeholder="e.g. abcd efgh ijkl mnop")
         
-        if smtp_u and smtp_p and st.button("SAVE SMTP CREDENTIALS TO .ENV"):
+        if smtp_u and smtp_p and st.button("Save SMTP Credentials"):
             env_file = os.path.join(os.path.dirname(__file__), ".env")
             with open(env_file, "a", encoding="utf-8") as ef:
                 lines = ["\n", f"SMTP_USER={smtp_u.strip()}\n", f"SMTP_PASSWORD={smtp_p.strip()}\n", f"RECIPIENT_EMAIL={email_recipient.strip()}\n"]
                 ef.writelines(lines)
             st.success("Saved credentials to .env for autonomous background scheduler.")
             
-        if st.button("DISPATCH 1-PAGE EXECUTIVE REPORT NOW (HEADLESS)"):
+        if st.button("Dispatch 1-Page Executive Report Now"):
             from report_generator import build_executive_one_pager
             from email_dispatcher import send_headless_email
             rep = build_executive_one_pager()
@@ -1023,7 +1022,7 @@ with tabs[13]:
             else:
                 st.error("Dispatch failed: " + str(res.get("message", "Unknown error")) + " - Local report saved to: " + str(res.get("local_path", "")))
 
-        with st.expander("VIEW 1-PAGE EXECUTIVE REPORT PREVIEW (NO EMOJIS)"):
+        with st.expander("View 1-Page Executive Report Preview"):
             from report_generator import build_executive_one_pager
             preview_rep = build_executive_one_pager()
             st.text(preview_rep["plain_text"])
@@ -1032,7 +1031,7 @@ with tabs[13]:
 # TAB 15: BOARD-READY EXPORT INFRASTRUCTURE
 # -----------------------------------------------------------------------------
 with tabs[14]:
-    st.markdown("#### [EXPORT_INFRASTRUCTURE // C_SUITE_BOARD_REPORTS]")
+    st.markdown("#### Export Infrastructure - Executive Board Reports")
     st.caption("Generate verifiable audit documents formatted for Excel and C-suite strategy committees.")
 
     exp_col1, exp_col2, exp_col3 = st.columns(3)
@@ -1090,7 +1089,7 @@ with tabs[14]:
 # TAB 16: COMPETITOR THREAT & SENTIMENT HEATMAP MATRIX
 # -----------------------------------------------------------------------------
 with tabs[15]:
-    st.markdown("#### [THREAT_HEATMAP // MULTI-FACTOR_SENTIMENT_&_MARKET_IMPACT_MATRIX]")
+    st.markdown("#### Threat Heatmap - Multi-Factor Sentiment & Market Impact Matrix")
     st.caption(f"Real-time comparative quadrant positioning and multi-factor vulnerability heatmap across 60+ monitored competitors. Sliced by **{time_horizon}**.")
 
     hm_col1, hm_col2 = st.columns([2, 1])
@@ -1126,7 +1125,7 @@ with tabs[15]:
     with qc1:
         st.html(textwrap.dedent(f"""
         <div style="background:#FEF2F2; border:1px solid #FECACA; border-top:3px solid #DC2626; padding:12px;">
-            <div style="font-family:'JetBrains Mono', monospace; font-size:10px; font-weight:700; color:#991B1B;">QUADRANT 1 // PRIME TARGETS</div>
+            <div style="font-family:'Montserrat', sans-serif; font-size:10px; font-weight:700; color:#991B1B;">QUADRANT 1 // PRIME TARGETS</div>
             <div style="font-size:22px; font-weight:800; color:#7F1D1D;">{len(q1_items)} BRANDS</div>
             <div style="font-size:10px; color:#991B1B; margin-top:4px;">High Volume + High Customer Friction. Prime targets for GoNano sales displacement.</div>
         </div>
@@ -1134,7 +1133,7 @@ with tabs[15]:
     with qc2:
         st.html(textwrap.dedent(f"""
         <div style="background:#EFF6FF; border:1px solid #BFDBFE; border-top:3px solid #2563EB; padding:12px;">
-            <div style="font-family:'JetBrains Mono', monospace; font-size:10px; font-weight:700; color:#1E40AF;">QUADRANT 2 // INCUMBENTS</div>
+            <div style="font-family:'Montserrat', sans-serif; font-size:10px; font-weight:700; color:#1E40AF;">QUADRANT 2 // INCUMBENTS</div>
             <div style="font-size:22px; font-weight:800; color:#1E3A8A;">{len(q2_items)} BRANDS</div>
             <div style="font-size:10px; color:#1E40AF; margin-top:4px;">High Volume + Low Friction. Entrenched technical players; target with ASTM lab data.</div>
         </div>
@@ -1142,7 +1141,7 @@ with tabs[15]:
     with qc3:
         st.html(textwrap.dedent(f"""
         <div style="background:#FFFBEB; border:1px solid #FDE68A; border-top:3px solid #D97706; padding:12px;">
-            <div style="font-family:'JetBrains Mono', monospace; font-size:10px; font-weight:700; color:#92400E;">QUADRANT 3 // REGIONAL SPRAY</div>
+            <div style="font-family:'Montserrat', sans-serif; font-size:10px; font-weight:700; color:#92400E;">QUADRANT 3 // REGIONAL SPRAY</div>
             <div style="font-size:22px; font-weight:800; color:#78350F;">{len(q3_items)} BRANDS</div>
             <div style="font-size:10px; color:#92400E; margin-top:4px;">Low-to-Mid Volume + High Washout Complaints. Local contractor applicators.</div>
         </div>
@@ -1150,14 +1149,14 @@ with tabs[15]:
     with qc4:
         st.html(textwrap.dedent(f"""
         <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-top:3px solid #16A34A; padding:12px;">
-            <div style="font-family:'JetBrains Mono', monospace; font-size:10px; font-weight:700; color:#166534;">QUADRANT 4 // DISRUPTORS</div>
+            <div style="font-family:'Montserrat', sans-serif; font-size:10px; font-weight:700; color:#166534;">QUADRANT 4 // DISRUPTORS</div>
             <div style="font-size:22px; font-weight:800; color:#14532D;">{len(q4_items)} BRANDS</div>
             <div style="font-size:10px; color:#166534; margin-top:4px;">Niche / Emerging Nanotech Startups. Monitor for patent filings and regional growth.</div>
         </div>
         """).strip())
 
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("##### [MULTI-FACTOR_COMPETITOR_HEATMAP_GRID]")
+    st.markdown("##### Multi-Factor Competitor Heatmap Grid")
 
     st.dataframe(
         hm_df,
