@@ -1137,6 +1137,25 @@ with tabs[14]:
         st.markdown("#### Export Infrastructure - Executive Board Reports")
         st.caption("Generate verifiable audit documents formatted for Excel and C-suite strategy committees.")
 
+        dl_dir = '/Users/macbook/Downloads'
+        target_slug = active_target.replace(' ', '_') if active_target else "Global_Portfolio"
+        target_memo_name = active_target if active_target else lookup_target
+        audit_label = f"{active_target[:20]} Audit" if active_target else "Global Market Audit"
+
+        if st.button("⚡ Save All Reports Directly to Mac Downloads (~/Downloads)", use_container_width=True):
+            erm_df_exp = generate_erm_kpi_table()
+            p_csv = os.path.join(dl_dir, f"GoNano_Competitive_ERM_Risk_Register_{target_slug}.csv")
+            p_xls = os.path.join(dl_dir, f"GoNano_Executive_Spreadsheet_{target_slug}.xls")
+            p_md = os.path.join(dl_dir, f"GoNano_Executive_Memo_{target_slug}.md")
+            with open(p_csv, "wb") as f:
+                f.write(generate_utf8_bom_csv(erm_df_exp))
+            with open(p_xls, "w", encoding="utf-8") as f:
+                f.write(generate_spreadsheetml_xls(erm_df_exp, audit_label))
+            with open(p_md, "w", encoding="utf-8") as f:
+                f.write(generate_csuite_markdown_memo(target_memo_name))
+            st.success(f"Saved all 3 files to !")
+
+        st.markdown("<br>", unsafe_allow_html=True)
         exp_col1, exp_col2, exp_col3 = st.columns(3)
     
         target_slug = active_target.replace(' ', '_') if active_target else "Global_Portfolio"
