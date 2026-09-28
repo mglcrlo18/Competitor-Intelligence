@@ -4,15 +4,17 @@ Headless SMTP Email Dispatcher for Competitor Intelligence Tool.
 Dispatches intelligence briefings silently in the background without opening the macOS Mail application.
 Supports:
 1. Headless SMTP over TLS/SSL (e.g. Gmail App Password, Corporate SMTP)
-2. Dual-mode payload delivery (Multipart Plain Text + Formatted Executive HTML)
-3. Fallback archival of generated 1-pager reports
+2. Unlimited CC recipients (comma-separated list)
+3. Dual-mode payload delivery (Multipart Plain Text + Formatted Executive HTML)
+4. Fallback archival of generated 1-pager reports
 """
 import os
+import re
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 DEFAULT_RECIPIENT = "gonzalesmiguelcarlo@gmail.com"
 
@@ -33,20 +35,36 @@ def get_smtp_config() -> Dict[str, Any]:
     host = os.getenv("SMTP_HOST") or env_vars.get("SMTP_HOST", "smtp.gmail.com")
     port = int(os.getenv("SMTP_PORT") or env_vars.get("SMTP_PORT", 587))
     recipient = (os.getenv("RECIPIENT_EMAIL") or env_vars.get("RECIPIENT_EMAIL", DEFAULT_RECIPIENT)).strip()
+    cc = (os.getenv("CC_EMAILS") or env_vars.get("CC_EMAILS", "")).strip()
 
     return {
         "user": user,
         "password": password,
         "host": host,
         "port": port,
-        "recipient": recipient
+        "recipient": recipient,
+        "cc": cc
     }
+
+def parse_email_list(raw_input: Optional[str]) -> List[str]:
+    """Parses a comma, semicolon, or newline-separated string of email addresses."""
+    if not raw_input:
+        return []
+    items = re.split(r"[,;\n]", str(raw_input))
+    cleaned = []
+    for it in items:
+        addr = it.strip()
+        if addr and "@" in addr and "." in addr:
+            if addr not in cleaned:
+                cleaned.append(addr)
+    return cleaned
 
 def send_headless_email(
     to_email: str,
     subject: str,
     plain_text: str,
     html_content: Optional[str] = None,
+    cc_emails: Optional[str] = None,
     smtp_user: str = "",
     smtp_pass: str = "",
     smtp_host: str = "smtp.gmail.com",
@@ -54,6 +72,7 @@ def send_headless_email(
 ) -> Dict[str, Any]:
     """
     Sends an email completely headlessly via Python smtplib.
+    Supports freely adding any number of CC recipients.
     Guaranteed: NEVER opens macOS Mail.app or interrupts the user's desktop.
     """
     cfg = get_smtp_config()
@@ -62,6 +81,10 @@ def send_headless_email(
     host = smtp_host or cfg["host"]
     port = smtp_port or cfg["port"]
     dest = to_email or cfg["recipient"]
+
+    # Parse CC recipients freely
+    cc_raw = cc_emails if cc_emails is not None else cfg.get("cc", "")
+    cc_list = parse_email_list(cc_raw)
 
     # Save local copy of report regardless
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -87,6 +110,8 @@ def send_headless_email(
         msg = MIMEMultipart("alternative")
         msg["From"] = f"GoNano Competitor Intelligence <{user}>"
         msg["To"] = dest
+        if cc_list:
+            msg["Cc"] = ", ".join(cc_list)
         msg["Subject"] = subject
         msg["Date"] = datetime.now().strftime("%a, %d %b %Y %H:%M:%S +0800")
 
@@ -103,14 +128,19 @@ def send_headless_email(
             server.ehlo()
 
         server.login(user, password)
-        server.sendmail(user, [dest], msg.as_string())
+        
+        # Deliver to dest + all CC recipients
+        all_recipients = [dest] + [c for c in cc_list if c.lower() != dest.lower()]
+        server.sendmail(user, all_recipients, msg.as_string())
         server.quit()
 
-        log_entry(f"[SUCCESS] Dispatched headless email to {dest} via {host}:{port}")
+        cc_summary = f" (CC: {', '.join(cc_list)})" if cc_list else ""
+        log_entry(f"[SUCCESS] Dispatched headless email to {dest}{cc_summary} via {host}:{port}")
         return {
             "status": "success",
             "method": f"Headless SMTP ({host}:{port})",
             "recipient": dest,
+            "cc_recipients": cc_list,
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S PHT")
         }
     except Exception as e:

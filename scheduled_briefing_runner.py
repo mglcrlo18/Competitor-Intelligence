@@ -5,7 +5,7 @@ Triggered automatically at 9:00 PM PHT (21:00) and 00:00 H PHT (Midnight).
 Performs:
 1. Live competitive signal scan
 2. Google Sheets tracker synchronization
-3. Generates 1-page executive brief (Updates on News, New Competitors, Findings)
+3. Generates 1-page executive brief (Updates on News, Strategic Findings)
 4. Headless email dispatch without opening macOS Mail.app
 """
 import os
@@ -50,24 +50,28 @@ def run_scheduled_briefing():
     except Exception as e:
         log(f"Warning: News scan encountered exception: {e}")
 
-    # 3. Generate 1-page executive report (Zero emojis, strict professional structure)
+    # 3. Retrieve SMTP and CC config
+    cfg = get_smtp_config()
+    recipient = cfg["recipient"] or "gonzalesmiguelcarlo@gmail.com"
+    cc_emails = cfg.get("cc", "")
+
+    # 4. Generate 1-page executive report (Zero emojis, strict professional structure)
     log("Compiling executive 1-page report...")
-    report = build_executive_one_pager()
+    report = build_executive_one_pager(cc_recipients=cc_emails)
     plain_text = report["plain_text"]
     html_content = report["html"]
     timestamp = report["timestamp"]
 
-    # 4. Dispatch headless email
-    cfg = get_smtp_config()
-    recipient = cfg["recipient"] or "gonzalesmiguelcarlo@gmail.com"
-    subject = f"[COMPETITOR INTELLIGENCE] Executive Briefing ({timestamp})"
+    # 5. Subject: Competitor Updates as of [Date and Time]
+    subject = f"Competitor Updates as of {timestamp}"
 
-    log(f"Dispatching headless email to {recipient} without launching Mail.app...")
+    log(f"Dispatching headless email to {recipient} (CC: {cc_emails or 'None'}) without launching Mail.app...")
     result = send_headless_email(
         to_email=recipient,
         subject=subject,
         plain_text=plain_text,
-        html_content=html_content
+        html_content=html_content,
+        cc_emails=cc_emails
     )
 
     if result["status"] == "success":

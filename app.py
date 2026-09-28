@@ -88,12 +88,30 @@ st.html("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-    html, body, [class*="css"], .stMarkdown, p, div, span, h1, h2, h3, h4, h5, h6, button, input, select, textarea, [data-testid="stMetricValue"], [data-testid="stMetricLabel"], .stSelectbox, .stTextInput {
+    html, body, [data-testid="stAppViewContainer"], .stMarkdown, p, h1, h2, h3, h4, h5, h6, [data-testid="stMetricValue"], [data-testid="stMetricLabel"] {
         font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    }
+
+    button, input, select, textarea, .stSelectbox, .stTextInput {
+        font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
     
     code, pre, .terminal-mono {
         font-family: 'Montserrat', monospace !important;
+    }
+
+    /* Explicitly preserve icon ligatures to eliminate literal 'arrow_right' text overlays */
+    [data-testid*="Icon"],
+    [data-testid*="icon"],
+    [data-testid="stExpanderToggleIcon"],
+    .material-symbols-rounded,
+    .material-symbols-outlined,
+    .material-icons,
+    span[data-testid*="Icon"],
+    span[data-testid*="icon"],
+    details summary span {
+        font-family: 'Material Symbols Rounded', 'Material Icons', sans-serif !important;
+        font-feature-settings: 'liga' 1 !important;
     }
 
     /* Enforce 0-radius rectangular geometry across all elements */
@@ -333,13 +351,13 @@ st.html(f"""
 top_c1, top_c2 = st.columns([3, 1])
 with top_c1:
     top_search = st.text_input(
-        "DIRECT COMPETITOR & TOPIC SEARCH (FLEXIBLE FREE-TEXT)",
-        value="" if active_target in ALL_COMPETITORS[:1] else active_target,
+        "Direct Competitor Search",
+        value="",
         placeholder="Type any brand (e.g. Roof Maxx, PEAK301, DuraSeal, Ever Roof, Nasiol, or custom entity)...",
         key="top_main_search_input",
         label_visibility="collapsed"
     )
-    if top_search.strip() and top_search.strip() != active_target:
+    if top_search.strip():
         active_target = top_search.strip()
 with top_c2:
     if st.button("Reset to Benchmark", use_container_width=True):
@@ -991,32 +1009,52 @@ with tabs[13]:
     with alert_col3:
         st.markdown("##### Headless Email Dispatcher - 1-Page Report")
         st.caption("Dispatches silent background updates at 9:00 PM PHT & 00:00 H PHT. Never opens macOS Mail.app.")
-        email_recipient = st.text_input("Recipient Email Address", value="gonzalesmiguelcarlo@gmail.com")
-        
-        smtp_u = st.text_input("SMTP User / Gmail Address", placeholder="e.g. gonzalesmiguelcarlo@gmail.com")
-        smtp_p = st.text_input("Google App Password (16-char token)", type="password", placeholder="e.g. abcd efgh ijkl mnop")
-        
-        if smtp_u and smtp_p and st.button("Save SMTP Credentials"):
+
+        from email_dispatcher import get_smtp_config
+        smtp_cfg = get_smtp_config()
+
+        email_recipient = st.text_input("Recipient Email Address", value=smtp_cfg["recipient"] or "gonzalesmiguelcarlo@gmail.com")
+
+        email_cc = st.text_area(
+            "CC Recipients (freely add as many comma-separated emails as needed)",
+            value=smtp_cfg.get("cc", ""),
+            placeholder="e.g. miguel.gonzales@gonano.com, executive@gonano.com, board@gonano.com",
+            help="Separate multiple email addresses with commas. All recipients will receive the executive briefing simultaneously."
+        )
+
+        smtp_u = st.text_input("SMTP User / Gmail Address", value=smtp_cfg["user"] or "", placeholder="e.g. gonzalesmiguelcarlo@gmail.com")
+        smtp_p = st.text_input("Google App Password (16-char token)", type="password", value=smtp_cfg["password"] or "", placeholder="e.g. abcd efgh ijkl mnop")
+
+        if st.button("Save SMTP Credentials & CC List"):
             env_file = os.path.join(os.path.dirname(__file__), ".env")
             with open(env_file, "a", encoding="utf-8") as ef:
-                lines = ["\n", f"SMTP_USER={smtp_u.strip()}\n", f"SMTP_PASSWORD={smtp_p.strip()}\n", f"RECIPIENT_EMAIL={email_recipient.strip()}\n"]
+                lines = [
+                    "\n",
+                    f"SMTP_USER={smtp_u.strip()}\n",
+                    f"SMTP_PASSWORD={smtp_p.strip()}\n",
+                    f"RECIPIENT_EMAIL={email_recipient.strip()}\n",
+                    f"CC_EMAILS={email_cc.strip()}\n"
+                ]
                 ef.writelines(lines)
-            st.success("Saved credentials to .env for autonomous background scheduler.")
-            
+            st.success("Saved SMTP credentials and CC list to configuration for autonomous background scheduler.")
+
         if st.button("Dispatch 1-Page Executive Report Now"):
             from report_generator import build_executive_one_pager
             from email_dispatcher import send_headless_email
-            rep = build_executive_one_pager()
+            rep = build_executive_one_pager(cc_recipients=email_cc.strip())
+            subject_line = f"Competitor Updates as of {rep['timestamp']}"
             res = send_headless_email(
                 to_email=email_recipient,
-                subject=f"[COMPETITOR INTELLIGENCE] Executive Briefing ({rep['timestamp']})",
+                subject=subject_line,
                 plain_text=rep["plain_text"],
                 html_content=rep["html"],
+                cc_emails=email_cc.strip(),
                 smtp_user=smtp_u,
                 smtp_pass=smtp_p
             )
             if res["status"] == "success":
-                st.success(f"Email delivered headlessly to {email_recipient} via {res['method']}")
+                cc_info = f" (and CC to: {', '.join(res.get('cc_recipients', []))})" if res.get('cc_recipients') else ""
+                st.success(f"Email delivered headlessly to {email_recipient}{cc_info} via {res['method']}")
             elif res["status"] == "config_needed":
                 st.info(str(res.get("message", "")) + " - Local report saved to: " + str(res.get("local_path", "")))
             else:
@@ -1024,7 +1062,7 @@ with tabs[13]:
 
         with st.expander("View 1-Page Executive Report Preview"):
             from report_generator import build_executive_one_pager
-            preview_rep = build_executive_one_pager()
+            preview_rep = build_executive_one_pager(cc_recipients=email_cc.strip())
             st.text(preview_rep["plain_text"])
 
 # -----------------------------------------------------------------------------
