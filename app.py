@@ -269,36 +269,27 @@ time_horizon = st.sidebar.selectbox(
     help="Filters signals, risk metrics, and threat heatmaps across the selected time horizon."
 )
 
-st.sidebar.markdown("**Target Competitor Selection**")
+# Maintain active target in session state
+if "active_target" not in st.session_state:
+    st.session_state.active_target = "RoofLife Canada"
+
+st.sidebar.markdown("**Target Competitor**")
 search_term = st.sidebar.text_input(
-    "SEARCH_OR_FILTER_COMPETITOR",
+    "Search Competitor",
     value="",
-    placeholder="Search 60+ competitors or enter custom...",
+    placeholder="Type competitor name (e.g. Roof Maxx)...",
+    key="sidebar_search_input",
     label_visibility="collapsed"
 )
 
-# Flexible filter logic: user can search across 60+ competitors or type any custom target freely
 if search_term.strip():
-    q = search_term.strip().lower()
-    matching_comps = [c for c in ALL_COMPETITORS if q in c.lower()]
-    # If custom query is not an exact match, offer it directly at top of dropdown
-    if not any(c.lower() == q for c in ALL_COMPETITORS):
-        target_options = [search_term.strip()] + matching_comps
-    else:
-        target_options = matching_comps if matching_comps else [search_term.strip()]
-else:
-    target_options = ALL_COMPETITORS
+    st.session_state.active_target = search_term.strip()
 
-default_idx = target_options.index("RoofLife Canada") if "RoofLife Canada" in target_options else 0
-active_target = st.sidebar.selectbox(
-    "ACTIVE_TARGET_ENTITY",
-    options=target_options,
-    index=default_idx,
-    help="Flexible selection: search through all 60+ competitors from the Google Sheet or enter any new company name."
-)
+active_target = st.session_state.active_target
+st.sidebar.caption(f"Active Subject: **{active_target}**")
 
 # Quick Expand Tool: Add any custom competitor to monitor
-with st.sidebar.expander("EXPAND ROSTER / ADD TARGET"):
+with st.sidebar.expander("Add Custom Competitor"):
     with st.form("add_comp_form", clear_on_submit=True):
         new_name = st.text_input("Competitor Name", placeholder="e.g. Acme Roof Rejuvenation")
         new_dom = st.text_input("Domain / Website", placeholder="e.g. acmeroof.com")
