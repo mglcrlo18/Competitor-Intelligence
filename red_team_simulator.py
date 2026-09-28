@@ -9,10 +9,16 @@ import httpx
 
 GEMINI_API_KEY = "AQ.Ab8RN6J_w4DRW8fb-62_voFT9jeqCFrY6UydrwARB4A-FzAT6g"
 
-def simulate_rival_counter_attack(competitor_name: str, gonano_move: str, api_key: str = GEMINI_API_KEY) -> str:
+def simulate_rival_counter_attack(competitor_name: Optional[str] = None, gonano_move: Optional[str] = None, api_key: str = GEMINI_API_KEY) -> str:
     """
     Prompts Gemini to simulate the rival executive leadership's counter-strategy.
     """
+    if not competitor_name or not str(competitor_name).strip():
+        competitor_name = "RoofLife Canada"
+    if not gonano_move or not str(gonano_move).strip():
+        gonano_move = "GoNano launches a certified contractor partnership program in Ontario offering a 15-Year non-prorated hail warranty."
+    competitor_name = str(competitor_name).strip()
+    gonano_move = str(gonano_move).strip()
     prompt = f"""
 You are the Chief Strategy Officer and CEO of '{competitor_name}', a direct competitor to GoNano in the roofing preservation industry.
 GoNano has just executed the following major commercial offensive move in your key market:

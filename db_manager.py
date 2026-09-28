@@ -97,8 +97,11 @@ def get_all_monitored_competitors() -> List[Dict[str, str]]:
     conn.close()
     return rows
 
-def get_competitor_profile(name: str) -> Optional[Dict[str, Any]]:
+def get_competitor_profile(name: Optional[str]) -> Optional[Dict[str, Any]]:
     """Retrieves full profile for a competitor by exact or partial match."""
+    if not name or not str(name).strip():
+        return None
+    name = str(name).strip()
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM competitor_profiles WHERE LOWER(name) = LOWER(?)", (name.strip(),))

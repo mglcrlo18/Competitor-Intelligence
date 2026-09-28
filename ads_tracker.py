@@ -8,11 +8,14 @@ from typing import Dict, List, Any, Optional
 import httpx
 
 
-def get_public_ad_transparency_links(company_name: str, domain: str = "") -> Dict[str, str]:
+def get_public_ad_transparency_links(company_name: Optional[str] = None, domain: str = "") -> Dict[str, str]:
     """
     Generates direct zero-cost URLs to inspect competitor ads in real-time
     on official public transparency libraries without requiring paid scrapers.
     """
+    if not company_name or not str(company_name).strip():
+        company_name = "GoNano"
+    company_name = str(company_name).strip()
     encoded_name = urllib.parse.quote(company_name)
     encoded_domain = urllib.parse.quote(domain) if domain else encoded_name
     

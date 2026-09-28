@@ -53,10 +53,13 @@ HISTORICAL_PAGE_SNAPSHOTS = {
     }
 }
 
-def compute_text_diff(competitor_name: str) -> Dict[str, Any]:
+def compute_text_diff(competitor_name: Optional[str] = None) -> Dict[str, Any]:
     """
     Computes visual side-by-side additions and removals between historical baseline and current page content.
     """
+    if not competitor_name or not str(competitor_name).strip():
+        competitor_name = "RoofLife Canada"
+    competitor_name = str(competitor_name).strip()
     snapshot = HISTORICAL_PAGE_SNAPSHOTS.get(competitor_name)
     if not snapshot:
         # Fallback generic snapshot

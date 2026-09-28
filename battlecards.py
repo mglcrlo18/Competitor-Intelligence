@@ -124,8 +124,11 @@ BATTLECARDS_DATABASE = {
     }
 }
 
-def get_battlecard(competitor_name: str) -> Dict[str, Any]:
+def get_battlecard(competitor_name: Optional[str] = None) -> Dict[str, Any]:
     """Retrieves or dynamically builds a full battlecard for any target competitor."""
+    if not competitor_name or not str(competitor_name).strip():
+        competitor_name = "RoofLife Canada"
+    competitor_name = str(competitor_name).strip()
     for key, card in BATTLECARDS_DATABASE.items():
         if key.lower() in competitor_name.lower() or competitor_name.lower() in key.lower():
             return card

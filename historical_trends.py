@@ -55,8 +55,16 @@ HISTORICAL_ERA_DATABASE = {
     }
 }
 
-def get_historical_era_comparison(year_baseline: int = 1970, year_comparison: int = 2026) -> Dict[str, Any]:
+def get_historical_era_comparison(year_baseline: Any = 1970, year_comparison: Any = 2026) -> Dict[str, Any]:
     """Retrieves comparative historical data between any two chosen years (1900-2026)."""
+    try:
+        year_baseline = int(year_baseline) if year_baseline is not None else 1970
+    except (ValueError, TypeError):
+        year_baseline = 1970
+    try:
+        year_comparison = int(year_comparison) if year_comparison is not None else 2026
+    except (ValueError, TypeError):
+        year_comparison = 2026
     # Find closest matching era
     def find_closest(year):
         keys = sorted(list(HISTORICAL_ERA_DATABASE.keys()))

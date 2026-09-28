@@ -59,11 +59,16 @@ def call_gemini_api(prompt: str, system_instruction: str = SYSTEM_COMPETITOR_PRO
     return None
 
 
-def generate_competitor_summary(competitor_name: str, signals: Dict[str, Any], api_key: str = None) -> str:
+def generate_competitor_summary(competitor_name: Optional[str] = None, signals: Optional[Dict[str, Any]] = None, api_key: str = None) -> str:
     """
     Sends aggregated competitor signals to Gemini API to produce an executive intelligence briefing.
     Falls back to a structured rule-based competitive assessment if offline.
     """
+    if not competitor_name or not str(competitor_name).strip():
+        competitor_name = "RoofLife Canada"
+    if not signals or not isinstance(signals, dict):
+        signals = {"news": [], "hiring": [], "ads": []}
+    competitor_name = str(competitor_name).strip()
     prompt = f"""Analyze the following intelligence signals for competitor '{competitor_name}' against GoNano:
 
 Raw Signals:

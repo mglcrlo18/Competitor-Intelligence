@@ -88,8 +88,11 @@ COMPARATIVE_ENTITIES = {
     }
 }
 
-def build_dynamic_entity_profile(brand_name: str) -> Dict[str, Any]:
+def build_dynamic_entity_profile(brand_name: Optional[str] = None) -> Dict[str, Any]:
     """Dynamically builds comparative scorecard metrics for any entity from the database."""
+    if not brand_name or not str(brand_name).strip():
+        brand_name = "RoofLife Canada"
+    brand_name = str(brand_name).strip()
     prof = get_competitor_profile(brand_name)
     category = prof.get("category", "Roof Restoration & Preservation") if prof else "Roof Restoration"
     tech = prof.get("core_technology", "Surface restoration formulation") if prof else "Surface coating"
@@ -138,8 +141,14 @@ def build_dynamic_entity_profile(brand_name: str) -> Dict[str, Any]:
         ]
     }
 
-def get_head_to_head_comparison(brand_a: str, brand_b: str) -> Dict[str, Any]:
+def get_head_to_head_comparison(brand_a: Optional[str] = None, brand_b: Optional[str] = None) -> Dict[str, Any]:
     """Retrieves structured side-by-side data for any two entities."""
+    if not brand_a or not str(brand_a).strip():
+        brand_a = "GoNano (Your Brand)"
+    if not brand_b or not str(brand_b).strip():
+        brand_b = "RoofLife Canada"
+    brand_a = str(brand_a).strip()
+    brand_b = str(brand_b).strip()
     # Entity A
     if brand_a in COMPARATIVE_ENTITIES:
         data_a = COMPARATIVE_ENTITIES[brand_a]
