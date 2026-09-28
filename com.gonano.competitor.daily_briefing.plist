@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.gonano.competitor.daily_briefing</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/macbook/Desktop/competitor_intelligence_app/venv/bin/python</string>
+        <string>/Users/macbook/Desktop/competitor_intelligence_app/scheduled_briefing_runner.py</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>/Users/macbook/Desktop/competitor_intelligence_app</string>
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict>
+            <key>Hour</key>
+            <integer>21</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+        <dict>
+            <key>Hour</key>
+            <integer>0</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+    </array>
+    <key>StandardOutPath</key>
+    <string>/Users/macbook/Desktop/competitor_intelligence_app/briefing_stdout.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/macbook/Desktop/competitor_intelligence_app/briefing_stderr.log</string>
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>

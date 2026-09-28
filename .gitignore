@@ -1,0 +1,53 @@
+# Environment & Secrets (DO NOT COMMIT)
+.env
+*.env
+.env.*
+.agents/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+.venv/
+ENV/
+env/
+
+# Logs & Runtime Reports
+*.log
+latest_scheduled_report.*
+latest_24h_briefing.md
+briefing_*.log
+email_dispatches.log
+scheduled_briefings.log
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Compiled Binaries
+Competitor_Window
+*.o
+*.app/
