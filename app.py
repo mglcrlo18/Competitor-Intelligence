@@ -248,15 +248,81 @@ st.html("""
 </style>
 """)
 
+
+# -----------------------------------------------------------------------------
+# AUTHENTICATION: C-SUITE EXECUTIVE LOGIN GATE
+# -----------------------------------------------------------------------------
+if "authenticated_executive" not in st.session_state:
+    st.session_state.authenticated_executive = None
+
+if not st.session_state.authenticated_executive:
+    st.html("""
+    <div style="max-width:560px; margin: 30px auto; background:#1B1C36; border:1px solid #1E293B; border-top:5px solid #675CE7; padding:28px; color:#F8FAFC;">
+        <div style="font-family:'Montserrat', sans-serif; font-size:18px; font-weight:700; color:#F8FAFC; margin-bottom:4px;">
+            GONANO COMPETITOR INTELLIGENCE // C-SUITE EXECUTIVE TERMINAL
+        </div>
+        <div style="font-size:12px; color:#94A3B8; margin-bottom:18px;">
+            Strictly Confidential // Boardroom & CRO Market Surveillance. Restricted strictly to authorized GoNano executive leadership (@gonano.com).
+        </div>
+    </div>
+    """)
+    with st.container():
+        _, login_col, _ = st.columns([1, 2.5, 1])
+        with login_col:
+            with st.form("executive_login_form"):
+                st.markdown("##### 🔐 Executive Identity Verification")
+                exec_email = st.text_input("Executive Email Address *", placeholder="e.g. miguel.gonzales@gonano.com", key="e_login_email")
+                exec_pin = st.text_input("Executive Passcode / Security Key *", type="password", placeholder="e.g. GONANO-EXEC-2026", key="e_login_pin")
+                
+                e_btn1, e_btn2 = st.columns([1.5, 1])
+                with e_btn1:
+                    submit_exec = st.form_submit_button("Sign In to Executive Terminal", use_container_width=True, type="primary")
+                with e_btn2:
+                    demo_exec = st.form_submit_button("Executive One-Click Access", use_container_width=True)
+
+                if submit_exec:
+                    clean_email = exec_email.strip().lower()
+                    if not clean_email:
+                        st.error("Please enter your GoNano corporate email address.")
+                    elif not (clean_email.endswith("@gonano.com") or exec_pin == "GONANO-EXEC-2026"):
+                        st.error("Access Denied: Terminal restricted strictly to authorized @gonano.com corporate accounts.")
+                    else:
+                        name_part = clean_email.split('@')[0].replace('.', ' ').title() if '@' in clean_email else 'Executive Leader'
+                        st.session_state.authenticated_executive = {
+                            "name": name_part,
+                            "email": exec_email.strip(),
+                            "role": "GoNano Strategic Intelligence / C-Suite"
+                        }
+                        st.success(f"Welcome, {name_part}! Executive Terminal unlocked.")
+                        st.rerun()
+
+                if demo_exec:
+                    st.session_state.authenticated_executive = {
+                        "name": "Miguel Gonzales",
+                        "email": "miguel.gonzales@gonano.com",
+                        "role": "Lead Strategic Intelligence Analyst"
+                    }
+                    st.success("Executive terminal unlocked for Miguel Gonzales.")
+                    st.rerun()
+
+    st.stop()
+
 # -----------------------------------------------------------------------------
 # SIDEBAR: TERMINAL NAVIGATION & FLEXIBLE SEARCH CONTROLS
 # -----------------------------------------------------------------------------
-st.sidebar.html("""
-<div style="background-color:#1B1C36; padding:12px; border:1px solid #1E293B; border-left:3px solid #8583F2; margin-bottom:14px;">
-    <div style="font-family:'Montserrat', sans-serif; font-weight:700; color:#F8FAFC; font-size:13px;">COMPETITOR INTELLIGENCE TOOL</div>
-    <div style="font-family:'Montserrat', sans-serif; font-size:10px; color:#94A3B8;">GONANO ENTERPRISE SUITE V5.0</div>
+exec_user = st.session_state.authenticated_executive
+st.sidebar.html(f"""
+<div style="background-color:#1B1C36; padding:12px; border:1px solid #1E293B; border-left:3px solid #675CE7; margin-bottom:14px;">
+    <div style="font-family:'Montserrat', sans-serif; font-size:10px; color:#8583F2; font-weight:700; text-transform:uppercase;">● C-SUITE EXECUTIVE ACTIVE</div>
+    <div style="font-family:'Montserrat', sans-serif; font-weight:700; color:#F8FAFC; font-size:13px; margin-top:2px;">{exec_user['name']}</div>
+    <div style="font-family:'Montserrat', sans-serif; font-size:11px; color:#94A3B8;">{exec_user['role']}</div>
+    <div style="font-family:'Montserrat', sans-serif; font-size:10px; color:#675CE7; margin-top:2px;">{exec_user['email']}</div>
 </div>
 """)
+if st.sidebar.button("Log Out Executive Session", use_container_width=True):
+    st.session_state.authenticated_executive = None
+    st.rerun()
+
 
 # Load ALL monitored competitors dynamically from database / Google Sheet
 ALL_COMPETITORS = get_all_competitor_names()
