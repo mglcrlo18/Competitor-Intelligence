@@ -271,8 +271,8 @@ if not st.session_state.authenticated_executive:
         with login_col:
             with st.form("executive_login_form"):
                 st.markdown("##### 🔐 Executive Identity Verification")
-                exec_email = st.text_input("Executive Email Address *", placeholder="e.g. miguel.gonzales@gonano.com", key="e_login_email")
-                exec_pin = st.text_input("Executive Passcode / Security Key *", type="password", placeholder="Enter passcode / security key", key="e_login_pin")
+                exec_email = st.text_input("User", placeholder="User", key="e_login_email")
+                exec_pin = st.text_input("Password", type="password", placeholder="Password", key="e_login_pin")
                 
                 submit_exec = st.form_submit_button("Sign In to Executive Terminal", use_container_width=True, type="primary")
 
@@ -288,9 +288,9 @@ if not st.session_state.authenticated_executive:
                     ]
 
                     if not clean_email:
-                        st.error("Please enter your corporate email address.")
+                        st.error("Please enter your User.")
                     elif not clean_pin:
-                        st.error("Please enter your executive passcode / security key.")
+                        st.error("Please enter your Password.")
                     elif not (is_authorized_email and clean_pin in valid_pins):
                         st.error("Access Denied: Invalid credentials. Terminal restricted strictly to authorized GoNano executive leadership.")
                     else:
