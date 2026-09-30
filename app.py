@@ -448,7 +448,8 @@ tabs = st.tabs([
     "13. Red Team War Room",
     "14. Alerts & Updates",
     "15. Export Infrastructure",
-    "16. Threat & Sentiment Heatmap"
+    "16. Threat & Sentiment Heatmap",
+    "17. C-Suite Request Dispatch & Gemini Auto-Tracker"
 ])
 
 # -----------------------------------------------------------------------------
@@ -1362,3 +1363,137 @@ with tabs[15]:
     except Exception as tab_err:
         st.error(f"Intelligence Module Advisory: Encountered a non-fatal exception ({type(tab_err).__name__}: {tab_err}). The rest of the terminal remains fully functional.")
 
+
+# -----------------------------------------------------------------------------
+# TAB 17: C-SUITE REQUEST DISPATCH & GEMINI 3.1 PRO AUTO-TRACKER (MIGUEL'S PORTAL)
+# -----------------------------------------------------------------------------
+if len(tabs) >= 17:
+    with tabs[16]:
+        try:
+            from csuite_workflow import (
+                get_all_pending_competitor_requests,
+                analyze_document_with_gemini_3_pro,
+                dispatch_analysis_to_requester,
+                DEFAULT_CC_LIST
+            )
+            
+            st.markdown("### 👔 C-Suite Executive Command: Pending Competitor Requests & Gemini 3.1 Pro Fulfillment")
+            st.caption("Centralized executive workflow to review pending competitor inquiries from contractors, analyze uploaded dossiers with Gemini 3.1 Pro, auto-record findings into the Google Sheet tracker, and dispatch reports with Joel, Jonathan, and Charles CC'd.")
+
+            # 1. PENDING REQUESTS WORKFLOW TABLE
+            st.markdown("#### 1. Pending Competitor Analysis Requests Queue")
+            pending_reqs = get_all_pending_competitor_requests()
+
+            if pending_reqs:
+                st.dataframe(
+                    pd.DataFrame([
+                        {
+                            "Request ID": r["id"],
+                            "Source": r["source_type"],
+                            "Competitor Name": r["competitor_name"],
+                            "Requester": r["requester_name"],
+                            "Requester Email": r["requester_email"],
+                            "Territory / Market": r["location"],
+                            "Date Requested": r["date_requested"],
+                            "Field Notes / Subject": r["field_notes"][:100] + ("..." if len(r["field_notes"]) > 100 else ""),
+                            "Evidence Files": r["evidence_files"],
+                            "Status": r["status"]
+                        }
+                        for r in pending_reqs
+                    ]),
+                    use_container_width=True,
+                    hide_index=True
+                )
+            else:
+                st.info("No pending requests currently queued in database.")
+
+            st.markdown("---")
+
+            # 2. DOCUMENT UPLOAD & FULFILLMENT FORM
+            st.markdown("#### 2. Fulfill Request & Document Upload")
+
+            with st.form("csuite_fulfillment_form", clear_on_submit=False):
+                f_col1, f_col2 = st.columns(2)
+                with f_col1:
+                    req_options = ["-- Custom Competitor Entry --"] + [f"{r['id']} - {r['competitor_name']} (Requested by: {r['requester_name']})" for r in pending_reqs]
+                    selected_req_idx = st.selectbox("Select Pending Request to Fulfill", req_options)
+                with f_col2:
+                    if selected_req_idx != "-- Custom Competitor Entry --":
+                        chosen_r = next((r for r in pending_reqs if r["id"] == selected_req_idx.split(" - ")[0]), None)
+                        default_comp = chosen_r["competitor_name"] if chosen_r else ""
+                        default_email = chosen_r["requester_email"] if chosen_r else ""
+                        default_name = chosen_r["requester_name"] if chosen_r else ""
+                        req_id_val = chosen_r["id"] if chosen_r else ""
+                    else:
+                        default_comp = ""
+                        default_email = ""
+                        default_name = "GoNano Partner"
+                        req_id_val = None
+
+                    target_comp_input = st.text_input("Competitor Name *", value=default_comp, placeholder="e.g. Roof Juice RX, Inexso, Team Nano...")
+
+                u_col1, u_col2 = st.columns(2)
+                with u_col1:
+                    target_requester_email = st.text_input("Send Completed Analysis To (Requester Email) *", value=default_email, placeholder="e.g. charles.dumont@gonano.com or contractor@apexroofing.ca")
+                with u_col2:
+                    cc_recipients_input = st.text_input("CC Stakeholders (Comma Separated) *", value="joel@gonano.com, jonathan@gonano.com, charles@gonano.com, mathieu@gonano.com, jason@gonano.com")
+
+                uploaded_doc = st.file_uploader(
+                    "Upload Completed Competitor Analysis Document / Dossier *",
+                    type=["pdf", "docx", "xlsx", "pptx", "txt", "png", "jpg"],
+                    help="Upload the finished report. Gemini 3.1 Pro will read the document, benchmark it, and commit it to the intelligence tracker."
+                )
+
+                exec_cover_notes = st.text_area(
+                    "Executive Cover Notes / Context for Recipients",
+                    placeholder="e.g. Attached is the completed technical teardown on Roof Juice RX. Chemistry fails ASTM D3462; recommend sales team counter with GoNano molecular nanoparticle data.",
+                    height=85
+                )
+
+                c_btn_sub = st.form_submit_button("🚀 Analyze with Gemini 3.1 Pro, Update Tracker & Dispatch to Requester", use_container_width=True, type="primary")
+
+                if c_btn_sub:
+                    if not target_comp_input.strip():
+                        st.error("Please provide the Competitor Name.")
+                    elif not target_requester_email.strip():
+                        st.error("Please provide the Requester Email.")
+                    elif not uploaded_doc:
+                        st.error("Please upload the analysis document to proceed.")
+                    else:
+                        with st.spinner("Gemini 3.1 Pro analyzing document and extracting competitive benchmarks..."):
+                            file_bytes = uploaded_doc.getvalue()
+                            fname = uploaded_doc.name
+                            
+                            # 1. Analyze with Gemini 3.1 Pro
+                            gemini_data = analyze_document_with_gemini_3_pro(
+                                file_bytes=file_bytes,
+                                filename=fname,
+                                target_competitor=target_comp_input.strip()
+                            )
+                            
+                            # 2. Parse CCs
+                            parsed_ccs = [c.strip() for c in cc_recipients_input.split(",") if c.strip() and "@" in c]
+                            
+                            # 3. Dispatch Email with attachment
+                            dispatch_res = dispatch_analysis_to_requester(
+                                competitor_name=target_comp_input.strip(),
+                                requester_name=default_name,
+                                requester_email=target_requester_email.strip(),
+                                uploaded_file_bytes=file_bytes,
+                                filename=fname,
+                                cc_emails=parsed_ccs,
+                                executive_notes=exec_cover_notes.strip(),
+                                gemini_summary=gemini_data.get("executive_summary", ""),
+                                request_id=req_id_val
+                            )
+                            
+                            if dispatch_res.get("status") == "success":
+                                st.success(f"✅ Dossier successfully dispatched to {target_requester_email} with Joel, Jonathan, and Charles CC'd!")
+                                st.info(f"📊 Auto-Recorded into Tracker: Competitor Profile for '{target_comp_input.strip()}' created/updated and committed to Reports Sent.")
+                                
+                                with st.expander("🔍 View Gemini 3.1 Pro Analysis Breakdown", expanded=True):
+                                    st.json(gemini_data)
+                            else:
+                                st.error(f"⚠️ Email dispatch failed: {dispatch_res.get('message')}")
+        except Exception as tab_err:
+            st.error(f"Intelligence Module Advisory: Encountered a non-fatal exception ({type(tab_err).__name__}: {tab_err}). The rest of the terminal remains fully functional.")
