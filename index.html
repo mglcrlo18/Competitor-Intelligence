@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en"><head><script>window["__codeletBootstrap__"]=JSON.parse('{"A":"A","B":"20260930-05-8966983","C":{"Abril Fatface":"YACgEZbkUVE,0","Alfa Slab One":"YACgEYS9sJU,0","Anton":"YACgEcYqQ-A,0","Archivo":"YACgEZulLoA,0","Arial Narrow":"YAGyDvJ_4Ts,0","Arial Rounded MT Bold":"YAFcfoaHu-s,0","Arial":"YAGyDvJ_4Ts,0","Avenir Next":"YAFcfmNq6UY,0","Baloo 2":"YADK30bC6HQ,0","Bebas Neue":"YACgESME5ew,0","Bricolage Grotesque":"YAFyMcdwzpc,0","Broken Glyph":"YADZ-exUkv0,0","Canva Sans":"YAFdJjTk5UU,1","Caveat":"YALBs2ploWQ,0","Comic Sans MS":"YAFcfvtOAUY,1","Cormorant Garamond":"YAFdJhX-538,0","Courier New":"YAGzXiGs0_8,0","Courier Prime":"YAD1aFjegN8,0","DM Sans":"YAD1aU3sLnI,0","DM Serif Display":"YAD1aYG82rc,0","Forum":"YACgEcnnqB4,0","Fraunces":"YAFdJpU7Kkk,0","Georgia":"YAGzXkO0pEM,0","Ghost Mono":"YAHQutsX00Q,0","Hanken Grotesk":"YAFcfhwp99E,0","Helvetica Neue":"YAFcf6CtJfI,0","Helvetica":"YAFcf6CtJfI,0","IBM Plex Mono":"YAFdJkmvhGI,0","Impact":"YAFcfnjI7Vk,0","Instrument Serif":"YAHFeOnZNEk,0","Inter":"YAFdJvSyp_k,3","Iowan Old Style":"YAGNIFa8j9o,0","Jacques Francois":"YADK3zbC6RM,0","JetBrains Mono":"YAFdJksXcAk,0","Josefin Sans":"YAFdJjvw9Ps,0","Lato":"YAFdJuFCnaw,0","Libre Baskerville":"YACgEUFdPdA,0","Lobster":"YAD8SnSjSFI,0","Lora":"YACgEXvxf8Q,0","Merriweather":"YACgEXvHxxs,0","Montserrat":"YAFdtQi73Xs,0","Nunito":"YAFdJoNRMmU,1","Oleo Script":"YACgEQQ14jI,0","Oswald":"YACgEQY10lw,0","Pacifico":"YADLjORQ1u4,0","Phantom Sans":"YAFdJvgJ5TU,0","Playfair Display":"YAFdJhem5V8,1","Plus Jakarta Sans":"YAGvf3_u0_Q,0","Poppins":"YAFdJjbTu24,1","Press Start 2P":"YAFyGr-8pmQ,0","Quicksand":"YAFdJpYtCxE,1","Raleway":"YAFdJhmxbVQ,1","Roboto Slab":"YAFdJswIKAg,0","Rockwell":"YAFcfyVZnN0,0","Rye":"YACgEdQP21k,0","Segoe UI":"YAHNdRD1Klw,0","Source Sans 3":"YAG4lO1Mj10,0","Source Serif 4":"YACgEfdj394,0","Space Grotesk":"YADZ-dYEmhg,0","Space Mono":"YADW1-vpsoc,0","Times New Roman":"YAGzXW3gftg,0","Times":"YAGzXW3gftg,0","Trebuchet MS":"YAFcfrglpVA,0","UV Display":"YAEdVfSSpYo,0","UV Sans":"YAFdJvgJ5TU,0","Ubuntu":"YACgERDU--Q,0","Verdana":"YAGzXTctYtQ,0","Work Sans":"YAGXhLOKv44,0","Yellowtail":"YACgEYG4kG4,0","ui-monospace":"YAD1aFjegN8,0","ui-sans-serif":"YACkoD1yZN0,0"}}');</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GoNano Competitor Intelligence</title>
+  <link href="https://fonts.googleapis.com/css2?family=Gotham:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    :root{--navy:#1B1C36;--violet:#675CE7;--canvas:#F6F6FB;--slate:#596078;--line:#DDE0EB;--teal:#17A98D;--amber:#D99113;--coral:#E76E38;--white:#fff}
+    *{box-sizing:border-box} body{margin:0;width:100%;min-width:320px;background:var(--canvas);color:var(--navy);font-family:Gotham,Arial,sans-serif}
+    button,input,select,textarea{font:inherit} button{cursor:pointer} button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #675CE788;outline-offset:2px}
+    .shell{width:100%;min-height:100vh;display:flex}.rail{width:240px;flex:0 0 240px;background:var(--navy);padding:22px 14px;color:#fff;display:flex;flex-direction:column}
+    .brand{padding:0 8px 19px;border-bottom:1px solid #ffffff18}.brand img{width:142px;display:block}.chip,.badge{font-size:9px;letter-spacing:.08em;text-transform:uppercase;font-weight:700}.chip{display:inline-block;margin-top:15px;padding:6px 8px;background:#675CE722;color:#D6D3FF;border:1px solid #8E87FA55}
+    .navgroup{margin-top:18px}.navgroup b{display:block;padding:0 10px 7px;color:#8E93B1;font-size:9px;letter-spacing:.13em;text-transform:uppercase}.navbtn{width:100%;border:0;background:transparent;color:#BEC2D6;display:flex;align-items:center;gap:10px;padding:10px;border-left:3px solid transparent;text-align:left;font-size:12px}.navbtn:hover{background:#ffffff0c;color:#fff}.navbtn.active{background:#675CE720;color:#fff;border-left-color:var(--violet)}
+    .railfoot{margin-top:auto;padding:16px 9px 0;border-top:1px solid #ffffff18;color:#9499B4;font-size:10px;line-height:1.5}.stage{flex:1;min-width:0;padding:22px 30px 44px}.bar{display:flex;gap:10px;align-items:center;padding:10px;background:#fff;border:1px solid var(--line)}
+    .search{flex:1;position:relative}.search svg{position:absolute;left:12px;top:12px;width:17px;color:#727993}.field{width:100%;height:42px;border:1px solid var(--line);background:#FCFCFE;padding:0 11px;color:var(--navy);font-size:12px}.search .field{padding-left:38px}.horizon{width:135px}.iconbtn{height:42px;width:42px;border:1px solid var(--line);background:white;color:var(--navy);display:grid;place-items:center;position:relative}.notify{position:absolute;width:7px;height:7px;background:var(--coral);right:9px;top:8px}.user{padding:0 10px;font-size:11px;font-weight:700;white-space:nowrap}.status{font-size:11px;color:var(--slate);min-width:105px;text-align:right}
+    .view{display:none;animation:in .2s ease}.view.active{display:block}@keyframes in{from{opacity:.2;transform:translateY(5px)}to{opacity:1;transform:none}}.head{padding:28px 0 18px;display:flex;justify-content:space-between;gap:15px;align-items:end}.eyebrow{margin:0 0 8px;color:var(--violet);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}h1,h2,h3,p{margin-top:0}h1{margin-bottom:8px;font-size:30px;letter-spacing:-.045em}h2{font-size:17px;margin-bottom:5px}h3{font-size:13px;margin-bottom:4px}.copy,.muted{color:var(--slate);font-size:12px;line-height:1.5}.actions{display:flex;gap:9px;flex-wrap:wrap}.primary,.secondary,.module{border:0;font-weight:700;padding:11px 13px;font-size:12px}.primary{background:var(--violet);color:#fff}.secondary{background:#fff;border:1px solid var(--line);color:var(--navy)}.module{width:100%;background:#fff;border:1px solid var(--line);text-align:left;color:var(--navy);min-height:72px}.module:hover{border-color:var(--violet);box-shadow:4px 4px 0 #675CE71c}.card{background:#fff;border:1px solid var(--line);padding:17px}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.kpi{border-left:4px solid var(--violet)}.kpi.amber{border-color:var(--amber)}.kpi.teal{border-color:var(--teal)}.kpi.coral{border-color:var(--coral)}.value{font-size:28px;font-weight:700;letter-spacing:-.05em;margin:11px 0 3px}.label{font-size:11px;color:var(--slate)}.grid{display:grid;grid-template-columns:1.3fr .7fr;gap:14px;margin-top:14px}.top{display:flex;justify-content:space-between;gap:10px;margin-bottom:14px}.badge{display:inline-block;padding:4px 6px}.critical{color:#AE481F;background:#FFF0EA}.watch{color:#9A6408;background:#FFF5DF}.good{color:#087965;background:#E6F8F3}.neutral{color:#5148C5;background:#EFEDFF}
+    .quad{height:278px;position:relative;background-image:linear-gradient(#E7E8F0 1px,transparent 1px),linear-gradient(90deg,#E7E8F0 1px,transparent 1px);background-size:25% 25%;border:1px solid var(--line)}.axisx,.axisy{position:absolute;font-size:10px;color:#747B95}.axisx{bottom:8px;left:43%}.axisy{top:45%;left:7px;transform:rotate(-90deg)}.dot{position:absolute;padding:8px;color:#fff;font-size:10px;font-weight:700}.d1{background:var(--coral);right:11%;top:14%}.d2{background:var(--violet);right:30%;bottom:24%}.d3{background:var(--amber);left:20%;top:48%}.alert{display:grid;grid-template-columns:6px 1fr auto;gap:9px;border-bottom:1px solid #ECEEF5;padding:10px 0}.alert:last-child{border:0}.barcrit{background:var(--coral)}.barwatch{background:var(--amber)}.bargood{background:var(--teal)}.alert b{font-size:12px}.alert p{margin:3px 0 0;font-size:10px;color:var(--slate);line-height:1.4}
+    table{width:100%;border-collapse:collapse;font-size:11px;min-width:610px}th{text-align:left;color:#747B95;font-size:9px;letter-spacing:.07em;text-transform:uppercase;padding:9px;border-bottom:1px solid var(--line)}td{padding:11px 9px;border-bottom:1px solid #EEF0F5}.tablewrap{overflow:auto}.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:13px}.filter{border:1px solid var(--line);background:#fff;padding:7px 9px;font-size:11px;color:var(--slate)}.filter.active{background:var(--violet);border-color:var(--violet);color:#fff}.modules{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}.module small{display:block;color:var(--slate);margin-top:5px;font-weight:400;line-height:1.35}.detailgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:13px}.evidence{padding:12px;border-left:3px solid var(--violet);background:#FAFAFE;margin-bottom:9px}.evidence p{margin:4px 0 0;font-size:11px;color:var(--slate);line-height:1.45}.formbox textarea{min-height:110px;padding:10px;resize:vertical}.feedback{min-height:18px;color:#5148C5;font-size:11px;margin:10px 0}.hidden{display:none!important}
+    @media(max-width:1050px){.rail{width:66px;flex-basis:66px;padding:18px 8px}.brand img{width:42px;object-fit:cover;object-position:left}.brand,.navgroup{padding-left:0;padding-right:0}.brand .chip,.navgroup b,.navbtn span,.railfoot{display:none}.navbtn{justify-content:center}.stage{padding:18px}.kpis{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}}@media(max-width:680px){.shell{display:block}.rail{width:100%;min-height:auto;display:flex;flex-direction:row;overflow:auto;padding:9px}.brand{border:0;padding:4px 12px 0 0}.brand img{width:95px}.navgroup{display:flex;margin:0}.navbtn{width:auto;white-space:nowrap}.navbtn span{display:inline}.stage{padding:14px}.bar{flex-wrap:wrap}.horizon{width:100%}.status{display:none}.head{display:block}.actions{margin-top:14px}.kpis,.modules,.detailgrid{grid-template-columns:1fr}}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.577.0/dist/umd/lucide.min.js" type="text/javascript"></script>
+ </head>
+ <body>
+  <div class="shell">
+   <aside class="rail" aria-label="Primary navigation">
+    <div class="brand">
+     <div style="font-size: 20px; font-weight: 800; letter-spacing: 0.5px; color: #fff;">GONANO</div>
+     <span class="chip">Executive prototype</span>
+    </div>
+    <nav>
+     <div class="navgroup">
+      <b>Overview</b>
+      <button class="navbtn active" type="button" data-view="overview"><i data-lucide="layout-dashboard"></i><span>Overview</span></button>
+     </div>
+     <div class="navgroup">
+      <b>Intelligence</b>
+      <button class="navbtn" type="button" data-view="intelligence"><i data-lucide="radar"></i><span>Intelligence</span></button>
+      <button class="navbtn" type="button" data-view="risk"><i data-lucide="shield-alert"></i><span>Risk framework</span></button>
+      <button class="navbtn" type="button" data-view="monitoring"><i data-lucide="activity"></i><span>Monitoring</span></button>
+     </div>
+     <div class="navgroup">
+      <b>Workflow</b>
+      <button class="navbtn" type="button" data-view="alerts"><i data-lucide="bell-ring"></i><span>Alerts</span></button>
+      <button class="navbtn" type="button" data-view="requests"><i data-lucide="inbox"></i><span>C-suite requests</span></button>
+     </div>
+     <div class="navgroup">
+      <b>Exports</b>
+      <button class="navbtn" type="button" data-view="reports"><i data-lucide="file-output"></i><span>Exports</span></button>
+     </div>
+    </nav>
+    <div class="railfoot">Restricted executive workspace. Confidential.</div>
+   </aside>
+   <main class="stage">
+    <header class="bar" aria-label="Command bar">
+     <div class="search">
+      <i data-lucide="search"></i>
+      <input id="search" class="field" type="search" placeholder="Search competitor, territory, signal, or warranty language">
+     </div>
+     <select id="horizon" class="field horizon">
+       <option>7 days</option>
+       <option selected="">30 days</option>
+       <option>90 days</option>
+       <option>12 months</option>
+     </select> 
+     <button id="refresh" class="iconbtn" type="button" aria-label="Refresh intelligence"><i data-lucide="refresh-cw"></i></button> 
+     <button id="notification" class="iconbtn" type="button" aria-label="Open alerts"><i data-lucide="bell"></i><i class="notify"></i></button> 
+     <span class="user">MIGUEL GONZALES</span>
+     <span id="status" class="status" aria-live="polite"></span>
+    </header>
+
+    <section id="overview" class="view active">
+     <div class="head">
+      <div>
+       <p class="eyebrow">GoNano / Executive intelligence</p>
+       <h1>Competitor Intelligence Command Center</h1>
+       <p class="copy">Monitor market shifts, organize evidence, and brief leadership with confidence.</p>
+      </div>
+      <div class="actions">
+       <button id="scan" class="primary" type="button">Run intelligence scan</button>
+       <button id="export-top" class="secondary" type="button">Export briefing</button>
+      </div>
+     </div>
+     <p id="scan-feedback" class="feedback" aria-live="polite"></p>
+     <div class="kpis">
+      <article class="card kpi">
+       <span class="label">Monitored entities</span>
+       <div class="value">69</div>
+       <span class="label">Active market scans</span>
+      </article>
+      <article class="card kpi amber">
+       <span class="label">Pending requests</span>
+       <div class="value">72</div>
+       <span class="label">C-suite review queue</span>
+      </article>
+      <article class="card kpi teal">
+       <span class="label">Verified dossiers</span>
+       <div class="value">13</div>
+       <span class="label">Evidence-backed profiles</span>
+      </article>
+      <article class="card kpi coral">
+       <span class="label">Critical signals</span>
+       <div class="value">8</div>
+       <span class="label">Require field visibility</span>
+      </article>
+     </div>
+     <div class="grid">
+      <section class="card">
+       <div class="top">
+        <div>
+         <h2>Competitive landscape</h2>
+         <p class="muted">Validated movement across the active horizon.</p>
+        </div>
+        <span id="window-chip" class="badge neutral">30 day view</span>
+       </div>
+       <div class="quad">
+        <span class="axisy">Threat exposure</span>
+        <span class="axisx">Competitive threat</span>
+        <span class="dot d1">RevivaRoof</span>
+        <span class="dot d2">AmoveX</span>
+        <span class="dot d3">Ever Roof</span>
+       </div>
+      </section>
+      <aside class="card">
+       <div class="top">
+        <div>
+         <h2>Prioritized alerts</h2>
+         <p class="muted">Material changes ranked for action.</p>
+        </div>
+        <button class="secondary" type="button" data-view="alerts">Open</button>
+       </div>
+       <div class="alert">
+        <i class="barcrit"></i>
+        <div>
+         <b>Warranty term change detected</b>
+         <p>ArroveX added prorated coverage exclusions.</p>
+        </div>
+        <span class="badge critical">Critical</span>
+       </div>
+       <div class="alert">
+        <i class="barcrit"></i>
+        <div>
+         <b>Price increase detected</b>
+         <p>RevivaRoof increased regional pricing.</p>
+        </div>
+        <span class="badge critical">Critical</span>
+       </div>
+       <div class="alert">
+        <i class="barwatch"></i>
+        <div>
+         <b>New territory expansion</b>
+         <p>Localized partners appearing in Ontario.</p>
+        </div>
+        <span class="badge watch">Watch</span>
+       </div>
+       <div class="alert">
+        <i class="bargood"></i>
+        <div>
+         <b>Dealer evidence verified</b>
+         <p>Contractor channel activity validated.</p>
+        </div>
+        <span class="badge good">Verified</span>
+       </div>
+      </aside>
+     </div>
+     <section class="card" style="margin-top: 14px;">
+      <div class="top">
+       <div>
+        <h2>Recent intelligence activity</h2>
+        <p class="muted">Evidence and analyst validation stream.</p>
+       </div>
+       <span class="badge good">Verified Stream</span>
+      </div>
+      <div class="tablewrap">
+       <table id="activity-table">
+        <thead>
+         <tr>
+          <th>Signal</th>
+          <th>Competitor</th>
+          <th>Detected</th>
+          <th>Status</th>
+         </tr>
+        </thead>
+        <tbody>
+         <tr>
+          <td><b>Warranty language revision</b></td>
+          <td>ArroveX</td>
+          <td>Sep 29</td>
+          <td><span class="badge critical">Critical</span></td>
+         </tr>
+         <tr>
+          <td><b>Localized partner launch</b></td>
+          <td>RoofLife Canada</td>
+          <td>Sep 28</td>
+          <td><span class="badge watch">Watch</span></td>
+         </tr>
+         <tr>
+          <td><b>Standard pricing adjustment</b></td>
+          <td>RevivaRoof</td>
+          <td>Sep 26</td>
+          <td><span class="badge good">Verified</span></td>
+         </tr>
+        </tbody>
+       </table>
+      </div>
+     </section>
+    </section>
+
+    <section id="intelligence" class="view">
+     <div class="head">
+      <div>
+       <p class="eyebrow">Intelligence workspace</p>
+       <h1>Analytical modules</h1>
+       <p class="copy">Open an evidence-led module without losing command-center context.</p>
+      </div>
+     </div>
+     <div class="modules">
+       <button class="module" type="button" data-module="Battlecards"><b>Sales battlecards</b><small>Buyer questions, approved positioning, objection handling.</small></button>
+       <button class="module" type="button" data-module="Head-to-head scorecard"><b>Head-to-head scorecard</b><small>Warranty, chemistry, installation, and risk comparison.</small></button>
+       <button class="module" type="button" data-module="Brand reality gaps"><b>Brand promise vs reality</b><small>Positioning claims mapped against observed evidence.</small></button>
+       <button class="module" type="button" data-module="DOM diff radar"><b>DOM diff radar</b><small>Website changes, deletions, additions, and exclusions.</small></button>
+       <button class="module" type="button" data-module="IP radar"><b>Patent &amp; IP radar</b><small>Available public domain and claim-monitoring prototype.</small></button>
+       <button class="module" type="button" data-module="ASTM lab"><b>Technical ASTM lab</b><small>Material benchmarks and molecular cross-linking audit.</small></button>
+       <button class="module" type="button" data-module="Dealer intelligence"><b>Dealer intelligence</b><small>Contractor churn, poaching, and channel movement.</small></button>
+       <button class="module" type="button" data-module="Territory audit"><b>Territory audit</b><small>Geographic market dynamics and exposure by region.</small></button>
+       <button class="module" type="button" data-module="Historical trends"><b>Historical trends</b><small>Lifecycle evolution and prior market milestones.</small></button>
+       <button class="module" type="button" data-module="Domain analytics"><b>Domain &amp; Sheet tracker</b><small>Domain risk and monitored-record tracker.</small></button>
+       <button class="module" type="button" data-module="OSINT stream"><b>OSINT stream</b><small>Analyst-curated open-source evidence queue.</small></button>
+       <button class="module" type="button" data-module="Red-team simulator"><b>Red-team simulator</b><small>Scenario stress test for executive counter-moves.</small></button>
+     </div>
+    </section>
+
+    <section id="risk" class="view">
+     <div class="head">
+      <div>
+       <p class="eyebrow">Risk analysis</p>
+       <h1>Risk scorecard</h1>
+       <p class="copy">Exposure prioritization based on evidence and analyst weighting.</p>
+      </div>
+     </div>
+     <div class="kpis">
+      <article class="card kpi coral">
+       <span class="label">Highest competitive threat</span>
+       <div class="value">5.2/10</div>
+       <span class="badge critical">Elevated</span>
+      </article>
+      <article class="card kpi teal">
+       <span class="label">GoNano control moat</span>
+       <div class="value">6.8/10</div>
+       <span class="badge good">Defensible</span>
+      </article>
+      <article class="card kpi amber">
+       <span class="label">Residual threat rating</span>
+       <div class="value">3.1/10</div>
+       <span class="badge watch">Monitor</span>
+      </article>
+      <article class="card kpi">
+       <span class="label">Portfolio risk</span>
+       <div class="value">-14.6%</div>
+       <span class="badge neutral">VaR Exposure</span>
+      </article>
+     </div>
+     <section class="card" style="margin-top:14px">
+      <h2>Prioritized risk register</h2>
+      <div class="tablewrap">
+       <table>
+        <thead>
+         <tr>
+          <th>Risk vector</th>
+          <th>Lead entity</th>
+          <th>Exposure</th>
+          <th>Recommended response</th>
+         </tr>
+        </thead>
+        <tbody>
+         <tr>
+          <td><b>Warranty positioning</b></td>
+          <td>ArroveX</td>
+          <td>High</td>
+          <td>Validate approved field language</td>
+         </tr>
+         <tr>
+          <td><b>Regional price movement</b></td>
+          <td>RevivaRoof</td>
+          <td>High</td>
+          <td>Prepare commercial response</td>
+         </tr>
+         <tr>
+          <td><b>Territory expansion</b></td>
+          <td>RoofLife Canada</td>
+          <td>Medium</td>
+          <td>Track partner activity</td>
+         </tr>
+        </tbody>
+       </table>
+      </div>
+     </section>
+    </section>
+
+    <section id="monitoring" class="view">
+     <div class="head">
+      <div>
+       <p class="eyebrow">Monitoring</p>
+       <h1>Signal stream</h1>
+       <p class="copy">Live signals and multi-source open-source surveillance.</p>
+      </div>
+     </div>
+     <div class="detailgrid">
+      <section class="card">
+       <h2>OSINT evidence queue</h2>
+       <div class="evidence">
+        <b>Residential roofing services listing</b>
+        <p>Open-source capture references expanded regional service availability. Analyst review pending.</p>
+       </div>
+       <div class="evidence">
+        <b>Contractor recruitment language update</b>
+        <p>Observed channel copy may indicate distributor expansion. Confidence: medium.</p>
+       </div>
+       <div class="evidence">
+        <b>Regional permit discussion</b>
+        <p>Public discussion references local availability; no direct claim validation completed.</p>
+       </div>
+      </section>
+      <section class="card">
+       <h2>Monitoring controls</h2>
+       <p class="muted">Active multi-source feeds: Reddit, YouTube, Meta Ad Library, News, and Crawlers.</p>
+       <button class="primary" type="button" id="monitor-refresh">Refresh evidence queue</button>
+       <p id="monitor-feedback" class="feedback" aria-live="polite"></p>
+      </section>
+     </div>
+    </section>
+
+    <section id="alerts" class="view">
+     <div class="head">
+      <div>
+       <p class="eyebrow">Action queue</p>
+       <h1>Prioritized alerts</h1>
+       <p class="copy">Filter material market developments and open analyst context.</p>
+      </div>
+     </div>
+     <div class="card">
+      <div id="filters" class="filters">
+       <button class="filter active" data-filter="All" type="button">All</button>
+       <button class="filter" data-filter="Critical" type="button">Critical</button>
+       <button class="filter" data-filter="Watch" type="button">Watch</button>
+       <button class="filter" data-filter="Verified" type="button">Verified</button>
+      </div>
+      <div id="alert-list">
+       <article class="alert" data-severity="Critical">
+        <i class="barcrit"></i>
+        <div>
+         <b>Warranty term change detected</b>
+         <p>ArroveX added prorated coverage exclusions on labor and materials.</p>
+        </div>
+        <span class="badge critical">Critical</span>
+       </article>
+       <article class="alert" data-severity="Critical">
+        <i class="barcrit"></i>
+        <div>
+         <b>Price increase detected</b>
+         <p>RevivaRoof regional standard pricing moved +20%.</p>
+        </div>
+        <span class="badge critical">Critical</span>
+       </article>
+       <article class="alert" data-severity="Watch">
+        <i class="barwatch"></i>
+        <div>
+         <b>New territory expansion</b>
+         <p>Localized partner activity surfaced in Ontario and Quebec.</p>
+        </div>
+        <span class="badge watch">Watch</span>
+       </article>
+       <article class="alert" data-severity="Verified">
+        <i class="bargood"></i>
+        <div>
+         <b>Dealer channel evidence verified</b>
+         <p>Contractor communication activity has been validated.</p>
+        </div>
+        <span class="badge good">Verified</span>
+       </article>
+      </div>
+      <p id="empty-alert" class="muted hidden">No alerts match this severity.</p>
+     </div>
+    </section>
+
+    <section id="requests" class="view">
+     <div class="head">
+      <div>
+       <p class="eyebrow">Executive workflow</p>
+       <h1>C-suite request desk</h1>
+       <p class="copy">Save an executive intelligence request or fulfill contractor requests with Gemini 3.1 Pro.</p>
+      </div>
+     </div>
+     <div class="detailgrid">
+      <section class="card formbox">
+       <h2>New request</h2>
+       <form id="request-form">
+        <label for="request-subject" class="label">Request subject</label>
+        <input id="request-subject" class="field" required="" placeholder="e.g. Review warranty positioning in Ontario">
+        <label for="request-note" class="label" style="display:block;margin-top:12px">Context and decision need</label>
+        <textarea id="request-note" class="field" required=""></textarea>
+        <button id="request-submit" class="primary" type="submit" style="margin-top:12px">Save C-suite request</button>
+       </form>
+       <p id="request-feedback" class="feedback" aria-live="polite"></p>
+      </section>
+      <aside class="card">
+       <h2>Recent saved requests</h2>
+       <div id="saved-requests" class="muted">
+        No saved requests in this session.
+       </div>
+      </aside>
+     </div>
+    </section>
+
+    <section id="reports" class="view">
+     <div class="head">
+      <div>
+       <p class="eyebrow">Exports</p>
+       <h1>Executive reports</h1>
+       <p class="copy">Generate a download-ready briefing from the current intelligence horizon.</p>
+      </div>
+      <div class="actions">
+       <button id="report-export" class="primary" type="button">Export executive briefing</button>
+      </div>
+     </div>
+     <p id="report-feedback" class="feedback" aria-live="polite"></p>
+     <div class="modules">
+      <button class="module" type="button" data-export="Competitive exposure brief"><b>Competitive exposure brief</b><small>Critical price, warranty, and territory changes.</small></button>
+      <button class="module" type="button" data-export="Market response digest"><b>Market response digest</b><small>Field-ready talking points and response cues.</small></button>
+      <button class="module" type="button" data-export="Verified dossier pack"><b>Verified dossier pack</b><small>Evidence-backed profiles and review notes.</small></button>
+     </div>
+    </section>
+
+    <section id="detail" class="view">
+     <div class="head">
+      <div>
+       <p class="eyebrow">Intelligence drill-down</p>
+       <h1 id="detail-title">Module</h1>
+       <p id="detail-copy" class="copy"></p>
+      </div>
+      <button class="secondary" type="button" data-view="intelligence">Back to modules</button>
+     </div>
+     <div class="detailgrid">
+      <section class="card">
+       <h2>Analyst findings</h2>
+       <div class="evidence">
+        <b>Evidence status: Verified</b>
+        <p>Real-time data synced from GoNano persistent store and analytical engines.</p>
+       </div>
+       <div class="evidence">
+        <b>Priority interpretation</b>
+        <p>Use this workspace to structure evidence, review market exposure, and prepare approved GoNano leadership responses.</p>
+       </div>
+      </section>
+      <section class="card formbox" id="simulator-panel">
+       <h2>Response workspace</h2>
+       <label for="scenario" class="label">Executive scenario</label>
+       <textarea id="scenario" class="field">GoNano evaluates a regional competitor partnership program and its potential warranty positioning impact.</textarea>
+       <button id="simulate" class="primary" type="button" style="margin-top:12px">Simulate executive counter-attack</button>
+       <p id="simulation-feedback" class="feedback" aria-live="polite"></p>
+      </section>
+     </div>
+    </section>
+   </main>
+  </div>
+  <script>
+const state={filter:'All'};
+const $=id=>document.getElementById(id);
+function view(id){document.querySelectorAll('.view').forEach(x=>x.classList.toggle('active',x.id===id));document.querySelectorAll('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===id));window.scrollTo({top:0,behavior:'smooth'})}
+document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>view(b.dataset.view)));
+function setStatus(t){$('status').textContent=t;setTimeout(()=>{if($('status').textContent===t)$('status').textContent=''},2800)}
+$('scan').addEventListener('click',async e=>{e.currentTarget.disabled=true;$('scan-feedback').textContent='Intelligence scan running across configured evidence categories…';setTimeout(()=>{$('scan-feedback').textContent='Intelligence scan complete — material signals prioritized for analyst review.';e.currentTarget.disabled=false},1200)});
+function download(title){const text=`GoNano Competitor Intelligence\n${title}\nHorizon: ${$('horizon').value}\nSubject: ${$('search').value||'All monitored entities'}\n\nGoNano Strategic Intelligence Briefing. Confidential.`;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:'text/plain'}));a.download='gonano-intelligence-briefing.txt';a.click();URL.revokeObjectURL(a.href)}
+$('export-top').addEventListener('click',()=>{download('Executive briefing');$('scan-feedback').textContent='Briefing downloaded as a text report.'});$('report-export').addEventListener('click',()=>{download('Executive briefing');$('report-feedback').textContent='Executive briefing downloaded.'});
+$('refresh').addEventListener('click',()=>setStatus('Feed refreshed'));$('notification').addEventListener('click',()=>view('alerts'));$('monitor-refresh').addEventListener('click',()=>{$('monitor-feedback').textContent='Evidence queue refreshed — latest records active.'});
+let timer;$('search').addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(()=>{const q=$('search').value.toLowerCase();document.querySelectorAll('#activity-table tbody tr').forEach(r=>r.classList.toggle('hidden',q&&!r.textContent.toLowerCase().includes(q)));setStatus(q?'Filtered visible activity':'Showing all activity');},500)});
+$('horizon').addEventListener('change',()=>{$('window-chip').textContent=$('horizon').value+' view';setStatus('Horizon updated')});
+document.querySelectorAll('#filters .filter').forEach(b=>b.addEventListener('click',()=>{state.filter=b.dataset.filter;document.querySelectorAll('#filters .filter').forEach(x=>x.classList.toggle('active',x===b));let n=0;document.querySelectorAll('#alert-list .alert').forEach(x=>{const yes=state.filter==='All'||x.dataset.severity===state.filter;x.classList.toggle('hidden',!yes);if(yes)n++});$('empty-alert').classList.toggle('hidden',n>0)}));
+document.querySelectorAll('[data-module]').forEach(b=>b.addEventListener('click',()=>{$('detail-title').textContent=b.dataset.module;$('detail-copy').textContent=`Focused ${b.dataset.module.toLowerCase()} workspace. Active GoNano intelligence and evidence records loaded.`;$('simulator-panel').classList.toggle('hidden',b.dataset.module!=='Red-team simulator');view('detail')}));
+$('simulate').addEventListener('click',()=>{$('simulation-feedback').textContent='Executive counter-attack response: verify third-party ASTM D3462 tear data, deploy sales battlecard landmines, and alert territory distributors.'});
+document.querySelectorAll('[data-export]').forEach(b=>b.addEventListener('click',()=>download(b.dataset.export)));
+$('request-form').addEventListener('submit',e=>{e.preventDefault();const b=$('request-submit');b.disabled=true;$('request-feedback').textContent='Saving request…';setTimeout(()=>{$('request-feedback').textContent='Request saved to C-suite workflow.';const out=$('saved-requests');if(out.textContent.includes('No saved requests'))out.innerHTML='';const el=document.createElement('div');el.className='evidence';el.innerHTML=`<b>${$('request-subject').value.trim()}</b><p>${$('request-note').value.trim()}</p>`;out.prepend(el);$('request-note').value='';$('request-subject').value='';b.disabled=false;},600)});
+if(window.lucide){lucide.createIcons();}
+</script>
+</body></html>
