@@ -272,38 +272,42 @@ if not st.session_state.authenticated_executive:
             with st.form("executive_login_form"):
                 st.markdown("##### 🔐 Executive Identity Verification")
                 exec_email = st.text_input("Executive Email Address *", placeholder="e.g. miguel.gonzales@gonano.com", key="e_login_email")
-                exec_pin = st.text_input("Executive Passcode / Security Key *", type="password", placeholder="e.g. GONANO-EXEC-2026", key="e_login_pin")
+                exec_pin = st.text_input("Executive Passcode / Security Key *", type="password", placeholder="Enter passcode / security key", key="e_login_pin")
                 
-                e_btn1, e_btn2 = st.columns([1.5, 1])
-                with e_btn1:
-                    submit_exec = st.form_submit_button("Sign In to Executive Terminal", use_container_width=True, type="primary")
-                with e_btn2:
-                    demo_exec = st.form_submit_button("Executive One-Click Access", use_container_width=True)
+                submit_exec = st.form_submit_button("Sign In to Executive Terminal", use_container_width=True, type="primary")
 
                 if submit_exec:
                     clean_email = exec_email.strip().lower()
+                    clean_pin = exec_pin.strip()
+                    
+                    valid_pins = ["GONANO-EXEC-2026", "GoNano#Exec", "GoNano#2026", "gonano-exec-2026"]
+                    is_authorized_email = clean_email.endswith("@gonano.com") or clean_email in [
+                        "miguel.gonzales@gonano.com",
+                        "mcbgonzales@outlook.com",
+                        "gonzalesmiguelcarlo@gmail.com"
+                    ]
+
                     if not clean_email:
-                        st.error("Please enter your GoNano corporate email address.")
-                    elif not (clean_email.endswith("@gonano.com") or exec_pin == "GONANO-EXEC-2026"):
-                        st.error("Access Denied: Terminal restricted strictly to authorized @gonano.com corporate accounts.")
+                        st.error("Please enter your corporate email address.")
+                    elif not clean_pin:
+                        st.error("Please enter your executive passcode / security key.")
+                    elif not (is_authorized_email and clean_pin in valid_pins):
+                        st.error("Access Denied: Invalid credentials. Terminal restricted strictly to authorized GoNano executive leadership.")
                     else:
-                        name_part = clean_email.split('@')[0].replace('.', ' ').title() if '@' in clean_email else 'Executive Leader'
+                        if clean_email in ["miguel.gonzales@gonano.com", "mcbgonzales@outlook.com", "gonzalesmiguelcarlo@gmail.com"]:
+                            name_part = "Miguel Gonzales"
+                            role_part = "Lead Strategic Intelligence Analyst"
+                        else:
+                            name_part = clean_email.split('@')[0].replace('.', ' ').title() if '@' in clean_email else 'Executive Leader'
+                            role_part = "GoNano Strategic Intelligence / C-Suite"
+
                         st.session_state.authenticated_executive = {
                             "name": name_part,
-                            "email": exec_email.strip(),
-                            "role": "GoNano Strategic Intelligence / C-Suite"
+                            "email": clean_email,
+                            "role": role_part
                         }
                         st.success(f"Welcome, {name_part}! Executive Terminal unlocked.")
                         st.rerun()
-
-                if demo_exec:
-                    st.session_state.authenticated_executive = {
-                        "name": "Miguel Gonzales",
-                        "email": "miguel.gonzales@gonano.com",
-                        "role": "Lead Strategic Intelligence Analyst"
-                    }
-                    st.success("Executive terminal unlocked for Miguel Gonzales.")
-                    st.rerun()
 
     st.stop()
 
