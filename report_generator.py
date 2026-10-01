@@ -1,23 +1,20 @@
 """
 report_generator.py
 Executive Intelligence Briefing Generator for GoNano Leadership.
-Renders the exact high-fidelity weekly briefing layout specified by GoNano Executive Leadership:
-- Two-column structured dashboard layout with Apple G2 squircle cards and borderless soft lighting.
-- Top metrics: Monitored Competitor Profiles (69) and High Threat Rivals Under Surveillance (8).
-- Left Column: Significant Market Signals & Executive Summary + Strategic Findings & Tactical Playbook (High Threat / Priority Action findings).
-- Right Column: Competitor Watch: Industry & Broadcast Signals (YouTube & Press signals with verified briefs).
-- Bottom Full-Width Card: Executive Action Takeaway with ASTM D3462 proof and 15-Year non-prorated positioning.
-- Zero emojis. Enforces official brand typography and GoNano palette (#1B1C36, #675CE7, #8583F2, #E76E38).
-- Prepared by: Miguel Gonzales, Competitor Analysis Specialist.
+Engineered with production-grade email table architecture:
+- 100% inline CSS and nested HTML tables for bulletproof rendering in Gmail, Outlook, and Apple Mail.
+- Zero reliance on CSS Grid, Flexbox, or class-based stylesheets that Gmail strips.
+- Direct HTTPS PNG asset URLs hosted on GitHub for high-resolution retina rendering.
+- Exact two-column layout matching the official GoNano Weekly Competitor Updates visual peg.
+- QA brand palette compliant: #1B1C36, #675CE7, #8583F2, #E76E38, #5551FF.
+- Author: Miguel Gonzales, Competitor Analysis Specialist.
 """
 import sqlite3
 import os
-import re
-import base64
 import urllib.parse
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List
 from db_manager import (
     get_connection,
     get_all_competitor_profiles,
@@ -25,14 +22,8 @@ from db_manager import (
     get_marketing_gaps
 )
 
-ASSETS_DIR = Path(__file__).resolve().parent / "assets"
-ICONS_DIR = ASSETS_DIR / "icons"
-
-def get_file_b64(filepath: Path) -> str:
-    if filepath.exists():
-        with open(filepath, "rb") as f:
-            return base64.b64encode(f.read()).decode("utf-8")
-    return ""
+# Base CDN URL for high-res PNG assets on GitHub
+GITHUB_CDN_BASE = "https://raw.githubusercontent.com/mglcrlo18/GoNano-Competitor-Intelligence-Tool-For-Certified-Contractors/main/assets"
 
 def sanitize_url(raw_url: str, fallback_title: str = "") -> str:
     if not raw_url or str(raw_url).strip() in ["#", "", "about:blank", "javascript:void(0)", "None"]:
@@ -45,7 +36,6 @@ def sanitize_url(raw_url: str, fallback_title: str = "") -> str:
     return f"https://www.google.com/search?q={urllib.parse.quote(fallback_title.strip() or 'GoNano')}"
 
 def truncate_words(text: str, max_words: int = 200) -> str:
-    """Enforces a strict maximum word count on text."""
     if not text:
         return ""
     words = str(text).split()
@@ -54,10 +44,6 @@ def truncate_words(text: str, max_words: int = 200) -> str:
     return " ".join(words)
 
 def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors", cc_recipients: str = "") -> Dict[str, str]:
-    """
-    Synthesizes current intelligence into a concise, professional 1-page executive brief matching
-    the official GoNano Executive Weekly Briefing template.
-    """
     now = datetime.now()
     timestamp_pht = now.strftime("%Y-%m-%d %H%M PHT")
     timestamp_display = now.strftime("%Y-%m-%d %H:%M PHT")
@@ -65,7 +51,6 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
     conn = get_connection()
     cursor = conn.cursor()
 
-    # 1. Significant News Updates
     cursor.execute("""
     SELECT competitor, platform, title, snippet, timestamp, url
     FROM signals
@@ -82,14 +67,32 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
     total_comps = len(get_all_competitor_profiles())
     critical_threats = 8
 
-    # Extract base64 assets
-    logo_dark_b64 = get_file_b64(ASSETS_DIR / "gonano_dark_color_logo.svg")
-    page3_b64 = get_file_b64(ICONS_DIR / "Page 3.svg")
-    page40_b64 = get_file_b64(ICONS_DIR / "Page 40.svg")
+    # Asset URLs
+    logo_dark_url = f"{GITHUB_CDN_BASE}/GoNano%20Logo_GoNano%20Dark%20Color%20Logo.png"
+    icon_calendar = f"{GITHUB_CDN_BASE}/icons_png/Page%2034.png"
+    icon_users = f"{GITHUB_CDN_BASE}/icons_png/users_group.png"
+    icon_shield = f"{GITHUB_CDN_BASE}/icons_png/Page%203.png"
+    icon_chart = f"{GITHUB_CDN_BASE}/icons_png/chart_trend.png"
+    icon_target = f"{GITHUB_CDN_BASE}/icons_png/target_crosshair.png"
+    icon_sun = f"{GITHUB_CDN_BASE}/icons_png/sun_uv.png"
+    icon_play = f"{GITHUB_CDN_BASE}/icons_png/play_button_solid.png"
+    icon_doc = f"{GITHUB_CDN_BASE}/icons_png/document_article.png"
+    icon_check = f"{GITHUB_CDN_BASE}/icons_png/checkmark_circle.png"
 
-    logo_tag = f'<img src="data:image/svg+xml;base64,{logo_dark_b64}" style="height:38px; width:auto; display:inline-block;" alt="GoNano Logo" />' if logo_dark_b64 else '<span style="font-size:24px; font-weight:800; color:#1B1C36;">GONANO</span>'
-    shield_icon_tag = f'<img src="data:image/svg+xml;base64,{page3_b64}" style="width:26px; height:26px; vertical-align:middle;" />' if page3_b64 else '<span style="color:#E76E38; font-weight:800;">!</span>'
-    check_icon_tag = f'<img src="data:image/svg+xml;base64,{page40_b64}" style="width:22px; height:22px; vertical-align:middle; margin-right:6px;" />' if page40_b64 else '&#10003;'
+    # Signals for Right Column
+    s1 = recent_signals[0] if len(recent_signals) > 0 else {"title": "RoofLife & CP24 Broadcast Interview: Ontario Contractor Expansion", "platform": "YouTube", "competitor": "RoofLife Canada", "url": "https://www.youtube.com/watch?v=HBgxviu01S0", "snippet": "Broadcast coverage highlighting bio-oil single spray treatments across Southern Ontario. Focuses on consumer cost savings claims versus full roof replacement; serves as a key sales displacement benchmark for GoNano certified applicators."}
+    s1_title = truncate_words(s1.get("title", ""), 200)
+    s1_url = sanitize_url(s1.get("url"), s1_title)
+    s1_comp = s1.get("competitor", "ROOFLIFE CANADA").upper()
+    s1_plat = s1.get("platform", "YOUTUBE").upper()
+    s1_snip = s1.get("snippet") or "Broadcast coverage highlighting bio-oil single spray treatments across Southern Ontario. Focuses on consumer cost savings claims versus full roof replacement; serves as a key sales displacement benchmark for GoNano certified applicators."
+
+    s2 = recent_signals[1] if len(recent_signals) > 1 else {"title": "Eco Roof Sprays Promise Longer Life, Less Waste - Industry Technical Report", "platform": "Industry Press", "competitor": "Roofing Contractor", "url": "https://www.google.com/search?q=Eco+Roof+Sprays+Promise+Longer+Life+Roofing+Contractor", "snippet": "National roofing journal editorial analyzing topical bio-oil rejuvenation versus nanotechnology penetrants. Emphasizes warranty limitations and the importance of independent ASTM D3462 lab testing for long-term granular adhesion."}
+    s2_title = truncate_words(s2.get("title", ""), 200)
+    s2_url = sanitize_url(s2.get("url"), s2_title)
+    s2_comp = s2.get("competitor", "ROOFING CONTRACTOR").upper()
+    s2_plat = s2.get("platform", "INDUSTRY PRESS").upper()
+    s2_snip = s2.get("snippet") or "National roofing journal editorial analyzing topical bio-oil rejuvenation versus nanotechnology penetrants. Emphasizes warranty limitations and the importance of independent ASTM D3462 lab testing for long-term granular adhesion."
 
     # -------------------------------------------------------------------------
     # PLAIN TEXT FALLBACK
@@ -123,22 +126,16 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
         "",
         "COMPETITOR WATCH: INDUSTRY & BROADCAST SIGNALS",
         "----------------------------------------------------------------------------",
-    ]
-
-    for idx, s in enumerate(recent_signals[:2], 1):
-        raw_t = s.get("title", "Market Update")
-        t = truncate_words(raw_t, 200)
-        p = s.get("platform", "NEWS").upper()
-        c = s.get("competitor", "INDUSTRY").upper()
-        sn = truncate_words(s.get("snippet", ""), 200)
-        u = sanitize_url(s.get("url"), t)
-        text_lines.append(f"[{idx}] {c} // {p}")
-        text_lines.append(f"Headline: {t}")
-        text_lines.append(f"Source: {u}")
-        text_lines.append(f"Brief Summary: {sn}")
-        text_lines.append("")
-
-    text_lines.extend([
+        f"[1] {s1_comp} // {s1_plat}",
+        f"Headline: {s1_title}",
+        f"Source: {s1_url}",
+        f"Brief Summary: {s1_snip}",
+        "",
+        f"[2] {s2_comp} // {s2_plat}",
+        f"Headline: {s2_title}",
+        f"Source: {s2_url}",
+        f"Brief Summary: {s2_snip}",
+        "",
         "EXECUTIVE ACTION TAKEAWAY",
         "----------------------------------------------------------------------------",
         "Neutralize bio-oil replacement displacement with certified performance proof and a defensible long-term warranty story.",
@@ -148,511 +145,411 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
         "CONFIDENTIAL: FOR INTERNAL GONANO LEADERSHIP ONLY",
         "Prepared by: Miguel Gonzales, Competitor Analysis Specialist",
         "============================================================================"
-    ])
+    ]
     plain_text = "\n".join(text_lines)
 
     # -------------------------------------------------------------------------
-    # HTML FORMATTING: EXACT MATCH TO SCREENSHOT 2026-10-01 at 8.21.16 PM
+    # PRODUCTION EMAIL HTML: 100% INLINED NESTED TABLES
+    # Compatible with Gmail, Apple Mail, Outlook, Android & iOS
     # -------------------------------------------------------------------------
-    # Signal 1
-    s1 = recent_signals[0] if len(recent_signals) > 0 else {"title": "RoofLife & CP24 Broadcast Interview: Ontario Contractor Expansion", "platform": "YouTube", "competitor": "RoofLife Canada", "url": "https://www.youtube.com/watch?v=HBgxviu01S0", "snippet": "Broadcast coverage highlighting bio-oil single spray treatments across Southern Ontario. Focuses on consumer cost savings claims versus full roof replacement; serves as a key sales displacement benchmark for GoNano certified applicators."}
-    s1_title = truncate_words(s1.get("title", ""), 200)
-    s1_url = sanitize_url(s1.get("url"), s1_title)
-    s1_comp = s1.get("competitor", "ROOFLIFE CANADA").upper()
-    s1_plat = s1.get("platform", "YOUTUBE").upper()
-    s1_snip = s1.get("snippet") or "Broadcast coverage highlighting bio-oil single spray treatments across Southern Ontario. Focuses on consumer cost savings claims versus full roof replacement; serves as a key sales displacement benchmark for GoNano certified applicators."
-
-    # Signal 2
-    s2 = recent_signals[1] if len(recent_signals) > 1 else {"title": "Eco Roof Sprays Promise Longer Life, Less Waste - Industry Technical Report", "platform": "Industry Press", "competitor": "Roofing Contractor", "url": "https://www.google.com/search?q=Eco+Roof+Sprays+Promise+Longer+Life+Roofing+Contractor", "snippet": "National roofing journal editorial analyzing topical bio-oil rejuvenation versus nanotechnology penetrants. Emphasizes warranty limitations and the importance of independent ASTM D3462 lab testing for long-term granular adhesion."}
-    s2_title = truncate_words(s2.get("title", ""), 200)
-    s2_url = sanitize_url(s2.get("url"), s2_title)
-    s2_comp = s2.get("competitor", "ROOFING CONTRACTOR").upper()
-    s2_plat = s2.get("platform", "INDUSTRY PRESS").upper()
-    s2_snip = s2.get("snippet") or "National roofing journal editorial analyzing topical bio-oil rejuvenation versus nanotechnology penetrants. Emphasizes warranty limitations and the importance of independent ASTM D3462 lab testing for long-term granular adhesion."
-
-    html = f"""<!DOCTYPE html>
-<html>
+    html = f"""<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GoNano Weekly Competitor Updates</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap');
-        /* GoNano Brand Palette Compliance: #1B1C36, #675CE7, #8583F2 */
-        body {{
-            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: #EEF1F6;
-            color: #1B1C36;
-            margin: 0;
-            padding: 24px 10px;
-            -webkit-font-smoothing: antialiased;
-        }}
-        .email-container {{
-            max-width: 820px;
-            margin: 0 auto;
-            background-color: #FFFFFF;
-            border-radius: 28px;
-            box-shadow: -5px -5px 12px rgba(255, 255, 255, 0.95), 6px 6px 16px rgba(0, 0, 0, 0.08);
-            padding: 32px 34px;
-        }}
-        /* Top Navigation Header */
-        .top-row {{
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }}
-        .date-badge {{
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 12px;
-            font-weight: 600;
-            color: #596078;
-        }}
-        .main-headline {{
-            font-size: 44px;
-            font-weight: 700;
-            letter-spacing: -0.04em;
-            color: #5551FF;
-            margin: 10px 0 4px 0;
-            line-height: 1.1;
-        }}
-        .sub-headline {{
-            font-size: 13px;
-            font-weight: 800;
-            color: #1B1C36;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            margin: 0 0 24px 0;
-        }}
-        /* Two Metric Cards */
-        .metric-row {{
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 24px;
-        }}
-        .metric-box {{
-            background: #FFFFFF;
-            border-radius: 22px;
-            box-shadow: -4px -4px 9px rgba(255, 255, 255, 0.9), 5px 5px 11px rgba(0, 0, 0, 0.05);
-            padding: 16px 20px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }}
-        .metric-icon-disc {{
-            width: 54px;
-            height: 54px;
-            border-radius: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }}
-        .metric-icon-disc.blue {{
-            background: #EEF2FF;
-            color: #5551FF;
-        }}
-        .metric-icon-disc.orange {{
-            background: #FFF1EB;
-            color: #E76E38;
-        }}
-        .metric-num {{
-            font-size: 34px;
-            font-weight: 800;
-            color: #1B1C36;
-            line-height: 1.0;
-        }}
-        .metric-num.orange {{
-            color: #E76E38;
-        }}
-        .metric-lbl {{
-            font-size: 11px;
-            font-weight: 800;
-            color: #1B1C36;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            line-height: 1.3;
-            margin-top: 4px;
-        }}
-        /* Two-Column Grid */
-        .content-grid {{
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 22px;
-        }}
-        /* Section Banner */
-        .section-banner {{
-            background: #5551FF;
-            border-radius: 10px 10px 0 0;
-            padding: 10px 16px;
-            color: #FFFFFF;
-            font-size: 11px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-        }}
-        .section-surface {{
-            background: #FFFFFF;
-            border-radius: 0 0 20px 20px;
-            box-shadow: -4px -4px 9px rgba(255, 255, 255, 0.9), 5px 5px 12px rgba(0, 0, 0, 0.05);
-            padding: 18px 20px;
-            min-height: 200px;
-        }}
-        /* Left Column Specific */
-        .summary-flex {{
-            display: flex;
-            gap: 14px;
-            align-items: flex-start;
-        }}
-        .summary-icon {{
-            width: 48px;
-            height: 48px;
-            border-radius: 16px;
-            background: #EEF2FF;
-            color: #5551FF;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }}
-        .summary-text {{
-            font-size: 12px;
-            line-height: 1.55;
-            color: #1B1C36;
-            font-weight: 500;
-        }}
-        .summary-text p {{
-            margin: 0 0 10px 0;
-        }}
-        .finding-item {{
-            display: flex;
-            gap: 12px;
-            margin-bottom: 16px;
-            align-items: flex-start;
-        }}
-        .finding-item:last-child {{
-            margin-bottom: 0;
-        }}
-        .finding-icon {{
-            width: 42px;
-            height: 42px;
-            border-radius: 14px;
-            background: #FFF1EB;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }}
-        .finding-content {{
-            flex: 1;
-        }}
-        .finding-head {{
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 4px;
-        }}
-        .finding-title {{
-            font-size: 12px;
-            font-weight: 700;
-            color: #1B1C36;
-        }}
-        .finding-tag {{
-            background: #E76E38;
-            color: #FFFFFF;
-            font-size: 9px;
-            font-weight: 800;
-            padding: 2px 7px;
-            border-radius: 9999px;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }}
-        .finding-desc {{
-            font-size: 11px;
-            line-height: 1.45;
-            color: #596078;
-        }}
-        /* Right Column Specific */
-        .signal-block {{
-            display: flex;
-            gap: 14px;
-            margin-bottom: 22px;
-            align-items: flex-start;
-        }}
-        .signal-block:last-child {{
-            margin-bottom: 0;
-        }}
-        .signal-icon {{
-            width: 52px;
-            height: 52px;
-            border-radius: 18px;
-            background: #EEF2FF;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }}
-        .signal-tag {{
-            font-size: 10px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            margin-bottom: 3px;
-        }}
-        .signal-tag.blue {{
-            color: #5551FF;
-        }}
-        .signal-tag.orange {{
-            color: #E76E38;
-        }}
-        .signal-title {{
-            font-size: 14px;
-            font-weight: 700;
-            color: #1B1C36;
-            line-height: 1.35;
-            margin-bottom: 6px;
-        }}
-        .signal-title a {{
-            color: #1B1C36;
-            text-decoration: none;
-        }}
-        .signal-title a:hover {{
-            color: #5551FF;
-        }}
-        .signal-summary {{
-            font-size: 11.5px;
-            color: #596078;
-            line-height: 1.45;
-        }}
-        /* Executive Action Takeaway Card */
-        .takeaway-banner {{
-            background: #E76E38;
-            border-radius: 10px 10px 0 0;
-            padding: 10px 16px;
-            color: #FFFFFF;
-            font-size: 12px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }}
-        .takeaway-surface {{
-            background: #FFF5ED;
-            border-radius: 0 0 20px 20px;
-            box-shadow: -4px -4px 9px rgba(255, 255, 255, 0.9), 5px 5px 12px rgba(0, 0, 0, 0.05);
-            padding: 18px 22px;
-            margin-bottom: 24px;
-        }}
-        .takeaway-lead {{
-            font-size: 13.5px;
-            font-weight: 700;
-            color: #1B1C36;
-            line-height: 1.5;
-            margin-bottom: 8px;
-        }}
-        .takeaway-sub {{
-            display: flex;
-            align-items: center;
-            font-size: 13px;
-            font-weight: 800;
-            color: #E76E38;
-        }}
-        /* Footer */
-        .footer-line {{
-            border-top: 1px solid #DDE0EB;
-            padding-top: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 11px;
-        }}
-        .footer-conf {{
-            color: #7A819B;
-            font-weight: 600;
-            letter-spacing: 0.04em;
-        }}
-        .footer-author {{
-            color: #5551FF;
-            font-weight: 700;
-        }}
+    <style type="text/css">
+        /* Brand Colors: #1B1C36, #675CE7, #8583F2, #E76E38, #5551FF */
+        body {{ margin: 0; padding: 0; background-color: #EEF1F6; -webkit-font-smoothing: antialiased; }}
+        table {{ border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }}
+        td {{ border-collapse: collapse; }}
+        img {{ border: 0; outline: none; text-decoration: none; display: block; }}
+        a {{ text-decoration: none; color: #1B1C36; }}
     </style>
 </head>
-<body>
-    <div class="email-container">
-        <!-- Brand & Date Row -->
-        <div class="top-row">
-            <div>
-                {logo_tag}
-            </div>
-            <div class="date-badge">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5551FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                <span>{timestamp_pht}</span>
-            </div>
-        </div>
+<body bgcolor="#EEF1F6" style="margin: 0; padding: 24px 0; background-color: #EEF1F6; font-family: 'Montserrat', Arial, Helvetica, sans-serif;">
+    <!-- Outer Wrapper Table -->
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#EEF1F6" style="background-color: #EEF1F6; margin: 0; padding: 24px 0;">
+        <tr>
+            <td align="center" valign="top">
+                <!-- Main Centered Container Card (780px wide) -->
+                <table width="780" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFFFFF" style="width: 780px; max-width: 780px; background-color: #FFFFFF; border-radius: 26px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); padding: 34px 36px;">
+                    
+                    <!-- 1. HEADER ROW: LOGO & DATE -->
+                    <tr>
+                        <td valign="top" style="padding-bottom: 12px;">
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td align="left" valign="middle">
+                                        <img src="{logo_dark_url}" width="165" height="42" alt="GoNano" style="display: block; width: 165px; height: auto;" />
+                                    </td>
+                                    <td align="right" valign="middle">
+                                        <table cellpadding="0" cellspacing="0" border="0" bgcolor="#F4F6FB" style="background-color: #F4F6FB; border-radius: 8px; padding: 6px 14px;">
+                                            <tr>
+                                                <td valign="middle" style="padding-right: 6px;">
+                                                    <img src="{icon_calendar}" width="16" height="16" alt="Date" style="display: block; width: 16px; height: 16px;" />
+                                                </td>
+                                                <td valign="middle" style="font-family: 'Montserrat', Arial, sans-serif; font-size: 12px; font-weight: 600; color: #596078; white-space: nowrap;">
+                                                    {timestamp_pht}
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
 
-        <div class="main-headline">Weekly Competitor Updates</div>
-        <div class="sub-headline">EXECUTIVE INTELLIGENCE BRIEFING // MARKET RISK</div>
-
-        <!-- 2 Metric Cards -->
-        <div class="metric-row">
-            <div class="metric-box">
-                <div class="metric-icon-disc blue">
-                    <!-- Users icon -->
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#5551FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                </div>
-                <div>
-                    <div class="metric-num">{total_comps}</div>
-                    <div class="metric-lbl">MONITORED<br>COMPETITOR PROFILES</div>
-                </div>
-            </div>
-
-            <div class="metric-box">
-                <div class="metric-icon-disc orange">
-                    {shield_icon_tag}
-                </div>
-                <div>
-                    <div class="metric-num orange">{critical_threats}</div>
-                    <div class="metric-lbl">HIGH THREAT RIVALS<br>UNDER SURVEILLANCE</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Main 2-Column Grid -->
-        <div class="content-grid">
-            <!-- Left Column -->
-            <div>
-                <!-- 1. Executive Summary -->
-                <div class="section-banner">1. SIGNIFICANT MARKET SIGNALS &amp; EXECUTIVE SUMMARY</div>
-                <div class="section-surface" style="margin-bottom: 20px;">
-                    <div class="summary-flex">
-                        <div class="summary-icon">
-                            <!-- Trend / bar chart icon -->
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5551FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                        </div>
-                        <div class="summary-text">
-                            <p><strong>Executive Synthesis:</strong> Active monitoring across North American roofing markets indicates escalating D2C and contractor recruitment campaigns. Rival players are aggressively leveraging local broadcast segments and paid social media funnels to market their products against complete roof replacement.</p>
-                            <p style="margin:0;">Concurrently, field contractor reports reveal accelerating customer friction regarding early coating washouts during freeze-thaw cycles and warranty claim disputes.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 2. Strategic Findings & Playbook -->
-                <div class="section-banner">2. STRATEGIC FINDINGS &amp; TACTICAL PLAYBOOK</div>
-                <div class="section-surface">
-                    <!-- Finding 1 -->
-                    <div class="finding-item">
-                        <div class="finding-icon">
-                            <!-- Target / crosshair -->
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E76E38" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="22" y1="12" x2="18" y2="12"></line><line x1="6" y1="12" x2="2" y2="12"></line><line x1="12" y1="6" x2="12" y2="2"></line><line x1="12" y1="22" x2="12" y2="18"></line></svg>
-                        </div>
-                        <div class="finding-content">
-                            <div class="finding-head">
-                                <span class="finding-title">Finding 1: Bio-Oil Market Saturation vs. Waste Reduction</span>
-                                <span class="finding-tag">HIGH THREAT</span>
+                    <!-- 2. HEADLINE & SUBTITLE -->
+                    <tr>
+                        <td valign="top" style="padding-bottom: 24px;">
+                            <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 42px; font-weight: 700; color: #5551FF; letter-spacing: -0.04em; line-height: 1.15; margin: 0 0 6px 0;">
+                                Weekly Competitor Updates
                             </div>
-                            <div class="finding-desc">
-                                Rival firms continue pushing aggressive D2C video funnels undercutting roof replacement. However, field contractor and homeowner data shows substantial warranty claim rejections citing pre-existing conditions and granular loss.
+                            <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 13px; font-weight: 800; color: #1B1C36; letter-spacing: 0.12em; text-transform: uppercase; margin: 0;">
+                                EXECUTIVE INTELLIGENCE BRIEFING // MARKET RISK
                             </div>
-                        </div>
-                    </div>
+                        </td>
+                    </tr>
 
-                    <!-- Finding 2 -->
-                    <div class="finding-item">
-                        <div class="finding-icon">
-                            <!-- Sun / UV climate -->
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E76E38" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-                        </div>
-                        <div class="finding-content">
-                            <div class="finding-head">
-                                <span class="finding-title">Finding 2: Climate Stress Evaporation</span>
-                                <span class="finding-tag">HIGH THREAT</span>
-                            </div>
-                            <div class="finding-desc">
-                                Bio-oils swell surface bitumen without cross-linking to the fiberglass mat. In summer heat and freeze-thaw cycles, volatile plant oils evaporate within 12-18 months. Insurance adjusters are declining policies on aging shingle roofs treated with bio-oils.
-                            </div>
-                        </div>
-                    </div>
+                    <!-- 3. TOP TWO METRIC CARDS -->
+                    <tr>
+                        <td valign="top" style="padding-bottom: 24px;">
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <!-- Left Metric Card: 69 Profiles -->
+                                    <td width="48%" valign="top" bgcolor="#FFFFFF" style="background-color: #FFFFFF; border: 1px solid #EBEFFA; border-radius: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); padding: 18px 20px;">
+                                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td width="58" valign="middle">
+                                                    <table cellpadding="0" cellspacing="0" border="0" bgcolor="#EEF2FF" style="background-color: #EEF2FF; border-radius: 16px; width: 52px; height: 52px;">
+                                                        <tr>
+                                                            <td align="center" valign="middle">
+                                                                <img src="{icon_users}" width="28" height="28" alt="Profiles" style="display: block; width: 28px; height: 28px;" />
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                                <td valign="middle" style="padding-left: 14px;">
+                                                    <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 36px; font-weight: 800; color: #1B1C36; line-height: 1.0;">
+                                                        {total_comps}
+                                                    </div>
+                                                    <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 11px; font-weight: 800; color: #1B1C36; text-transform: uppercase; letter-spacing: 0.04em; line-height: 1.3; margin-top: 4px;">
+                                                        MONITORED<br />COMPETITOR PROFILES
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
 
-                    <!-- Finding 3 -->
-                    <div class="finding-item">
-                        <div class="finding-icon">
-                            <!-- Shield checkmark -->
-                            {shield_icon_tag}
-                        </div>
-                        <div class="finding-content">
-                            <div class="finding-head">
-                                <span class="finding-title">Finding 3: Tactical Action for GoNano Field Sales</span>
-                                <span class="finding-tag">PRIORITY ACTION</span>
-                            </div>
-                            <div class="finding-desc">
-                                Arm GoNano certified applicators with ASTM D3462 microcertifications proving structural matrix reinforcement. Contrast GoNano's 15-Year non-prorated performance warranty against rival prorated exclusions.
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                                    <td width="4%">&nbsp;</td>
 
-            <!-- Right Column -->
-            <div>
-                <div class="section-banner">COMPETITOR WATCH: INDUSTRY &amp; BROADCAST SIGNALS</div>
-                <div class="section-surface" style="min-height: 480px;">
-                    <!-- Signal 1 -->
-                    <div class="signal-block">
-                        <div class="signal-icon">
-                            <!-- Play button icon -->
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="#5551FF"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>
-                        </div>
-                        <div style="flex:1;">
-                            <div class="signal-tag blue">[1] {s1_comp} // {s1_plat}</div>
-                            <div class="signal-title"><a href="{s1_url}" target="_blank" rel="noopener noreferrer">{s1_title}</a></div>
-                            <div class="signal-summary"><strong>Brief Summary:</strong> {s1_snip}</div>
-                        </div>
-                    </div>
+                                    <!-- Right Metric Card: 8 High Threat -->
+                                    <td width="48%" valign="top" bgcolor="#FFFFFF" style="background-color: #FFFFFF; border: 1px solid #FDEEE6; border-radius: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); padding: 18px 20px;">
+                                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td width="58" valign="middle">
+                                                    <table cellpadding="0" cellspacing="0" border="0" bgcolor="#FFF1EB" style="background-color: #FFF1EB; border-radius: 16px; width: 52px; height: 52px;">
+                                                        <tr>
+                                                            <td align="center" valign="middle">
+                                                                <img src="{icon_shield}" width="30" height="30" alt="Threats" style="display: block; width: 30px; height: 30px;" />
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                                <td valign="middle" style="padding-left: 14px;">
+                                                    <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 36px; font-weight: 800; color: #E76E38; line-height: 1.0;">
+                                                        {critical_threats}
+                                                    </div>
+                                                    <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 11px; font-weight: 800; color: #1B1C36; text-transform: uppercase; letter-spacing: 0.04em; line-height: 1.3; margin-top: 4px;">
+                                                        HIGH THREAT RIVALS<br />UNDER SURVEILLANCE
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
 
-                    <!-- Signal 2 -->
-                    <div class="signal-block">
-                        <div class="signal-icon">
-                            <!-- Document icon -->
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5551FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                        </div>
-                        <div style="flex:1;">
-                            <div class="signal-tag orange">[2] {s2_comp} // {s2_plat}</div>
-                            <div class="signal-title"><a href="{s2_url}" target="_blank" rel="noopener noreferrer">{s2_title}</a></div>
-                            <div class="signal-summary"><strong>Brief Summary:</strong> {s2_snip}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                    <!-- 4. TWO-COLUMN MAIN GRID -->
+                    <tr>
+                        <td valign="top" style="padding-bottom: 24px;">
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <!-- ================= LEFT COLUMN ================= -->
+                                    <td width="48%" valign="top">
+                                        
+                                        <!-- Card A: 1. SIGNIFICANT MARKET SIGNALS -->
+                                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 22px;">
+                                            <tr>
+                                                <td bgcolor="#5551FF" style="background-color: #5551FF; border-radius: 10px 10px 0 0; padding: 10px 14px; font-family: 'Montserrat', Arial, sans-serif; font-size: 11px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 0.06em;">
+                                                    1. SIGNIFICANT MARKET SIGNALS &amp; EXECUTIVE SUMMARY
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td bgcolor="#FFFFFF" style="background-color: #FFFFFF; border: 1px solid #EBEFFA; border-top: none; border-radius: 0 0 18px 18px; padding: 18px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+                                                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                                        <tr>
+                                                            <td width="46" valign="top">
+                                                                <table cellpadding="0" cellspacing="0" border="0" bgcolor="#EEF2FF" style="background-color: #EEF2FF; border-radius: 14px; width: 42px; height: 42px;">
+                                                                    <tr>
+                                                                        <td align="center" valign="middle">
+                                                                            <img src="{icon_chart}" width="22" height="22" alt="Trend" style="display: block; width: 22px; height: 22px;" />
+                                                                        </td>
+                                                                    </tr>
+                                                                </table>
+                                                            </td>
+                                                            <td valign="top" style="padding-left: 12px; font-family: 'Montserrat', Arial, sans-serif; font-size: 12px; line-height: 1.55; color: #1B1C36;">
+                                                                <p style="margin: 0 0 10px 0;"><strong>Executive Synthesis:</strong> Active monitoring across North American roofing markets indicates escalating D2C and contractor recruitment campaigns. Rival players are aggressively leveraging local broadcast segments and paid social media funnels to market their products against complete roof replacement.</p>
+                                                                <p style="margin: 0;">Concurrently, field contractor reports reveal accelerating customer friction regarding early coating washouts during freeze-thaw cycles and warranty claim disputes.</p>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
 
-        <!-- Executive Action Takeaway -->
-        <div class="takeaway-banner">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
-            <span>EXECUTIVE ACTION TAKEAWAY</span>
-        </div>
-        <div class="takeaway-surface">
-            <div class="takeaway-lead">
-                Neutralize bio-oil replacement displacement with certified performance proof and a defensible long-term warranty story.
-            </div>
-            <div class="takeaway-sub">
-                {check_icon_tag}
-                <span>Lead with ASTM D3462 Tested. Back it with 15-Year Non-Prorated.</span>
-            </div>
-        </div>
+                                        <!-- Card B: 2. STRATEGIC FINDINGS & TACTICAL PLAYBOOK -->
+                                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td bgcolor="#5551FF" style="background-color: #5551FF; border-radius: 10px 10px 0 0; padding: 10px 14px; font-family: 'Montserrat', Arial, sans-serif; font-size: 11px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 0.06em;">
+                                                    2. STRATEGIC FINDINGS &amp; TACTICAL PLAYBOOK
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td bgcolor="#FFFFFF" style="background-color: #FFFFFF; border: 1px solid #EBEFFA; border-top: none; border-radius: 0 0 18px 18px; padding: 18px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+                                                    
+                                                    <!-- Finding 1 -->
+                                                    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 16px;">
+                                                        <tr>
+                                                            <td width="38" valign="top">
+                                                                <table cellpadding="0" cellspacing="0" border="0" bgcolor="#FFF1EB" style="background-color: #FFF1EB; border-radius: 12px; width: 34px; height: 34px;">
+                                                                    <tr>
+                                                                        <td align="center" valign="middle">
+                                                                            <img src="{icon_target}" width="18" height="18" alt="Target" style="display: block; width: 18px; height: 18px;" />
+                                                                        </td>
+                                                                    </tr>
+                                                                </table>
+                                                            </td>
+                                                            <td valign="top" style="padding-left: 10px;">
+                                                                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                                                    <tr>
+                                                                        <td valign="middle" style="font-family: 'Montserrat', Arial, sans-serif; font-size: 12px; font-weight: 700; color: #1B1C36;">
+                                                                            Finding 1: Bio-Oil Market Saturation vs. Waste Reduction
+                                                                        </td>
+                                                                        <td align="right" valign="middle" style="padding-left: 6px;">
+                                                                            <span style="background-color: #E76E38; color: #FFFFFF; font-family: 'Montserrat', Arial, sans-serif; font-size: 8.5px; font-weight: 800; padding: 2px 7px; border-radius: 10px; text-transform: uppercase; white-space: nowrap; display: inline-block;">HIGH THREAT</span>
+                                                                        </td>
+                                                                    </tr>
+                                                                </table>
+                                                                <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 11px; line-height: 1.45; color: #596078; margin-top: 4px;">
+                                                                    Rival firms continue pushing aggressive D2C video funnels undercutting roof replacement. However, field contractor and homeowner data shows substantial warranty claim rejections citing pre-existing conditions and granular loss.
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
 
-        <!-- Footer -->
-        <div class="footer-line">
-            <div class="footer-conf">CONFIDENTIAL: FOR INTERNAL GONANO LEADERSHIP ONLY</div>
-            <div style="color:#DDE0EB;">|</div>
-            <div class="footer-author">Prepared by: Miguel Gonzales, Competitor Analysis Specialist</div>
-        </div>
-    </div>
+                                                    <!-- Finding 2 -->
+                                                    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 16px;">
+                                                        <tr>
+                                                            <td width="38" valign="top">
+                                                                <table cellpadding="0" cellspacing="0" border="0" bgcolor="#FFF1EB" style="background-color: #FFF1EB; border-radius: 12px; width: 34px; height: 34px;">
+                                                                    <tr>
+                                                                        <td align="center" valign="middle">
+                                                                            <img src="{icon_sun}" width="18" height="18" alt="Sun" style="display: block; width: 18px; height: 18px;" />
+                                                                        </td>
+                                                                    </tr>
+                                                                </table>
+                                                            </td>
+                                                            <td valign="top" style="padding-left: 10px;">
+                                                                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                                                    <tr>
+                                                                        <td valign="middle" style="font-family: 'Montserrat', Arial, sans-serif; font-size: 12px; font-weight: 700; color: #1B1C36;">
+                                                                            Finding 2: Climate Stress Evaporation
+                                                                        </td>
+                                                                        <td align="right" valign="middle" style="padding-left: 6px;">
+                                                                            <span style="background-color: #E76E38; color: #FFFFFF; font-family: 'Montserrat', Arial, sans-serif; font-size: 8.5px; font-weight: 800; padding: 2px 7px; border-radius: 10px; text-transform: uppercase; white-space: nowrap; display: inline-block;">HIGH THREAT</span>
+                                                                        </td>
+                                                                    </tr>
+                                                                </table>
+                                                                <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 11px; line-height: 1.45; color: #596078; margin-top: 4px;">
+                                                                    Bio-oils swell surface bitumen without cross-linking to the fiberglass mat. In summer heat and freeze-thaw cycles, volatile plant oils evaporate within 12-18 months. Insurance adjusters are declining policies on aging shingle roofs treated with bio-oils.
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+
+                                                    <!-- Finding 3 -->
+                                                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                                        <tr>
+                                                            <td width="38" valign="top">
+                                                                <table cellpadding="0" cellspacing="0" border="0" bgcolor="#FFF1EB" style="background-color: #FFF1EB; border-radius: 12px; width: 34px; height: 34px;">
+                                                                    <tr>
+                                                                        <td align="center" valign="middle">
+                                                                            <img src="{icon_shield}" width="18" height="18" alt="Action" style="display: block; width: 18px; height: 18px;" />
+                                                                        </td>
+                                                                    </tr>
+                                                                </table>
+                                                            </td>
+                                                            <td valign="top" style="padding-left: 10px;">
+                                                                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                                                    <tr>
+                                                                        <td valign="middle" style="font-family: 'Montserrat', Arial, sans-serif; font-size: 12px; font-weight: 700; color: #1B1C36;">
+                                                                            Finding 3: Tactical Action for GoNano Field Sales
+                                                                        </td>
+                                                                        <td align="right" valign="middle" style="padding-left: 6px;">
+                                                                            <span style="background-color: #E76E38; color: #FFFFFF; font-family: 'Montserrat', Arial, sans-serif; font-size: 8.5px; font-weight: 800; padding: 2px 7px; border-radius: 10px; text-transform: uppercase; white-space: nowrap; display: inline-block;">PRIORITY ACTION</span>
+                                                                        </td>
+                                                                    </tr>
+                                                                </table>
+                                                                <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 11px; line-height: 1.45; color: #596078; margin-top: 4px;">
+                                                                    Arm GoNano certified applicators with ASTM D3462 microcertifications proving structural matrix reinforcement. Contrast GoNano's 15-Year non-prorated performance warranty against rival prorated exclusions.
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                    </td>
+
+                                    <td width="4%">&nbsp;</td>
+
+                                    <!-- ================= RIGHT COLUMN ================= -->
+                                    <td width="48%" valign="top">
+                                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td bgcolor="#5551FF" style="background-color: #5551FF; border-radius: 10px 10px 0 0; padding: 10px 14px; font-family: 'Montserrat', Arial, sans-serif; font-size: 11px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 0.06em;">
+                                                    COMPETITOR WATCH: INDUSTRY &amp; BROADCAST SIGNALS
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td bgcolor="#FFFFFF" style="background-color: #FFFFFF; border: 1px solid #EBEFFA; border-top: none; border-radius: 0 0 18px 18px; padding: 20px 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); min-height: 480px;">
+                                                    
+                                                    <!-- Signal 1 -->
+                                                    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 24px;">
+                                                        <tr>
+                                                            <td width="48" valign="top">
+                                                                <table cellpadding="0" cellspacing="0" border="0" bgcolor="#EEF2FF" style="background-color: #EEF2FF; border-radius: 16px; width: 44px; height: 44px;">
+                                                                    <tr>
+                                                                        <td align="center" valign="middle">
+                                                                            <img src="{icon_play}" width="18" height="18" alt="Play" style="display: block; width: 18px; height: 18px;" />
+                                                                        </td>
+                                                                    </tr>
+                                                                </table>
+                                                            </td>
+                                                            <td valign="top" style="padding-left: 12px;">
+                                                                <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 10.5px; font-weight: 800; color: #5551FF; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px;">
+                                                                    [1] {s1_comp} // {s1_plat}
+                                                                </div>
+                                                                <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 14px; font-weight: 700; line-height: 1.35; margin-bottom: 6px;">
+                                                                    <a href="{s1_url}" target="_blank" style="color: #1B1C36; text-decoration: none;">{s1_title}</a>
+                                                                </div>
+                                                                <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 11.5px; line-height: 1.45; color: #596078;">
+                                                                    <strong>Brief Summary:</strong> {s1_snip}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+
+                                                    <!-- Signal 2 -->
+                                                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                                        <tr>
+                                                            <td width="48" valign="top">
+                                                                <table cellpadding="0" cellspacing="0" border="0" bgcolor="#EEF2FF" style="background-color: #EEF2FF; border-radius: 16px; width: 44px; height: 44px;">
+                                                                    <tr>
+                                                                        <td align="center" valign="middle">
+                                                                            <img src="{icon_doc}" width="20" height="20" alt="Document" style="display: block; width: 20px; height: 20px;" />
+                                                                        </td>
+                                                                    </tr>
+                                                                </table>
+                                                            </td>
+                                                            <td valign="top" style="padding-left: 12px;">
+                                                                <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 10.5px; font-weight: 800; color: #E76E38; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px;">
+                                                                    [2] {s2_comp} // {s2_plat}
+                                                                </div>
+                                                                <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 14px; font-weight: 700; line-height: 1.35; margin-bottom: 6px;">
+                                                                    <a href="{s2_url}" target="_blank" style="color: #1B1C36; text-decoration: none;">{s2_title}</a>
+                                                                </div>
+                                                                <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 11.5px; line-height: 1.45; color: #596078;">
+                                                                    <strong>Brief Summary:</strong> {s2_snip}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- 5. EXECUTIVE ACTION TAKEAWAY -->
+                    <tr>
+                        <td valign="top" style="padding-bottom: 24px;">
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td bgcolor="#E76E38" style="background-color: #E76E38; border-radius: 10px 10px 0 0; padding: 10px 16px; font-family: 'Montserrat', Arial, sans-serif; font-size: 11.5px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 0.08em;">
+                                        <table cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td valign="middle" style="padding-right: 8px;">
+                                                    <img src="{icon_target}" width="16" height="16" alt="Takeaway" style="display: block; width: 16px; height: 16px;" />
+                                                </td>
+                                                <td valign="middle" style="font-family: 'Montserrat', Arial, sans-serif; font-size: 11.5px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 0.08em;">
+                                                    EXECUTIVE ACTION TAKEAWAY
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td bgcolor="#FFF5ED" style="background-color: #FFF5ED; border: 1px solid #FDEEE6; border-top: none; border-radius: 0 0 18px 18px; padding: 18px 22px;">
+                                        <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 13.5px; font-weight: 700; color: #1B1C36; line-height: 1.5; margin-bottom: 8px;">
+                                            Neutralize bio-oil replacement displacement with certified performance proof and a defensible long-term warranty story.
+                                        </div>
+                                        <table cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td valign="middle" style="padding-right: 8px;">
+                                                    <img src="{icon_check}" width="20" height="20" alt="Checkmark" style="display: block; width: 20px; height: 20px;" />
+                                                </td>
+                                                <td valign="middle" style="font-family: 'Montserrat', Arial, sans-serif; font-size: 13px; font-weight: 800; color: #E76E38;">
+                                                    Lead with ASTM D3462 Tested. Back it with 15-Year Non-Prorated.
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- 6. FOOTER ROW -->
+                    <tr>
+                        <td valign="top" style="border-top: 1px solid #EBEFFA; padding-top: 16px;">
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td align="left" valign="middle" style="font-family: 'Montserrat', Arial, sans-serif; font-size: 10.5px; font-weight: 600; color: #7A819B; letter-spacing: 0.04em;">
+                                        CONFIDENTIAL: FOR INTERNAL GONANO LEADERSHIP ONLY
+                                    </td>
+                                    <td align="right" valign="middle" style="font-family: 'Montserrat', Arial, sans-serif; font-size: 10.5px; font-weight: 700; color: #5551FF;">
+                                        Prepared by: Miguel Gonzales, Competitor Analysis Specialist
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>"""
 
