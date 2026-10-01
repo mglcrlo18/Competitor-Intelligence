@@ -189,20 +189,74 @@ def save_signals_to_db(signals_list: List[Dict[str, Any]], competitor: str):
     conn.commit()
     conn.close()
 
-def get_all_signals_for_competitor(competitor: Optional[str] = None, limit: int = 50) -> List[Dict[str, Any]]:
+def parse_signal_datetime(ts_str: Optional[str]) -> Optional[datetime]:
+    if not ts_str:
+        return None
+    ts_clean = str(ts_str).strip()
+    rel_match = re.match(r'(\d+)\s*(d|day|days|mo|month|months|y|year|years)\s*ago', ts_clean, re.I)
+    if rel_match:
+        val = int(rel_match.group(1))
+        unit = rel_match.group(2).lower()
+        now = datetime.now()
+        if unit in ('d', 'day', 'days'):
+            return now - timedelta(days=val)
+        elif unit in ('mo', 'month', 'months'):
+            return now - timedelta(days=val * 30)
+        elif unit in ('y', 'year', 'years'):
+            return now - timedelta(days=val * 365)
+    for fmt in ('%Y-%m-%d %H:%M:%S', '%Y-%m-%d', '%Y-%m-%dT%H:%M:%S'):
+        try:
+            return datetime.strptime(ts_clean[:19], fmt)
+        except Exception:
+            pass
+    try:
+        from email.utils import parsedate_to_datetime
+        return parsedate_to_datetime(ts_clean)
+    except Exception:
+        pass
+    return None
+
+def get_all_signals_for_competitor(competitor: Optional[str] = None, limit: int = 50, time_horizon: Optional[str] = None) -> List[Dict[str, Any]]:
     conn = get_connection()
     cursor = conn.cursor()
     if competitor and competitor != "All Competitors":
         cursor.execute("""
-        SELECT * FROM signals WHERE LOWER(competitor) LIKE ? ORDER BY id DESC LIMIT ?
-        """, (f"%{competitor.lower()}%", limit))
+        SELECT * FROM signals WHERE LOWER(competitor) LIKE ? ORDER BY id DESC LIMIT 150
+        """, (f"%{competitor.lower()}%",))
     else:
         cursor.execute("""
-        SELECT * FROM signals ORDER BY id DESC LIMIT ?
-        """, (limit,))
+        SELECT * FROM signals ORDER BY id DESC LIMIT 150
+        """)
     rows = [dict(r) for r in cursor.fetchall()]
     conn.close()
-    return rows
+
+    if not time_horizon or str(time_horizon).lower() in ("all", "all time"):
+        return rows[:limit]
+
+    th = str(time_horizon).lower()
+    max_days = 30
+    if "24" in th or "1 day" in th or "today" in th:
+        max_days = 1
+    elif "7" in th:
+        max_days = 7
+    elif "30" in th:
+        max_days = 30
+    elif "90" in th:
+        max_days = 90
+    elif "12" in th or "year" in th:
+        max_days = 365
+
+    cutoff = datetime.now() - timedelta(days=max_days)
+    filtered = []
+    for r in rows:
+        dt = parse_signal_datetime(r.get("timestamp"))
+        if dt:
+            if dt.tzinfo:
+                dt = dt.replace(tzinfo=None)
+            if dt >= cutoff:
+                filtered.append(r)
+    return filtered[:limit]
+
 
 def get_marketing_gaps(competitor: Optional[str] = None) -> List[Dict[str, Any]]:
     conn = get_connection()

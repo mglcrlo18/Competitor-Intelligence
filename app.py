@@ -106,7 +106,7 @@ def get_logo_base64(is_light_logo: bool = True) -> str:
 LOGO_B64_LIGHT = get_logo_base64(is_light_logo=True)
 LOGO_B64_DARK = get_logo_base64(is_light_logo=False)
 
-def render_logo_html(is_light: bool = True, height: int = 90) -> str:
+def render_logo_html(is_light: bool = True, height: int = 90, max_width: int = 280) -> str:
     b64 = LOGO_B64_LIGHT if is_light else LOGO_B64_DARK
     if b64:
         return f'<img src="data:image/png;base64,{b64}" style="height:{height}px; max-width:280px; width:auto; display:inline-block; vertical-align:middle; filter:drop-shadow(0 3px 6px rgba(0,0,0,0.22));" alt="GoNano Logo" />'
@@ -759,7 +759,7 @@ if selected_nav == "Overview":
                     Verified contractor discourse with contextual summaries below each headline.
                 </div>
             """, unsafe_allow_html=True)
-            signals = get_all_signals_for_competitor(active_target, limit=4)
+            signals = get_all_signals_for_competitor(active_target, limit=4, time_horizon=time_horizon)
             if signals:
                 for sig in signals:
                     title_text = sig.get('title', 'Market Signal')
@@ -1161,7 +1161,7 @@ elif selected_nav == "Intelligence Workspace":
                 st.markdown(f"#### Real-Time Intelligence Stream: {active_target if active_target else f'All Monitored Competitors'}")
                 st.caption("Live video uploads, Reddit discussions, and public advertisements with summaries.")
 
-                persisted_signals = get_all_signals_for_competitor(active_target, limit=20)
+                persisted_signals = get_all_signals_for_competitor(active_target, limit=20, time_horizon=time_horizon)
                 if persisted_signals:
                     for s in persisted_signals:
                         title_str = s.get('title', 'Market Signal')
@@ -1324,7 +1324,7 @@ elif selected_nav == "Monitoring & Signals":
                 st.rerun()
             st.markdown("</div>", unsafe_allow_html=True)
 
-        signals = get_all_signals_for_competitor(active_target, limit=25)
+        signals = get_all_signals_for_competitor(active_target, limit=25, time_horizon=time_horizon)
         if signals:
             for s in signals:
                 if feed_type == "YouTube Videos Only" and "YouTube" not in s.get("platform", ""):
