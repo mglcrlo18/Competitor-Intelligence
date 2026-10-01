@@ -136,7 +136,7 @@ def sanitize_url(raw_url: Optional[str], fallback_title: str = "") -> str:
 # -----------------------------------------------------------------------------
 # FLOWY TACTILE DESIGN SYSTEM CSS
 # -----------------------------------------------------------------------------
-st.markdown("""
+st.html("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
@@ -815,8 +815,7 @@ elif selected_nav == "Intelligence Workspace":
             ("Technical ASTM Lab", "Lab teardowns: ASTM D3462 tear resistance, D3161 wind uplift, UL 2218 impact.", "astm"),
             ("Dealer Channel Intel", "Applicator dissatisfaction, poaching alerts, and territory exclusivity.", "dealer"),
             ("Territory Audit", "Regional market penetration and climate vulnerability mapping.", "territory"),
-            ("Historical Trends", "Asphalt shingle chemistry evolution from 1900 to present.", "history"),
-            ("Domain & Sheet Tracker", "Integrated enterprise domain risks and Google Sheets live roster.", "tracker"),
+                        ("Domain & Sheet Tracker", "Integrated enterprise domain risks and Google Sheets live roster.", "tracker"),
             ("OSINT Stream", "Multi-source feed with in-app video embeds, Reddit discussions, and Meta Ads.", "osint"),
             ("Red Team Simulator", "Roleplay as rival executive leadership to stress-test GoNano offensive moves.", "redteam")
         ]
@@ -989,12 +988,12 @@ elif selected_nav == "Intelligence Workspace":
         # 4. SILENT DOM DIFF RADAR
         elif drill == "diff":
             try:
-                target_diff_title = active_target if active_target else f"Select Competitor (Preview: {lookup_target})"
-                st.markdown(f"#### Website Change Radar - Stealth Changes: {target_diff_title}")
+                diff_subject = active_target if active_target else lookup_target
+                st.markdown(f"#### Website Change Radar - Stealth Changes: {diff_subject}")
                 st.caption("Detects unannounced competitor warranty changes, price increases, and stealth terms modifications.")
 
-                diff_data = compute_text_diff(lookup_target)
-                safe_diff_url = sanitize_url(diff_data.get('url'), lookup_target)
+                diff_data = compute_text_diff(diff_subject)
+                safe_diff_url = sanitize_url(diff_data.get('url'), diff_subject)
                 st.markdown(f"**Target Monitored Endpoint:** [{diff_data['url']}]({safe_diff_url})")
                 st.caption(f"Comparing **{diff_data['baseline_date']}** against **{diff_data['current_date']}**")
 
@@ -1073,18 +1072,27 @@ elif selected_nav == "Intelligence Workspace":
 
                 dealers = get_dealer_intel_records()
                 for dl in dealers:
+                    c_id = dl.get('contractor_id', 'DEALER')
+                    reg = str(dl.get('region') or 'North America').upper()
+                    brand = dl.get('current_rival_brand') or 'Rival Applicator'
+                    status = dl.get('sentiment_status') or 'MONITORED'
+                    friction = dl.get('reported_friction') or dl.get('core_grievance') or 'Contractor reporting customer warranty friction.'
+                    strategy = dl.get('recruitment_strategy') or dl.get('gonano_pitch_angle') or 'Offer certified ASTM lab proof and territory exclusivity.'
+                    src_url = dl.get('source_url') or 'https://www.google.com'
+                    forum_src = dl.get('forum_source') or 'Industry Forum'
+
                     st.markdown(f"""
                     <div class="tactile-card">
-                        <div style="display:flex; justify-content:space-between;">
-                            <strong style="font-size:14px; color:var(--ink);">[{dl['contractor_id']}] {dl['region'].upper()} // {dl['current_rival_brand']}</strong>
-                            <span class="capsule-pill capsule-amber"><span class="bead"></span>{dl['sentiment_status']}</span>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <strong style="font-size:14px; color:var(--ink);">[{c_id}] {reg} // {brand}</strong>
+                            <span class="capsule-pill capsule-amber"><span class="bead"></span>{status}</span>
                         </div>
-                        <div style="font-size:12px; color:var(--slate); margin-top:4px;"><strong>Contractor Profile:</strong> {dl['company_name']} ({dl['applicator_volume_sqft']})</div>
+                        <div style="font-size:12px; color:var(--slate); margin-top:6px;"><strong>Reported Field Friction:</strong> {friction}</div>
                         <div style="background:var(--pill-amber-bg); border-radius:16px; padding:10px; font-size:12px; margin:8px 0; color:var(--pill-amber-fg);">
-                            <strong>Reported Dissatisfaction:</strong> {dl['core_grievance']}
+                            <strong>GoNano Recruitment Action:</strong> {strategy}
                         </div>
-                        <div style="font-size:12px; color:var(--pill-green-fg); font-weight:700;">
-                            GoNano Pitch Opportunity: {dl['gonano_pitch_angle']}
+                        <div style="margin-top:6px;">
+                            <a href="{src_url}" target="_blank" rel="noopener noreferrer" class="tactile-link">Open Verified Forum Thread ({forum_src})</a>
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
@@ -1100,32 +1108,18 @@ elif selected_nav == "Intelligence Workspace":
 
                 territories = get_territory_audit_data()
                 for t in territories:
-                    with st.expander(f"Territory: {t['region']} - Rival Penetration: {t['competitor_penetration']}"):
-                        st.markdown(f"**Dominant Competitor:** `{t['dominant_competitor']}`")
-                        st.markdown(f"**Climate & Hail Vulnerability:** {t['climate_risk']}")
-                        st.markdown(f"**GoNano Strategic Window:** {t['gonano_advantage']}")
+                    r_name = t.get('region_name') or t.get('region') or 'Territory'
+                    r_pen = f"{t.get('market_volume_pct', 25)}% Market Share" if 'market_volume_pct' in t else (t.get('competitor_penetration') or 'High Penetration')
+                    dom_comp = t.get('dominant_competitor') or 'Regional Bio-Sprayers'
+                    climate = t.get('climate_stress') or t.get('climate_risk') or 'Severe Climate Stress'
+                    opp = t.get('opportunity_for_gonano') or t.get('gonano_advantage') or 'Deploy certified GoNano applicators.'
 
-            except Exception as tab_err:
-                st.error(f"Intelligence Module Advisory: Encountered a non-fatal exception ({type(tab_err).__name__}: {tab_err}). The rest of the terminal remains fully functional.")
-
-        # 9. HISTORICAL TRENDS
-        elif drill == "history":
-            try:
-                st.markdown("#### Historical Trend Analysis - 1900 to Present")
-                st.caption("Deep historical timeline detailing the chemical evolution of asphalt shingles and roof preservation techniques.")
-
-                eras = get_historical_era_comparison()
-                for e in eras:
-                    st.markdown(f"""
-                    <div class="tactile-card">
-                        <div style="font-size:15px; font-weight:800; color:var(--ink);">{e['era_title']} ({e['time_period']})</div>
-                        <div style="font-size:12px; color:var(--primary); font-weight:700; margin:4px 0;">Dominant Chemical Process: {e['manufacturing_technology']}</div>
-                        <p style="font-size:12px; color:var(--slate); margin:4px 0;">{e['industry_context']}</p>
-                        <div style="background:var(--surface-soft); border-radius:14px; padding:10px; font-size:11px; margin-top:6px;">
-                            <strong>Historical Implication for Rejuvenation:</strong> {e['implication_for_rejuvenation']}
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
+                    with st.expander(f"Territory: {r_name} - {r_pen}"):
+                        st.markdown(f"**Dominant Competitor:** ")
+                        st.markdown(f"**Climate & Hail Vulnerability:** {climate}")
+                        st.markdown(f"**GoNano Strategic Window:** {opp}")
+                        if t.get('citations'):
+                            st.markdown(render_citations_html(t['citations']), unsafe_allow_html=True)
 
             except Exception as tab_err:
                 st.error(f"Intelligence Module Advisory: Encountered a non-fatal exception ({type(tab_err).__name__}: {tab_err}). The rest of the terminal remains fully functional.")
@@ -1148,8 +1142,7 @@ elif selected_nav == "Intelligence Workspace":
                         "Date (PHT)": r.get("date_pht", ""),
                         "Subject": r.get("subject", ""),
                         "Requested By": r.get("requested_by", ""),
-                        "Notes": r.get("notes", "")
-                    })
+                                            })
                 st.dataframe(pd.DataFrame(t_df_list), hide_index=True, use_container_width=True)
 
             except Exception as tab_err:
@@ -1444,8 +1437,7 @@ elif selected_nav == "C-Suite Request Desk":
                         "Requester Email": r["requester_email"],
                         "Territory": r["location"],
                         "Date Requested": r["date_requested"],
-                        "Notes": r["field_notes"][:90] + ("..." if len(r["field_notes"]) > 90 else ""),
-                        "Status": r["status"]
+                                                "Status": r["status"]
                     }
                     for r in pending_reqs
                 ]),
