@@ -1,6 +1,6 @@
 """
 app.py
-GoNano Competitor Intelligence Command Center (Full Executive Edition).
+GoNano Competitor Intelligence Dashboard (Full Executive Edition).
 Engineered with the "Flowy Tactile" Design System:
 - Non-Boxy Geometry: Apple G2 continuous curvature superellipses (border-radius: 28px) for containers; Capsule pills (border-radius: 9999px) for all controls, badges, and filters.
 - Borderless Dual-Source Soft Lighting: Strictly NO 1px perimeter outlines. Delineated via specular top-left highlight (-5px -5px 10px rgba(255,255,255,0.85)) and ambient bottom-right shadow (6px 6px 12px rgba(0,0,0,0.06)) over matte neutral canvas (#EEF1F6).
@@ -83,7 +83,7 @@ import heatmap_engine
 
 # Page Configuration
 st.set_page_config(
-    page_title="GoNano Competitor Intelligence Command Center",
+    page_title="GoNano Competitor Intelligence Dashboard",
     page_icon=None,
     layout="wide",
     initial_sidebar_state="expanded"
@@ -443,7 +443,7 @@ if not st.session_state.authenticated_executive:
         </div>
         <div class="tactile-card" style="text-align:left; padding:32px;">
             <div style="font-size:18px; font-weight:800; color:var(--ink); margin-bottom:4px;">
-                Executive Command Center
+                Executive Intelligence Dashboard
             </div>
             <div style="font-size:12px; color:var(--slate); margin-bottom:20px; line-height:1.5;">
                 Confidential Strategic Market Intelligence & Risk Terminal. Authorized Executive Access.
@@ -656,7 +656,7 @@ if selected_nav == "Overview":
         head_c1, head_c2 = st.columns([3, 1])
         with head_c1:
             st.markdown('<p class="eyebrow">GoNano / Executive intelligence</p>', unsafe_allow_html=True)
-            st.markdown('<h1 class="head-title">Competitor Intelligence Command Center</h1>', unsafe_allow_html=True)
+            st.markdown('<h1 class="head-title">Competitor Intelligence Dashboard</h1>', unsafe_allow_html=True)
             st.markdown('<p class="head-copy">Continuous market surveillance, empirical technical audits, and executive briefing synthesis.</p>', unsafe_allow_html=True)
         with head_c2:
             st.markdown("<div style='text-align:right; margin-top:10px;'>", unsafe_allow_html=True)
