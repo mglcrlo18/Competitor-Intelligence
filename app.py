@@ -106,10 +106,10 @@ def get_logo_base64(is_light_logo: bool = True) -> str:
 LOGO_B64_LIGHT = get_logo_base64(is_light_logo=True)
 LOGO_B64_DARK = get_logo_base64(is_light_logo=False)
 
-def render_logo_html(is_light: bool = True, height: int = 70) -> str:
+def render_logo_html(is_light: bool = True, height: int = 90) -> str:
     b64 = LOGO_B64_LIGHT if is_light else LOGO_B64_DARK
     if b64:
-        return f'<img src="data:image/png;base64,{b64}" style="height:{height}px; max-width:210px; width:auto; display:inline-block; vertical-align:middle; filter:drop-shadow(0 3px 6px rgba(0,0,0,0.22));" alt="GoNano Logo" />'
+        return f'<img src="data:image/png;base64,{b64}" style="height:{height}px; max-width:280px; width:auto; display:inline-block; vertical-align:middle; filter:drop-shadow(0 3px 6px rgba(0,0,0,0.22));" alt="GoNano Logo" />'
     fallback_color = "#FFFFFF" if is_light else "#1B1C36"
     return f'<span style="font-family:\'Montserrat\', sans-serif; font-size:26px; font-weight:800; color:{fallback_color}; letter-spacing:0.04em;">GONANO</span>'
 
@@ -511,7 +511,7 @@ ALL_COMPETITORS = get_all_competitor_names()
 # -----------------------------------------------------------------------------
 st.sidebar.markdown(f"""
 <div style="padding: 16px 0 24px 0; text-align:center;">
-    {render_logo_html(is_light=True, height=72)}
+    {render_logo_html(is_light=True, height=92, max_width=275)}
     <div style="margin-top:14px;">
         <span class="capsule-pill capsule-blue" style="font-size:9px;">
             <span class="bead"></span>Executive Terminal
