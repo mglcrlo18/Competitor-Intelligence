@@ -8,9 +8,11 @@ Engineered with the "Flowy Tactile" Design System:
 - Solid Color Discipline (No Gradients): High-contrast solid color anchors (#675CE7 brand primary, #1B1C36 deep ink, #596078 slate, #EEF1F6 canvas), with solid capsule pills (Soft Green, Soft Blue, Soft Amber, Soft Red).
 - Strictly Zero Emojis: Clean monochrome vector glyphs and typography. Zero Unicode emojis throughout.
 - Physics-Based Motion: Critically damped spring physics cubic-bezier(0.175, 0.885, 0.32, 1.275).
-- Official GoNano Light Color Logo embedded in sidebar and authentication headers.
+- Prominent GoNano Light Color Logo embedded in sidebar and authentication headers.
+- Official Executive Title: Competitor Analysis Specialist (Miguel Gonzales).
 - Bulletproof Redirect Prevention: Session authentication persisted in st.query_params; zero '#' or relative href links; all headlines open safely in target='_blank' with verified external URLs.
 - Brief Summary Below Each Title: Every single headline and news signal includes an informative contextual synthesis below the headline.
+- C-Suite Request Desk: Dedicated File Uploader + Separated Gemini 3.1 Pro Teardown Generation & Email Dispatch Workflow.
 """
 import os
 import sys
@@ -74,6 +76,7 @@ from csuite_workflow import (
     get_all_pending_competitor_requests,
     analyze_document_with_gemini_3_pro,
     dispatch_analysis_to_requester,
+    extract_text_from_file_bytes,
     DEFAULT_CC_LIST
 )
 import heatmap_engine
@@ -87,7 +90,7 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# ASSET EMBEDDING: OFFICIAL GONANO LOGO
+# ASSET EMBEDDING: PROMINENT OFFICIAL GONANO LOGO
 # -----------------------------------------------------------------------------
 ASSETS_DIR = Path(__file__).resolve().parent / "assets"
 
@@ -103,12 +106,12 @@ def get_logo_base64(is_light_logo: bool = True) -> str:
 LOGO_B64_LIGHT = get_logo_base64(is_light_logo=True)
 LOGO_B64_DARK = get_logo_base64(is_light_logo=False)
 
-def render_logo_html(is_light: bool = True, height: int = 38) -> str:
+def render_logo_html(is_light: bool = True, height: int = 70) -> str:
     b64 = LOGO_B64_LIGHT if is_light else LOGO_B64_DARK
     if b64:
-        return f'<img src="data:image/png;base64,{b64}" style="height:{height}px; width:auto; display:inline-block; vertical-align:middle; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.15));" alt="GoNano Logo" />'
+        return f'<img src="data:image/png;base64,{b64}" style="height:{height}px; max-width:210px; width:auto; display:inline-block; vertical-align:middle; filter:drop-shadow(0 3px 6px rgba(0,0,0,0.22));" alt="GoNano Logo" />'
     fallback_color = "#FFFFFF" if is_light else "#1B1C36"
-    return f'<span style="font-family:\'Montserrat\', sans-serif; font-size:22px; font-weight:800; color:{fallback_color}; letter-spacing:0.04em;">GONANO</span>'
+    return f'<span style="font-family:\'Montserrat\', sans-serif; font-size:26px; font-weight:800; color:{fallback_color}; letter-spacing:0.04em;">GONANO</span>'
 
 # -----------------------------------------------------------------------------
 # URL SANITIZATION & REDIRECT IMMUNITY
@@ -215,6 +218,15 @@ st.markdown("""
     }
     textarea, .stTextArea textarea {
         border-radius: 20px !important;
+    }
+
+    /* File uploader styling */
+    [data-testid="stFileUploader"] {
+        background: var(--surface);
+        border-radius: 24px !important;
+        padding: 16px;
+        box-shadow: -4px -4px 8px rgba(255, 255, 255, 0.85), 5px 5px 10px rgba(0, 0, 0, 0.05) !important;
+        border: none !important;
     }
 
     /* CAPSULE BUTTONS (Physics-based spring motion) */
@@ -418,16 +430,16 @@ if "authenticated_executive" not in st.session_state:
         st.session_state.authenticated_executive = {
             "name": st.query_params.get("u_name", "Miguel Gonzales"),
             "email": st.query_params.get("u_email", "miguel.gonzales@gonano.com"),
-            "role": "Lead Strategic Intelligence Analyst"
+            "role": "Competitor Analysis Specialist"
         }
     else:
         st.session_state.authenticated_executive = None
 
 if not st.session_state.authenticated_executive:
     st.markdown(f"""
-    <div style="max-width:520px; margin: 50px auto 20px auto; text-align:center;">
-        <div style="margin-bottom:18px;">
-            {render_logo_html(is_light=False, height=52)}
+    <div style="max-width:540px; margin: 50px auto 20px auto; text-align:center;">
+        <div style="margin-bottom:24px;">
+            {render_logo_html(is_light=False, height=80)}
         </div>
         <div class="tactile-card" style="text-align:left; padding:32px;">
             <div style="font-size:18px; font-weight:800; color:var(--ink); margin-bottom:4px;">
@@ -472,10 +484,10 @@ if not st.session_state.authenticated_executive:
                             role_part = "GoNano Evaluator"
                         elif clean_email in ["miguel.gonzales@gonano.com", "mcbgonzales@outlook.com", "gonzalesmiguelcarlo@gmail.com"]:
                             name_part = "Miguel Gonzales"
-                            role_part = "Lead Strategic Intelligence Analyst"
+                            role_part = "Competitor Analysis Specialist"
                         else:
                             name_part = clean_email.split('@')[0].replace('.', ' ').title() if '@' in clean_email else 'Executive Leader'
-                            role_part = "GoNano Strategic Intelligence"
+                            role_part = "Competitor Analysis Specialist"
 
                         st.session_state.authenticated_executive = {
                             "name": name_part,
@@ -495,12 +507,12 @@ exec_user = st.session_state.authenticated_executive
 ALL_COMPETITORS = get_all_competitor_names()
 
 # -----------------------------------------------------------------------------
-# 3. SIDEBAR: NAVIGATION RAIL WITH LOGO & CAPSULE PILLS
+# 3. SIDEBAR: NAVIGATION RAIL WITH ENLARGED LOGO & CAPSULE PILLS
 # -----------------------------------------------------------------------------
 st.sidebar.markdown(f"""
-<div style="padding: 10px 0 20px 0; text-align:center;">
-    {render_logo_html(is_light=True, height=44)}
-    <div style="margin-top:12px;">
+<div style="padding: 16px 0 24px 0; text-align:center;">
+    {render_logo_html(is_light=True, height=72)}
+    <div style="margin-top:14px;">
         <span class="capsule-pill capsule-blue" style="font-size:9px;">
             <span class="bead"></span>Executive Terminal
         </span>
@@ -572,10 +584,10 @@ with st.sidebar.expander("Add Custom Competitor"):
 # User identity card in sidebar foot
 st.sidebar.markdown("<div style='height: 14px;'></div>", unsafe_allow_html=True)
 st.sidebar.markdown(f"""
-<div style="background: rgba(255,255,255,0.05); border-radius: 18px; padding: 12px; margin-bottom: 12px;">
-    <div style="font-size: 12px; font-weight: 700; color: #FFFFFF;">{exec_user['name']}</div>
-    <div style="font-size: 10px; color: #9499B4;">{exec_user['role']}</div>
-    <div style="font-size: 10px; color: #8583F2; margin-top: 2px;">{exec_user['email']}</div>
+<div style="background: rgba(255,255,255,0.05); border-radius: 18px; padding: 14px; margin-bottom: 12px;">
+    <div style="font-size: 13px; font-weight: 700; color: #FFFFFF;">{exec_user['name']}</div>
+    <div style="font-size: 10px; color: #9499B4; font-weight:600; text-transform:uppercase; letter-spacing:0.04em;">Competitor Analysis Specialist</div>
+    <div style="font-size: 10px; color: #8583F2; margin-top: 3px;">{exec_user['email']}</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -593,7 +605,7 @@ conn.close()
 # -----------------------------------------------------------------------------
 # 4. TOP COMMAND BAR (INSET SOFT LIGHTING, PILL HORIZON, ZERO EMOJIS)
 # -----------------------------------------------------------------------------
-cbar_col1, cbar_col2, cbar_col3 = st.columns([3, 1.2, 1.2])
+cbar_col1, cbar_col2, cbar_col3 = st.columns([3, 1.2, 1.4])
 with cbar_col1:
     top_q = st.text_input(
         "TOP_GLOBAL_SEARCH",
@@ -617,7 +629,7 @@ with cbar_col3:
     st.markdown(f"""
     <div style="text-align: right; padding-top: 10px;">
         <span class="capsule-pill capsule-green" style="font-size:10px;">
-            <span class="bead"></span>MIGUEL GONZALES
+            <span class="bead"></span>MIGUEL GONZALES // SPECIALIST
         </span>
     </div>
     """, unsafe_allow_html=True)
@@ -637,7 +649,7 @@ def render_citations_html(citations_list):
 
 
 # =============================================================================
-# VIEW 1: OVERVIEW (FLOWY TACTILE COMMAND CENTER)
+# VIEW 1: OVERVIEW (FLOWY TACTILE COMMAND CENTER & FIXED QUADRANT CHART)
 # =============================================================================
 if selected_nav == "Overview":
     try:
@@ -698,7 +710,7 @@ if selected_nav == "Overview":
 
         st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
 
-        # Competitive Landscape Cubic Spline Curve & Recent Activity with Summaries
+        # FIXED QUADRANT CHART & RECENT ACTIVITY WITH BRIEF SUMMARIES
         q_col1, q_col2 = st.columns([1.8, 1.2])
         with q_col1:
             st.markdown("""
@@ -707,19 +719,32 @@ if selected_nav == "Overview":
                     Competitive Threat & Customer Friction Quadrant
                 </div>
                 <div style="font-size:12px; color:var(--slate); margin-bottom:14px;">
-                    Smooth cubic spline visualization with round node beads mapping market threat against customer friction.
+                    Tactile visualization mapping competitor threat scores against customer friction rates across 60+ monitored rivals.
                 </div>
             """, unsafe_allow_html=True)
-            hm_df = heatmap_engine.get_heatmap_dataframe(time_horizon="30 Days")
-            if not hm_df.empty:
-                # Altair Cubic Spline Curve with Round Node Beads
-                spline = alt.Chart(hm_df.head(20)).mark_circle(size=140).encode(
-                    x=alt.X("Threat Score (1-10):Q", title="Threat Score (1–10)", scale=alt.Scale(domain=[2, 10])),
-                    y=alt.Y("Customer Friction Rate:Q", title="Customer Friction Rate (%)", scale=alt.Scale(domain=[0, 100])),
-                    color=alt.Color("Category:N", scale=alt.Scale(range=["#675CE7", "#17A98D", "#D99113", "#E76E38", "#1B1C36"])),
-                    tooltip=["Competitor:N", "Category:N", "Threat Score (1-10):Q", "Customer Friction Rate:Q", "Quadrant:N"]
+            
+            raw_hm_df = heatmap_engine.get_heatmap_dataframe(time_horizon="30 Days")
+            if not raw_hm_df.empty:
+                chart_df = raw_hm_df.copy()
+                # Clean and convert friction rate string (strip %) to numeric
+                chart_df["friction_num"] = chart_df["Customer Friction Rate"].astype(str).str.replace("%", "").str.strip()
+                chart_df["friction_num"] = pd.to_numeric(chart_df["friction_num"], errors="coerce").fillna(50.0)
+                chart_df["competitor"] = chart_df["Competitor Entity"]
+                chart_df["category"] = chart_df["Technology Category"]
+                chart_df["threat"] = pd.to_numeric(chart_df["Threat Score (1-10)"], errors="coerce").fillna(5.0)
+
+                scatter = alt.Chart(chart_df.head(28)).mark_circle(size=160, opacity=0.9).encode(
+                    x=alt.X("threat:Q", title="Threat Score (1–10)", scale=alt.Scale(domain=[1.5, 9.5])),
+                    y=alt.Y("friction_num:Q", title="Customer Friction Rate (%)", scale=alt.Scale(domain=[0, 100])),
+                    color=alt.Color("category:N", title="Category", scale=alt.Scale(range=["#675CE7", "#17A98D", "#D99113", "#E76E38", "#1B1C36"])),
+                    tooltip=[
+                        alt.Tooltip("competitor:N", title="Competitor"),
+                        alt.Tooltip("category:N", title="Category"),
+                        alt.Tooltip("threat:Q", title="Threat Score", format=".1f"),
+                        alt.Tooltip("friction_num:Q", title="Friction Rate (%)", format=".1f")
+                    ]
                 ).properties(height=340).interactive()
-                st.altair_chart(spline, use_container_width=True)
+                st.altair_chart(scatter, use_container_width=True)
             else:
                 st.info("Synchronizing competitor quadrant metrics...")
             st.markdown("</div>", unsafe_allow_html=True)
@@ -1397,13 +1422,13 @@ elif selected_nav == "Prioritized Alerts":
 
 
 # =============================================================================
-# VIEW 6: C-SUITE REQUEST DESK (GEMINI 3.1 PRO & AUTOMATED DISPATCH)
+# VIEW 6: C-SUITE REQUEST DESK (WITH FILE UPLOADER & SEPARATED TEARDOWN / DISPATCH)
 # =============================================================================
 elif selected_nav == "C-Suite Request Desk":
     try:
         st.markdown('<p class="eyebrow">Executive Desk / Contractor Request Fulfillment</p>', unsafe_allow_html=True)
         st.markdown('<h1 class="head-title">C-Suite Request Dispatch & Gemini 3.1 Pro Teardown</h1>', unsafe_allow_html=True)
-        st.markdown('<p class="head-copy">Analyze competitor dossiers with Gemini 3.1 Pro, auto-record findings into Google Sheets, and dispatch executive email briefings.</p>', unsafe_allow_html=True)
+        st.markdown('<p class="head-copy">Review field requests, upload competitor dossiers or lab reports, generate Gemini 3.1 Pro teardowns, and dispatch verified briefings to leadership.</p>', unsafe_allow_html=True)
 
         pending_reqs = get_all_pending_competitor_requests()
 
@@ -1433,62 +1458,137 @@ elif selected_nav == "C-Suite Request Desk":
         st.markdown("---")
         st.markdown("##### 2. Fulfill Request & Analyze Document with Gemini 3.1 Pro")
 
-        with st.form("csuite_fulfillment_form"):
-            f_col1, f_col2 = st.columns(2)
-            with f_col1:
-                req_options = ["-- Custom Competitor Entry --"] + [f"{r['id']} - {r['competitor_name']} ({r['requester_name']})" for r in pending_reqs]
-                selected_req_idx = st.selectbox("Select Pending Request", req_options)
-            with f_col2:
-                if selected_req_idx != "-- Custom Competitor Entry --":
-                    chosen_r = next((r for r in pending_reqs if r["id"] == selected_req_idx.split(" - ")[0]), None)
-                    default_comp = chosen_r["competitor_name"] if chosen_r else ""
-                    default_email = chosen_r["requester_email"] if chosen_r else ""
-                    default_name = chosen_r["requester_name"] if chosen_r else ""
-                    req_id_val = chosen_r["id"] if chosen_r else ""
-                else:
-                    default_comp = ""
-                    default_email = ""
-                    default_name = ""
-                    req_id_val = ""
+        # Session state storage for active teardown
+        if "active_csuite_analysis" not in st.session_state:
+            st.session_state.active_csuite_analysis = None
+        if "active_csuite_meta" not in st.session_state:
+            st.session_state.active_csuite_meta = {}
 
-                competitor_input = st.text_input("Competitor Name", value=default_comp)
+        req_options = ["-- Custom Competitor Entry --"] + [f"{r['id']} - {r['competitor_name']} ({r['requester_name']})" for r in pending_reqs]
+        selected_req_idx = st.selectbox("Select Pending Request to Fulfill", req_options)
 
-            u_col1, u_col2 = st.columns(2)
-            with u_col1:
-                requester_name_input = st.text_input("Requester Name", value=default_name)
-            with u_col2:
-                requester_email_input = st.text_input("Requester Email", value=default_email)
+        if selected_req_idx != "-- Custom Competitor Entry --":
+            chosen_r = next((r for r in pending_reqs if r["id"] == selected_req_idx.split(" - ")[0]), None)
+            default_comp = chosen_r["competitor_name"] if chosen_r else ""
+            default_email = chosen_r["requester_email"] if chosen_r else ""
+            default_name = chosen_r["requester_name"] if chosen_r else ""
+            req_id_val = chosen_r["id"] if chosen_r else ""
+        else:
+            default_comp = ""
+            default_email = ""
+            default_name = ""
+            req_id_val = ""
 
-            pasted_text_input = st.text_area("Competitor Marketing Text / Warranty / Chemical Claim for Analysis", height=120)
-            custom_instructions = st.text_input("Specific Tactical Angle (Optional)", placeholder="e.g. Focus on ASTM D3462 tear resistance and bio-oil washout risks")
+        f_col1, f_col2 = st.columns(2)
+        with f_col1:
+            competitor_input = st.text_input("Competitor Name", value=default_comp, key="cs_comp_name")
+        with f_col2:
+            requester_name_input = st.text_input("Requester Name", value=default_name, key="cs_req_name")
 
-            submit_analysis = st.form_submit_button("Generate Gemini 3.1 Pro Teardown & Dispatch", type="primary", use_container_width=True)
+        u_col1, u_col2 = st.columns(2)
+        with u_col1:
+            requester_email_input = st.text_input("Requester Email", value=default_email, key="cs_req_email")
+        with u_col2:
+            custom_instructions = st.text_input("Specific Tactical Angle (Optional)", placeholder="e.g. Focus on ASTM D3462 tear resistance and bio-oil washout risks", key="cs_tactical_angle")
 
-            if submit_analysis:
-                if not competitor_input.strip():
-                    st.error("Please provide a competitor name.")
-                elif not pasted_text_input.strip():
-                    st.error("Please provide marketing or technical text to analyze.")
-                else:
-                    with st.spinner("Executing Gemini 3.1 Pro teardown, recording to database, and dispatching briefing..."):
-                        analysis_res = analyze_document_with_gemini_3_pro(
-                            document_text=pasted_text_input.strip(),
-                            competitor_name=competitor_input.strip(),
-                            requester_name=requester_name_input.strip() or "GoNano Contractor",
-                            specific_instructions=custom_instructions.strip()
-                        )
-                        dispatch_res = dispatch_analysis_to_requester(
-                            request_id=req_id_val if req_id_val else None,
-                            competitor_name=competitor_input.strip(),
-                            requester_name=requester_name_input.strip() or "GoNano Contractor",
-                            requester_email=requester_email_input.strip() or "miguel.gonzales@gonano.com",
-                            analysis_results=analysis_res,
-                            additional_cc=DEFAULT_CC_LIST
-                        )
+        # 2.A File Uploader Section
+        st.markdown("<p style='font-size:12px; font-weight:700; color:var(--ink); margin-top:8px;'>Upload Competitor File / Spec Sheet / Lab PDF</p>", unsafe_allow_html=True)
+        uploaded_dossier = st.file_uploader(
+            "Upload Competitor Dossier / Spec Sheet / Lab PDF",
+            type=["pdf", "txt", "docx", "png", "jpg", "csv"],
+            key="csuite_file_uploader",
+            label_visibility="collapsed"
+        )
+        
+        extracted_file_text = ""
+        uploaded_filename = "manual_entry.txt"
+        if uploaded_dossier is not None:
+            uploaded_filename = uploaded_dossier.name
+            file_bytes = uploaded_dossier.getvalue()
+            extracted_file_text = extract_text_from_file_bytes(file_bytes, uploaded_filename)
+            st.markdown(f"""
+            <div class="headline-card" style="background:var(--pill-green-bg); color:var(--pill-green-fg); font-size:12px; margin-top:6px;">
+                Successfully parsed file: <strong>{uploaded_filename}</strong> ({len(extracted_file_text)} characters extracted).
+            </div>
+            """, unsafe_allow_html=True)
 
-                    st.success("Executive teardown generated, logged into database/tracker, and dispatched via SMTP relay.")
-                    with st.expander("View Full Gemini 3.1 Pro Teardown Output", expanded=True):
-                        st.markdown(analysis_res.get("full_markdown", ""))
+        pasted_text_input = st.text_area(
+            "Competitor Marketing Text / Warranty Clauses / Chemical Claims for Analysis",
+            value=extracted_file_text if extracted_file_text else "",
+            height=130,
+            key="cs_pasted_text"
+        )
+
+        st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
+
+        # SEPARATION: Action 1 - Generate Gemini 3.1 Pro Teardown
+        if st.button("Generate Gemini 3.1 Pro Teardown", type="primary", use_container_width=True):
+            combined_text = (pasted_text_input or extracted_file_text).strip()
+            if not competitor_input.strip():
+                st.error("Please provide a Competitor Name.")
+            elif not combined_text:
+                st.error("Please provide marketing text or upload a document file to analyze.")
+            else:
+                with st.spinner("Executing Gemini 3.1 Pro structural teardown and logging to database..."):
+                    analysis_res = analyze_document_with_gemini_3_pro(
+                        document_text=combined_text,
+                        competitor_name=competitor_input.strip(),
+                        requester_name=requester_name_input.strip() or "GoNano Certified Contractor",
+                        specific_instructions=custom_instructions.strip(),
+                        filename=uploaded_filename
+                    )
+                    st.session_state.active_csuite_analysis = analysis_res
+                    st.session_state.active_csuite_meta = {
+                        "request_id": req_id_val,
+                        "competitor_name": competitor_input.strip(),
+                        "requester_name": requester_name_input.strip() or "GoNano Certified Contractor",
+                        "requester_email": requester_email_input.strip() or "miguel.gonzales@gonano.com"
+                    }
+                st.success("Gemini 3.1 Pro teardown generated and committed to local intelligence vault. Review findings below prior to email dispatch.")
+
+        # Display Generated Teardown if Available
+        if st.session_state.active_csuite_analysis:
+            analysis_data = st.session_state.active_csuite_analysis
+            meta_data = st.session_state.active_csuite_meta
+            
+            st.markdown("<div style='height: 14px;'></div>", unsafe_allow_html=True)
+            st.markdown(f"""
+            <div class="tactile-card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <div>
+                        <span class="capsule-pill capsule-blue"><span class="bead"></span>Gemini 3.1 Pro Verified Teardown</span>
+                        <h3 style="margin:8px 0 2px 0; color:var(--ink); font-size:18px;">Target: {meta_data.get('competitor_name', 'Competitor')}</h3>
+                        <div style="font-size:11px; color:var(--slate);">Prepared for: {meta_data.get('requester_name', 'Contractor')} ({meta_data.get('requester_email', '')})</div>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            with st.expander("Expand Full Competitive Intelligence Teardown Markdown", expanded=True):
+                st.markdown(analysis_data.get("full_markdown", ""))
+
+            # SEPARATION: Action 2 - Independent Email Dispatch Button
+            st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
+            st.markdown(f"""
+            <div class="tactile-card" style="background:var(--surface-soft); padding:18px 22px;">
+                <div style="font-size:12px; font-weight:700; color:var(--ink); margin-bottom:4px;">Executive Dispatch Review</div>
+                <div style="font-size:11px; color:var(--slate); margin-bottom:12px;">
+                    This will dispatch the formatted HTML intelligence dossier via authenticated SMTP relay to <strong>{meta_data.get('requester_email', '')}</strong> with corporate leadership CC'd ({', '.join(DEFAULT_CC_LIST[:3])}...).
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            if st.button("Dispatch Briefing Email to Leadership & Requester", type="primary", use_container_width=True):
+                with st.spinner("Dispatching briefing email via Google Workspace SMTP relay..."):
+                    dispatch_res = dispatch_analysis_to_requester(
+                        request_id=meta_data.get("request_id") if meta_data.get("request_id") else None,
+                        competitor_name=meta_data.get("competitor_name"),
+                        requester_name=meta_data.get("requester_name"),
+                        requester_email=meta_data.get("requester_email"),
+                        analysis_results=analysis_data,
+                        additional_cc=DEFAULT_CC_LIST
+                    )
+                st.success(f"Briefing email dispatched successfully! Logged to tracker reports as Sent.")
 
     except Exception as tab_err:
         st.error(f"Intelligence Module Advisory: Encountered a non-fatal exception ({type(tab_err).__name__}: {tab_err}). The rest of the terminal remains fully functional.")
