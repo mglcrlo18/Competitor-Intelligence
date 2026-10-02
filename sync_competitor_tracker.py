@@ -35,7 +35,8 @@ def run_sync():
         sheet_name TEXT
     )
     """)
-    cursor.execute("DELETE FROM tracker_reports") # fresh sync
+    # CRITICAL FIX: Removed "DELETE FROM tracker_reports" to prevent wiping Gemini Teardowns
+    # every night during the background sync. We now only UPSERT or APPEND.
 
     # 2. Parse XLSX
     with zipfile.ZipFile(XLSX_PATH) as z:

@@ -4,7 +4,7 @@ Competitor "Red Team" Strategic War Room Simulator.
 Simulates rival executive decision-making (CEO/CRO persona) in response to GoNano market moves,
 uncovering competitor counter-tactics and structural vulnerabilities.
 """
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import httpx
 
 GEMINI_API_KEY = "AQ.Ab8RN6J_w4DRW8fb-62_voFT9jeqCFrY6UydrwARB4A-FzAT6g"
