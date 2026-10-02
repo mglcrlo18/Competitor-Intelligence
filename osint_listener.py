@@ -2,16 +2,19 @@
 osint_listener.py
 Open-Source Social & Web Listening Engine.
 Scrapes competitor mentions and community sentiment across real Reddit and Forums
-using DuckDuckGo HTML fallbacks to avoid IP bans, and Google News RSS for official PR.
+using DuckDuckGo HTML fallbacks to avoid IP bans, and a two-tier news architecture:
+- Primary: Bing News RSS for direct publisher article URLs without wrappers.
+- Fallback: Google News RSS with redirect resolution to eliminate 404 links.
 """
 import urllib.parse
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 import httpx
 from bs4 import BeautifulSoup
 import feedparser
 
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+    "Accept": "application/rss+xml, application/xml, text/xml, */*"
 }
 
 def fetch_reddit_mentions(query: str, limit: int = 15) -> List[Dict[str, Any]]:
@@ -25,9 +28,8 @@ def fetch_reddit_mentions(query: str, limit: int = 15) -> List[Dict[str, Any]]:
         
     mentions = []
     
-    # 1. Fetch community reviews and discussions via DuckDuckGo Lite
-    ddg_query = urllib.parse.quote(f"site:reddit.com {clean_query}")
-    url = f"https://lite.duckduckgo.com/lite/"
+    # Fetch community reviews and discussions via DuckDuckGo Lite
+    url = "https://lite.duckduckgo.com/lite/"
     
     try:
         res = httpx.post(url, data={"q": f"site:reddit.com {clean_query}"}, headers=HEADERS, timeout=12.0)
@@ -38,8 +40,7 @@ def fetch_reddit_mentions(query: str, limit: int = 15) -> List[Dict[str, Any]]:
                 if td:
                     title_a = tr.previous_sibling.find("a", class_="result-url") if tr.previous_sibling else None
                     if title_a:
-                        raw_href = title_a["href"]
-                        # Decode the URL to properly check if it contains reddit.com
+                        raw_href = title_a.get("href", "")
                         decoded_href = urllib.parse.unquote(raw_href)
                         if "reddit.com" in decoded_href.lower():
                             real_url = raw_href
@@ -55,7 +56,7 @@ def fetch_reddit_mentions(query: str, limit: int = 15) -> List[Dict[str, Any]]:
                                 "author": "Reddit User",
                                 "title": title_a.text.strip(),
                                 "snippet": td.text.strip(),
-                                "score": "N/A",  # Real metric requires Reddit API
+                                "score": "N/A",
                                 "comments": "N/A",
                                 "url": real_url,
                                 "timestamp": "Recent"
@@ -67,33 +68,97 @@ def fetch_reddit_mentions(query: str, limit: int = 15) -> List[Dict[str, Any]]:
 
     return mentions
 
-def _fetch_rss(query_str: str, limit: int = 15) -> List[Dict[str, Any]]:
+def _extract_direct_url_from_bing(link: str) -> str:
+    if not link:
+        return "#"
+    if "bing.com/news/apiclick" in link:
+        try:
+            parsed = urllib.parse.urlparse(link)
+            qs = urllib.parse.parse_qs(parsed.query)
+            if "url" in qs and qs["url"]:
+                return qs["url"][0]
+        except Exception:
+            pass
+    return link
+
+def _resolve_google_redirect(url: str) -> str:
+    if not url or "news.google.com" not in url:
+        return url
+    try:
+        r = httpx.head(url, headers=HEADERS, timeout=6.0, follow_redirects=True)
+        final_url = str(r.url)
+        if "news.google.com" not in final_url and final_url != url:
+            return final_url
+    except Exception:
+        pass
+    try:
+        r = httpx.get(url, headers=HEADERS, timeout=6.0, follow_redirects=True)
+        final_url = str(r.url)
+        if "news.google.com" not in final_url and final_url != url:
+            return final_url
+    except Exception:
+        pass
+    return url
+
+def _fetch_bing_rss(query_str: str, limit: int = 15) -> List[Dict[str, Any]]:
     query = urllib.parse.quote(query_str.strip())
-    url = f"https://news.google.com/rss/search?q={query}&hl=en-US&gl=US&ceid=US:en"
-    
+    url = f"https://www.bing.com/news/search?q={query}&format=rss"
     try:
         r = httpx.get(url, headers=HEADERS, timeout=10.0, follow_redirects=True)
         if r.status_code == 200 and r.text:
             feed = feedparser.parse(r.text)
             items = []
             for entry in feed.entries[:limit]:
+                raw_link = entry.get("link", "#")
+                direct_link = _extract_direct_url_from_bing(raw_link)
                 items.append({
                     "title": entry.get("title", ""),
                     "summary": entry.get("summary", ""),
-                    "link": entry.get("link", "#"),
+                    "link": direct_link,
+                    "source": entry.get("source", {}).get("title", "News Publication"),
+                    "published": entry.get("published", "Recent")
+                })
+            return items
+    except Exception as e:
+        print(f"Error fetching Bing RSS for '{query_str}': {e}")
+    return []
+
+def _fetch_google_rss_fallback(query_str: str, limit: int = 15) -> List[Dict[str, Any]]:
+    query = urllib.parse.quote(query_str.strip())
+    url = f"https://news.google.com/rss/search?q={query}&hl=en-US&gl=US&ceid=US:en"
+    try:
+        r = httpx.get(url, headers=HEADERS, timeout=10.0, follow_redirects=True)
+        if r.status_code == 200 and r.text:
+            feed = feedparser.parse(r.text)
+            items = []
+            for entry in feed.entries[:limit]:
+                raw_link = entry.get("link", "#")
+                resolved_link = _resolve_google_redirect(raw_link)
+                items.append({
+                    "title": entry.get("title", ""),
+                    "summary": entry.get("summary", ""),
+                    "link": resolved_link,
                     "source": entry.get("source", {}).get("title", "News Outlet"),
                     "published": entry.get("published", "Recent")
                 })
             return items
     except Exception as e:
-        print(f"Error fetching RSS for '{query_str}': {e}")
+        print(f"Error fetching Google RSS fallback for '{query_str}': {e}")
     return []
 
 def fetch_web_and_news_signals(query: str, limit: int = 15) -> List[Dict[str, Any]]:
     """
-    Fetches real news signals via Google News RSS.
+    Fetches real news signals via Bing News RSS primary and Google News fallback with redirect resolution.
     """
-    raw = _fetch_rss(query, limit=limit)
+    # 1. Primary: Bing News
+    raw = _fetch_bing_rss(query, limit=limit)
+    if not raw:
+        # 2. Contextual Bing query
+        raw = _fetch_bing_rss(f"{query} roof", limit=limit)
+    if not raw:
+        # 3. Fallback: Google News with redirect resolution
+        raw = _fetch_google_rss_fallback(query, limit=limit)
+
     mentions = []
     for entry in raw:
         mentions.append({
@@ -110,4 +175,6 @@ def fetch_web_and_news_signals(query: str, limit: int = 15) -> List[Dict[str, An
     return mentions
 
 def fetch_all_open_source_stream(competitor_name: str, limit_per_source: int = 10) -> List[Dict[str, Any]]:
-    return fetch_reddit_mentions(competitor_name, limit=limit_per_source)
+    reddit = fetch_reddit_mentions(competitor_name, limit=limit_per_source)
+    news = fetch_web_and_news_signals(competitor_name, limit=limit_per_source)
+    return reddit + news
