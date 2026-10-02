@@ -23,32 +23,110 @@ def init_db():
     
     # 1. Signals & Mentions Table
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS signals (\n        id INTEGER PRIMARY KEY AUTOINCREMENT,\n        competitor TEXT NOT NULL,\n        platform TEXT NOT NULL,\n        channel_badge TEXT,\n        author TEXT,\n        title TEXT NOT NULL,\n        snippet TEXT,\n        sentiment TEXT DEFAULT 'Neutral',\n        polarity REAL DEFAULT 0.0,\n        url TEXT,\n        timestamp TEXT,\n        created_at DATETIME DEFAULT CURRENT_TIMESTAMP\n    )
+    CREATE TABLE IF NOT EXISTS signals (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        competitor TEXT NOT NULL,
+        platform TEXT NOT NULL,
+        channel_badge TEXT,
+        author TEXT,
+        title TEXT NOT NULL,
+        snippet TEXT,
+        sentiment TEXT DEFAULT 'Neutral',
+        polarity REAL DEFAULT 0.0,
+        url TEXT,
+        timestamp TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
     """)
     
     # 2. Competitor Corporate & Strategy Profiles
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS competitor_profiles (\n        id INTEGER PRIMARY KEY AUTOINCREMENT,\n        name TEXT UNIQUE NOT NULL,\n        domain TEXT,\n        category TEXT,\n        core_technology TEXT,\n        inherent_threat_score REAL DEFAULT 5.0,\n        control_efficacy_score REAL DEFAULT 5.0,\n        residual_threat_score REAL DEFAULT 2.5,\n        target_regions TEXT,\n        report_status TEXT,\n        reports_count INTEGER DEFAULT 0,\n        latest_report_date TEXT,\n        notes TEXT,\n        source_sheet TEXT,\n        gmail_link TEXT,\n        last_updated DATETIME DEFAULT CURRENT_TIMESTAMP\n    )
+    CREATE TABLE IF NOT EXISTS competitor_profiles (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT UNIQUE NOT NULL,
+        domain TEXT,
+        category TEXT,
+        core_technology TEXT,
+        inherent_threat_score REAL DEFAULT 5.0,
+        control_efficacy_score REAL DEFAULT 5.0,
+        residual_threat_score REAL DEFAULT 2.5,
+        target_regions TEXT,
+        report_status TEXT,
+        reports_count INTEGER DEFAULT 0,
+        latest_report_date TEXT,
+        notes TEXT,
+        source_sheet TEXT,
+        gmail_link TEXT,
+        last_updated DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
     """)
     
     # 3. Pricing & Commercial Claims
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS pricing_records (\n        id INTEGER PRIMARY KEY AUTOINCREMENT,\n        competitor TEXT NOT NULL,\n        product_name TEXT NOT NULL,\n        price_model TEXT,\n        estimated_sqft_cost REAL,\n        claim_warranty_years INTEGER,\n        source_url TEXT,\n        created_at DATETIME DEFAULT CURRENT_TIMESTAMP\n    )
+    CREATE TABLE IF NOT EXISTS pricing_records (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        competitor TEXT NOT NULL,
+        product_name TEXT NOT NULL,
+        price_model TEXT,
+        estimated_sqft_cost REAL,
+        claim_warranty_years INTEGER,
+        source_url TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
     """)
     
     # 4. Brand Promise vs Customer Reality (Marketing Gap)
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS marketing_gap_records (\n        id INTEGER PRIMARY KEY AUTOINCREMENT,\n        competitor TEXT NOT NULL,\n        marketing_claim TEXT NOT NULL,\n        claim_channel TEXT,\n        customer_reality TEXT NOT NULL,\n        reality_source TEXT,\n        gap_severity TEXT DEFAULT 'MODERATE',\n        divergence_score REAL DEFAULT 50.0,\n        source_url TEXT,\n        strategic_takeaway TEXT,\n        created_at DATETIME DEFAULT CURRENT_TIMESTAMP\n    )
+    CREATE TABLE IF NOT EXISTS marketing_gap_records (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        competitor TEXT NOT NULL,
+        marketing_claim TEXT NOT NULL,
+        claim_channel TEXT,
+        customer_reality TEXT NOT NULL,
+        reality_source TEXT,
+        gap_severity TEXT DEFAULT 'MODERATE',
+        divergence_score REAL DEFAULT 50.0,
+        source_url TEXT,
+        strategic_takeaway TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
     """)
     
     # 5. ERM Risk & KCI Register
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS erm_risk_register (\n        id INTEGER PRIMARY KEY AUTOINCREMENT,\n        competitor TEXT NOT NULL,\n        risk_category TEXT NOT NULL,\n        inherent_threat TEXT NOT NULL,\n        control_defense TEXT NOT NULL,\n        residual_threat TEXT NOT NULL,\n        kci_early_warning TEXT NOT NULL,\n        reverse_stress_scenario TEXT NOT NULL,\n        var_downside_pct REAL DEFAULT 15.0,\n        created_at DATETIME DEFAULT CURRENT_TIMESTAMP\n    )
+    CREATE TABLE IF NOT EXISTS erm_risk_register (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        competitor TEXT NOT NULL,
+        risk_category TEXT NOT NULL,
+        inherent_threat TEXT NOT NULL,
+        control_defense TEXT NOT NULL,
+        residual_threat TEXT NOT NULL,
+        kci_early_warning TEXT NOT NULL,
+        reverse_stress_scenario TEXT NOT NULL,
+        var_downside_pct REAL DEFAULT 15.0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
     """)
 
     # 6. Google Sheets Tracker Reports (Reports Sent & Open Requests)
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS tracker_reports (\n        id INTEGER PRIMARY KEY AUTOINCREMENT,\n        competitor TEXT NOT NULL,\n        report_type TEXT,\n        date_pht TEXT,\n        subject TEXT,\n        attachment_name TEXT,\n        to_recipients TEXT,\n        cc_recipients TEXT,\n        requested_by TEXT,\n        request_date TEXT,\n        gmail_link TEXT,\n        drive_link TEXT,\n        status TEXT,\n        notes TEXT,\n        sheet_name TEXT\n    )
+    CREATE TABLE IF NOT EXISTS tracker_reports (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        competitor TEXT NOT NULL,
+        report_type TEXT,
+        date_pht TEXT,
+        subject TEXT,
+        attachment_name TEXT,
+        to_recipients TEXT,
+        cc_recipients TEXT,
+        requested_by TEXT,
+        request_date TEXT,
+        gmail_link TEXT,
+        drive_link TEXT,
+        status TEXT,
+        notes TEXT,
+        sheet_name TEXT
+    )
     """)
     
     # Indices
@@ -58,6 +136,57 @@ def init_db():
     
     conn.commit()
     conn.close()
+
+def seed_pricing_records():
+    """Populates pricing records table with verified competitor pricing data."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) as count FROM pricing_records")
+    row = cursor.fetchone()
+    count = row["count"] if row else 0
+    if count < 10:
+        cursor.execute("DELETE FROM pricing_records")
+        verified_pricing = [
+            ("GoNano (Your Brand)", "NuRoof Fortify / Revive / Boost", "Flat rate per residential roof tier ($3,500 - $6,000 total; 75-80% less than full replacement)", 1.10, 15, "https://gonano.com/en/shingle-technology"),
+            ("Roof Maxx", "Soy Methyl Ester Bio-Oil", "Per sq.ft. (~$1.20/sq.ft. base; typical $3,000-$6,000; 20-25% of replacement)", 1.20, 5, "https://roofmaxx.com/warranty/"),
+            ("PEAK301", "GreenSoy Formulation", "Per sq.ft. (Starts at ~$1.00/sq.ft.; estimated savings $1,530 vs replacement)", 1.00, 6, "https://peak301.com/"),
+            ("Reactiv8", "Plant-Based Bio-Oil", "Flat rate / Per sq.ft. (~$2,300 for 600 sq.ft.; ~$3.83/sq.ft.)", 3.83, 5, "https://reactiv8inc.com/"),
+            ("RoofLife Canada", "GreenSoy Treatment", "Pricing Not Publicly Disclosed — Available via Field Sales Inquiries", 0.0, 5, "https://rooflife.ca/free-quote/"),
+            ("Shingle Magic", "Shingletech Acrylic Sealer", "Pricing Not Publicly Disclosed — Available via Field Sales Inquiries", 0.0, 10, "https://shinglemagic.com/"),
+            ("Nasiol (Artekya)", "Z-WB Industrial Coating", "Pricing Not Publicly Disclosed — Available via Field Sales Inquiries", 0.0, 3, "https://shop.nasiol.com/en"),
+            ("Spray-Net", "Liqua-Roof Elastomeric Paint", "Pricing Not Publicly Disclosed — Available via Field Sales Inquiries", 0.0, 15, "https://spray-network.com/self-booking/?pathb=1&lang=en"),
+            ("Rhino Shield", "Elastomeric Wall & Roof System", "Pricing Not Publicly Disclosed — Available via Field Sales Inquiries", 0.0, 25, "https://rhinoshield.com/rhino-shield-pricing"),
+            ("NoxNano (Noxor)", "Elite Shingle Package", "Pricing Not Publicly Disclosed — Available via Field Sales Inquiries", 0.0, 5, "https://noxor.ca/en/product/elite/"),
+            ("Nanoclad", "Nanoclad Protection", "Pricing Not Publicly Disclosed — Available via Field Sales Inquiries", 0.0, 5, "https://nanoclad.ca/quote"),
+            ("Ever Roof", "EverRoof Shingle System", "Pricing Not Publicly Disclosed — Available via Field Sales Inquiries", 0.0, 5, "https://everroof.co/request-a-quote/"),
+            ("Bright Green Roof", "Bio-Roof Rejuvenation", "Pricing Not Publicly Disclosed — Available via Field Sales Inquiries", 0.0, 5, "https://brightgreenroof.com/get-a-quote"),
+            ("MK Construction", "Quebec Restoration Soumission", "Pricing Not Publicly Disclosed — Available via Field Sales Inquiries", 0.0, 5, "https://www.mkconstruction.ca/soumission.html"),
+            ("NexaNano", "NexaNano Roof Protect", "Pricing Not Publicly Disclosed — Available via Field Sales Inquiries", 0.0, 5, "https://roofguardpro.com/products/roof-protection/nexanano-roof-protect/"),
+            ("OnYa Roof", "Contractor Business Packages", "Pricing Not Publicly Disclosed — Available via Field Sales Inquiries", 0.0, 5, "https://startrejuvenationbusiness.com/"),
+            ("Roof Rejuvenate", "Residential Shingle Estimate", "Pricing Not Publicly Disclosed — Available via Field Sales Inquiries", 0.0, 5, "https://roofrejuvenate.com/Free-Estimate.html"),
+            ("Roof Scientist (Cericade)", "Cericade Nano Coating", "Pricing Not Publicly Disclosed — Available via Field Sales Inquiries", 0.0, 5, "https://roofscientist.com/contact-us/"),
+            ("ShingleGuard", "Consultation & Estimate", "Pricing Not Publicly Disclosed — Available via Field Sales Inquiries", 0.0, 5, "https://shingleguard.ca/contact"),
+            ("FreshRoof", "GreenSoy Bio-Rejuvenator", "Pricing Not Publicly Disclosed — Available via Field Sales Inquiries", 0.0, 6, "https://freshroof.com/")
+        ]
+        for comp, prod, model, cost, war, url in verified_pricing:
+            cursor.execute("""
+            INSERT INTO pricing_records (competitor, product_name, price_model, estimated_sqft_cost, claim_warranty_years, source_url)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """, (comp, prod, model, cost, war, url))
+        conn.commit()
+    conn.close()
+
+def get_pricing_records(competitor: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Returns verified pricing records for competitors."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    if competitor and competitor != "All Competitors":
+        cursor.execute("SELECT * FROM pricing_records WHERE LOWER(competitor) LIKE ? OR LOWER(?) LIKE '%' || LOWER(competitor) || '%'", (f"%{competitor.lower()}%", competitor.lower()))
+    else:
+        cursor.execute("SELECT * FROM pricing_records ORDER BY id ASC")
+    rows = [dict(r) for r in cursor.fetchall()]
+    conn.close()
+    return rows
 
 def seed_baseline_data():
     """Populates baseline intelligence dossiers and syncs sheet data if needed."""
@@ -73,6 +202,8 @@ def seed_baseline_data():
             sync_competitor_tracker.run_sync()
         except Exception as e:
             print(f"Error seeding competitor tracker data: {e}")
+
+    seed_pricing_records()
 
 def get_all_competitor_names() -> List[str]:
     """Returns sorted list of all competitor names in the database."""
@@ -257,7 +388,6 @@ def get_all_signals_for_competitor(competitor: Optional[str] = None, limit: int 
             if dt >= cutoff:
                 filtered.append(r)
     return filtered[:limit]
-
 
 def get_marketing_gaps(competitor: Optional[str] = None) -> List[Dict[str, Any]]:
     conn = get_connection()

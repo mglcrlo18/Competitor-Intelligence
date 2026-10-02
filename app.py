@@ -993,8 +993,11 @@ elif selected_nav == "Intelligence Workspace":
                 st.caption("Detects unannounced competitor warranty changes, price increases, and stealth terms modifications.")
 
                 diff_data = compute_text_diff(diff_subject)
-                safe_diff_url = sanitize_url(diff_data.get('url'), diff_subject)
-                st.markdown(f"**Target Monitored Endpoint:** [{diff_data['url']}]({safe_diff_url})")
+                if diff_data.get('url'):
+                    safe_diff_url = sanitize_url(diff_data.get('url'), diff_subject)
+                    st.markdown(f"**Target Monitored Endpoint:** [{diff_data['url']}]({safe_diff_url})")
+                else:
+                    st.markdown("**Target Monitored Endpoint:** *Pricing Not Publicly Disclosed — Available via Field Sales Inquiries (Offline Intelligence Tracking)*")
                 st.caption(f"Comparing **{diff_data['baseline_date']}** against **{diff_data['current_date']}**")
 
                 d_col1, d_col2 = st.columns(2)
