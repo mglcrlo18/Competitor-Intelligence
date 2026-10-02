@@ -3,12 +3,30 @@ news_signals.py
 Tracks competitor press releases, product updates, and business decisions
 using a two-tier verified URL architecture:
 - Primary: Bing News RSS (returns direct publisher URLs with zero wrappers).
-- Fallback: Google News RSS with automatic redirect resolution to eliminate 404 links.
+- Fallback: Google News RSS with batchexecute RPC resolution via googlenewsdecoder.
+
+Data-fidelity features (via pipeline_utils):
+  - TLS-impersonated fetching (curl_cffi) to bypass WAF/JA3 fingerprinting.
+  - Trafilatura content extraction for full article body text.
+  - WAF challenge page detection to prevent poison data ingestion.
+  - SQLite TTL cache-aside to prevent redundant network calls.
+  - MinHash LSH near-duplicate detection to filter syndicated copies.
 """
 import urllib.parse
 from typing import List, Dict, Any, Optional
-import httpx
 import feedparser
+
+from pipeline_utils import (
+    fetch_rss_feed,
+    fetch_and_extract,
+    resolve_google_news_url,
+    is_near_duplicate,
+    init_dedup_index,
+    cache_lookup,
+    cache_store,
+    cache_evict_expired,
+    is_valid_article,
+)
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
@@ -63,55 +81,62 @@ def _extract_direct_url_from_bing(link: str) -> str:
             pass
     return link
 
-def _resolve_google_redirect(url: str) -> str:
-    """Follows Google News redirect wrappers to capture the real destination URL."""
-    if not url or "news.google.com" not in url:
-        return url
-    try:
-        r = httpx.head(url, headers=HEADERS, timeout=6.0, follow_redirects=True)
-        final_url = str(r.url)
-        if "news.google.com" not in final_url and final_url != url:
-            return final_url
-    except Exception:
-        pass
-    try:
-        r = httpx.get(url, headers=HEADERS, timeout=6.0, follow_redirects=True)
-        final_url = str(r.url)
-        if "news.google.com" not in final_url and final_url != url:
-            return final_url
-    except Exception:
-        pass
-    return url
-
 def _fetch_bing_news(query_str: str, limit: int = 25) -> List[Dict[str, Any]]:
-    """Fetches direct articles via Bing News RSS."""
+    """Fetches direct articles via Bing News RSS with optimized parameters."""
     query = urllib.parse.quote(query_str.strip())
-    rss_url = f"https://www.bing.com/news/search?q={query}&format=rss"
+    # Advanced Bing RSS parameters: count=100 maximizes payload, freshness=Day for delta updates
+    rss_url = f"https://www.bing.com/news/search?q={query}&format=rss&count=100&freshness=Day"
     
     try:
-        response = httpx.get(rss_url, headers=HEADERS, timeout=10.0, follow_redirects=True)
-        if response.status_code != 200 or not response.text:
+        rss_text = fetch_rss_feed(rss_url)
+        if not rss_text:
             return []
-            
-        feed = feedparser.parse(response.text)
+        
+        feed = feedparser.parse(rss_text)
         results = []
         for entry in feed.entries[:limit]:
             title = entry.get("title", "No Title")
             summary = entry.get("summary", "")
             raw_link = entry.get("link", "#")
             direct_link = _extract_direct_url_from_bing(raw_link)
+            
+            # Cache-aside: check if we already have this article
+            cached = cache_lookup(direct_link)
+            if cached:
+                full_text = cached.get("article_text", "")
+            else:
+                # Fetch full article text via TLS-impersonated curl_cffi + Trafilatura
+                full_text = fetch_and_extract(direct_link, timeout=10.0)
+                # Cache the result for future poll cycles
+                cache_store(direct_link, direct_link, article_text=full_text)
+            
+            # Use full text for dedup, fall back to title+summary
+            dedup_text = full_text if full_text else f"{title} {summary}"
+            
+            # Skip articles that fail validation (too short, WAF pages, etc.)
+            if not is_valid_article(dedup_text) and not summary:
+                continue
+            
+            # Near-duplicate detection: skip syndicated copies
+            if is_near_duplicate(dedup_text, direct_link):
+                continue
+            
             sig = score_article_significance(title, summary)
+            
+            source_obj = entry.get("source")
+            source_title = source_obj.get("title", "News Publication") if isinstance(source_obj, dict) else "News Publication"
             
             results.append({
                 "title": title,
                 "link": direct_link,
                 "published": entry.get("published", "Recent"),
-                "source": entry.get("source", {}).get("title", "News Publication"),
+                "source": source_title,
                 "summary": summary,
                 "threat_level": sig["threat_tier"],
                 "category": sig["primary_category"],
                 "is_significant": sig["is_significant"],
-                "score": sig["score"]
+                "score": sig["score"],
+                "full_text": full_text or "",
             })
         return results
     except Exception as e:
@@ -119,34 +144,62 @@ def _fetch_bing_news(query_str: str, limit: int = 25) -> List[Dict[str, Any]]:
         return []
 
 def _fetch_google_news_fallback(query_str: str, limit: int = 25) -> List[Dict[str, Any]]:
-    """Fallback Google News RSS with redirect resolution to avoid 404 links."""
+    """Fallback Google News RSS with batchexecute RPC URL resolution via googlenewsdecoder."""
     query = urllib.parse.quote(query_str.strip())
     rss_url = f"https://news.google.com/rss/search?q={query}&hl=en-US&gl=US&ceid=US:en"
     
     try:
-        response = httpx.get(rss_url, headers=HEADERS, timeout=10.0, follow_redirects=True)
-        if response.status_code != 200 or not response.text:
+        rss_text = fetch_rss_feed(rss_url)
+        if not rss_text:
             return []
-            
-        feed = feedparser.parse(response.text)
+        
+        feed = feedparser.parse(rss_text)
         results = []
         for entry in feed.entries[:limit]:
             title = entry.get("title", "No Title")
             summary = entry.get("summary", "")
             raw_link = entry.get("link", "#")
-            resolved_link = _resolve_google_redirect(raw_link)
+            
+            # Cache-aside: check if this opaque URL was already resolved
+            cached = cache_lookup(raw_link)
+            if cached:
+                resolved_link = cached.get("resolved_url", raw_link)
+                full_text = cached.get("article_text", "")
+            else:
+                # Resolve opaque Google News URL via batchexecute RPC
+                resolved_link = resolve_google_news_url(raw_link)
+                
+                # Fetch full article text from the resolved publisher URL
+                full_text = fetch_and_extract(resolved_link, timeout=10.0) if resolved_link != raw_link else None
+                
+                # Cache both the resolution and the extracted text
+                cache_store(raw_link, resolved_link, article_text=full_text)
+            
+            # Use full text for dedup, fall back to title+summary
+            dedup_text = full_text if full_text else f"{title} {summary}"
+            
+            if not is_valid_article(dedup_text) and not summary:
+                continue
+            
+            if is_near_duplicate(dedup_text, resolved_link):
+                continue
+            
             sig = score_article_significance(title, summary)
+            
+            source_obj = entry.get("source")
+            source_title = source_obj.get("title", "Google News") if isinstance(source_obj, dict) else "Google News"
             
             results.append({
                 "title": title,
                 "link": resolved_link,
                 "published": entry.get("published", "Recent"),
-                "source": entry.get("source", {}).get("title", "Google News"),
+                "source": source_title,
                 "summary": summary,
                 "threat_level": sig["threat_tier"],
                 "category": sig["primary_category"],
                 "is_significant": sig["is_significant"],
-                "score": sig["score"]
+                "score": sig["score"],
+                "full_text": full_text or "",
             })
         return results
     except Exception as e:
@@ -156,7 +209,13 @@ def _fetch_google_news_fallback(query_str: str, limit: int = 25) -> List[Dict[st
 def fetch_competitor_news(company_name: str, limit: int = 20) -> List[Dict[str, Any]]:
     """
     Fetches real-time verified news articles using Bing News primary and Google News fallback.
+    Includes full-text extraction, cache-aside, deduplication, and WAF detection.
     """
+    # Evict expired cache entries once per poll cycle
+    cache_evict_expired()
+    # Reset the dedup index for this poll cycle
+    init_dedup_index()
+    
     clean_name = company_name.strip()
     if not clean_name:
         clean_name = "Roof Rejuvenation"
@@ -172,7 +231,7 @@ def fetch_competitor_news(company_name: str, limit: int = 20) -> List[Dict[str, 
     if articles:
         return articles
 
-    # 3. Fallback: Google News with redirect resolution
+    # 3. Fallback: Google News with batchexecute resolution
     articles = _fetch_google_news_fallback(clean_name, limit=limit)
     if articles:
         return articles

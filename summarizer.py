@@ -7,6 +7,7 @@ import os
 import json
 from typing import Dict, Any, List, Optional
 import httpx
+import time
 
 # Default Gemini API key from environment or fallback
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AQ.Ab8RN6J_w4DRW8fb-62_voFT9jeqCFrY6UydrwARB4A-FzAT6g")
@@ -46,14 +47,21 @@ def call_gemini_api(prompt: str, system_instruction: str = SYSTEM_COMPETITOR_PRO
     }
 
     try:
-        response = httpx.post(url, json=payload, timeout=25.0)
-        if response.status_code == 200:
-            data = response.json()
-            candidates = data.get("candidates", [])
-            if candidates:
-                parts = candidates[0].get("content", {}).get("parts", [])
-                if parts:
-                    return parts[0].get("text", "")
+        for attempt in range(3):
+            response = httpx.post(url, json=payload, timeout=25.0)
+            if response.status_code == 200:
+                data = response.json()
+                candidates = data.get("candidates", [])
+                if candidates:
+                    parts = candidates[0].get("content", {}).get("parts", [])
+                    if parts:
+                        return parts[0].get("text", "")
+            if response.status_code == 429:
+                wait_time = 2 ** attempt
+                print(f"Gemini API rate limited (429). Retrying in {wait_time}s... (attempt {attempt+1}/3)")
+                time.sleep(wait_time)
+                continue
+            break
     except Exception as e:
         print(f"Gemini API call failed: {e}")
     return None
@@ -160,3 +168,38 @@ Evaluate this news item as a Competitor Intelligence Analyst for GoNano. Return 
         "gonano_implication": f"Potential risk of confusing prospects regarding surface treatments vs. genuine nanotechnology.",
         "recommended_action": "Reinforce GoNano's scientific certification data and lifetime value comparisons in regional sales collateral."
     }
+
+def batch_summarize_articles(
+    articles: List[Dict[str, Any]],
+    competitor_name: str = "Competitor",
+    api_key: str = None,
+    max_articles_per_batch: int = 10,
+) -> Optional[str]:
+    """
+    Batches multiple articles into a single Gemini API prompt to maximize
+    value per API call and conserve the free-tier quota (15-20 RPD).
+    """
+    if not articles:
+        return None
+
+    # Build a single combined prompt with all article texts
+    article_blocks = []
+    for i, art in enumerate(articles[:max_articles_per_batch], 1):
+        title = art.get("title", "Untitled")
+        text = art.get("full_text") or art.get("summary", "")
+        source = art.get("source", "Unknown")
+        article_blocks.append(f"--- Article {i} ---\nTitle: {title}\nSource: {source}\nContent:\n{text[:2000]}")
+
+    combined = "\n\n".join(article_blocks)
+    prompt = f"""Analyze the following {len(article_blocks)} intelligence signals for competitor '{competitor_name}' against GoNano.
+Provide a SINGLE consolidated executive intelligence briefing covering:
+1. Executive Verdict (2-3 sentences on the competitor's current strategic priorities)
+2. Key Strategic Moves detected across all articles
+3. Advertising & Messaging Angles observed
+4. Competitor Weaknesses & Technical Flaws vs GoNano nanotechnology
+5. GoNano Counter-Strategy & Recommended Actions
+
+Articles:
+{combined}"""
+
+    return call_gemini_api(prompt, api_key=api_key)

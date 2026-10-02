@@ -10,3 +10,12 @@ python-dotenv>=1.0.1
 altair>=5.0.0
 openpyxl>=3.1.0
 numpy>=1.26.0
+
+# Phase 1: Data Fidelity Chain
+googlenewsdecoder>=0.1.7
+curl_cffi>=0.7.0
+trafilatura>=2.0.0
+
+# Phase 2: Deduplication & Streaming
+datasketch>=1.6.0
+ijson>=3.2.0
