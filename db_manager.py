@@ -7,7 +7,9 @@ marketing gap dossiers, ERM evaluations, and Google Sheets tracker records.
 import sqlite3
 import os
 import re
-from datetime import datetime, timedelta
+import email.utils
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 from typing import List, Dict, Any, Optional
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "competitor_store.db")
@@ -296,8 +298,44 @@ def add_custom_competitor(name: str, domain: str, category: str, notes: str = ""
     conn.close()
     return True
 
+def normalize_signal_date(raw_date: Any) -> str:
+    """Normalizes various date formats (RFC 2822, ISO, relative) to YYYY-MM-DD in PHT."""
+    if not raw_date:
+        return datetime.now(ZoneInfo("Asia/Manila")).strftime("%Y-%m-%d")
+    raw_str = str(raw_date).strip()
+    if not raw_str or raw_str.lower() in ["recent", "now", "today"]:
+        return datetime.now(ZoneInfo("Asia/Manila")).strftime("%Y-%m-%d")
+
+    # RFC 2822 (common in RSS)
+    try:
+        dt = email.utils.parsedate_to_datetime(raw_str)
+        if dt:
+            return dt.strftime("%Y-%m-%d")
+    except Exception:
+        pass
+
+    # Relative date (e.g. '2 days ago', '5 hours ago')
+    rel_match = re.match(r'(\d+)\s*(d|day|days|h|hour|hours)\s*ago', raw_str, re.I)
+    if rel_match:
+        val = int(rel_match.group(1))
+        unit = rel_match.group(2).lower()
+        now_pht = datetime.now(ZoneInfo("Asia/Manila"))
+        if unit.startswith('d'):
+            return (now_pht - timedelta(days=val)).strftime("%Y-%m-%d")
+        elif unit.startswith('h'):
+            return (now_pht - timedelta(hours=val)).strftime("%Y-%m-%d")
+
+    # Standard formats
+    for fmt in ('%Y-%m-%d', '%Y/%m/%d', '%b %d, %Y', '%B %d, %Y', '%d %b %Y', '%Y-%m-%dT%H:%M:%SZ', '%Y-%m-%dT%H:%M:%S%z'):
+        try:
+            return datetime.strptime(raw_str[:19] if 'T' in raw_str and 'Z' not in raw_str else raw_str, fmt).strftime('%Y-%m-%d')
+        except Exception:
+            pass
+
+    return datetime.now(ZoneInfo("Asia/Manila")).strftime("%Y-%m-%d")
+
 def save_signals_to_db(signals_list: List[Dict[str, Any]], competitor: str):
-    """Saves scraped signals safely to SQLite database with URL resolution and deduplication."""
+    """Saves scraped signals safely to SQLite database with URL resolution, schema normalization, and deduplication."""
     if not signals_list:
         return
     conn = get_connection()
@@ -315,7 +353,11 @@ def save_signals_to_db(signals_list: List[Dict[str, Any]], competitor: str):
         if cursor.fetchone():
             continue
 
-        platform = s.get("source") or s.get("platform") or "Web"
+        platform = s.get("source") or s.get("platform") or "Industry Press"
+        raw_date = s.get("published") or s.get("timestamp") or s.get("date")
+        normalized_timestamp = normalize_signal_date(raw_date)
+        snippet = (s.get("snippet") or s.get("summary") or "").strip()
+
         cursor.execute("""
         INSERT INTO signals (competitor, platform, channel_badge, author, title, snippet, sentiment, polarity, url, timestamp)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -325,11 +367,11 @@ def save_signals_to_db(signals_list: List[Dict[str, Any]], competitor: str):
             s.get("channel_badge", platform),
             s.get("author", s.get("channel", "Unknown")),
             title,
-            s.get("snippet", s.get("summary", "")),
+            snippet,
             s.get("sentiment", "Neutral"),
             s.get("polarity", 0.0),
             raw_url,
-            s.get("published", s.get("timestamp", datetime.now().strftime("%Y-%m-%d")))
+            normalized_timestamp
         ))
     conn.commit()
     conn.close()

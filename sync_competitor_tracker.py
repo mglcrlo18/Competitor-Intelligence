@@ -185,13 +185,15 @@ def run_sync():
         drive_link = r.get('L', '').strip()
         notes = r.get('M', '').strip()
 
-        cursor.execute("""
-        INSERT INTO tracker_reports (
-            competitor, report_type, date_pht, subject, attachment_name,
-            to_recipients, cc_recipients, requested_by, request_date,
-            gmail_link, drive_link, status, notes, sheet_name
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (comp, rep_type, date_sent, subject, attachment, to_rec, cc_rec, req_by, req_date, gmail_link, drive_link, "Report Sent", notes, "Reports Sent"))
+        cursor.execute("SELECT id FROM tracker_reports WHERE competitor = ? AND subject = ? AND date_pht = ?", (comp, subject, date_sent))
+        if not cursor.fetchone():
+            cursor.execute("""
+            INSERT INTO tracker_reports (
+                competitor, report_type, date_pht, subject, attachment_name,
+                to_recipients, cc_recipients, requested_by, request_date,
+                gmail_link, drive_link, status, notes, sheet_name
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (comp, rep_type, date_sent, subject, attachment, to_rec, cc_rec, req_by, req_date, gmail_link, drive_link, "Report Sent", notes, "Reports Sent"))
 
         if comp not in competitors:
             cat, tech, inh, ctrl, res, reg = deduce_category_tech(comp)
@@ -228,13 +230,15 @@ def run_sync():
         status = r.get('I', '').strip() or "Open"
         notes = r.get('J', '').strip()
 
-        cursor.execute("""
-        INSERT INTO tracker_reports (
-            competitor, report_type, date_pht, subject, attachment_name,
-            to_recipients, cc_recipients, requested_by, request_date,
-            gmail_link, drive_link, status, notes, sheet_name
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (comp, "Open Request", req_date, summary, "", "", "", req_by, req_date, gmail_link, "", status, notes, "Open Requests"))
+        cursor.execute("SELECT id FROM tracker_reports WHERE competitor = ? AND subject = ? AND request_date = ?", (comp, summary, req_date))
+        if not cursor.fetchone():
+            cursor.execute("""
+            INSERT INTO tracker_reports (
+                competitor, report_type, date_pht, subject, attachment_name,
+                to_recipients, cc_recipients, requested_by, request_date,
+                gmail_link, drive_link, status, notes, sheet_name
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (comp, "Open Request", req_date, summary, "", "", "", req_by, req_date, gmail_link, "", status, notes, "Open Requests"))
 
         if comp not in competitors:
             cat, tech, inh, ctrl, res, reg = deduce_category_tech(comp)

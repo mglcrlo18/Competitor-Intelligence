@@ -25,8 +25,15 @@ def dispatch_webhook_alert(webhook_url: str, alert_data: Dict[str, Any]) -> Dict
     if not webhook_url:
         return {"status": "error", "message": "No webhook URL provided."}
         
+    title = alert_data.get("title") or f"[ALERT] {alert_data.get('severity', 'Notice')}: {alert_data.get('competitor', alert_data.get('target', 'Market Alert'))}"
+    competitor = alert_data.get("competitor") or alert_data.get("target") or "Market Rival"
+    severity = alert_data.get("severity") or alert_data.get("event") or "Medium"
+    trigger = alert_data.get("trigger") or alert_data.get("event") or "Manual Test Alert"
+    action = alert_data.get("action_required") or "Review GoNano dealer territory defense and counter-pricing immediately."
+    ts = alert_data.get("timestamp") or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
     slack_payload = {
-        "text": f"*{alert_data['title']}*\n> **Competitor:** {alert_data['competitor']}\n> **Severity:** `{alert_data['severity']}`\n> **Trigger Event:** {alert_data['trigger']}\n> *Action:* {alert_data['action_required']}\n_Timestamp: {alert_data['timestamp']}_"
+        "text": f"*{title}*\n> **Competitor:** {competitor}\n> **Severity:** `{severity}`\n> **Trigger Event:** {trigger}\n> *Action:* {action}\n_Timestamp: {ts}_"
     }
     
     try:

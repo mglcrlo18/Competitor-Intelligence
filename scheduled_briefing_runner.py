@@ -14,6 +14,7 @@ import sys
 import json
 import subprocess
 from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo
 from report_generator import build_executive_one_pager
 from email_dispatcher import send_headless_email, get_smtp_config
 from db_manager import get_all_monitored_competitors, save_signals_to_db
@@ -25,16 +26,26 @@ import sync_competitor_tracker
 LOG_FILE = os.path.join(os.path.dirname(__file__), "scheduled_briefings.log")
 LOCK_FILE = os.path.join(os.path.dirname(__file__), "dispatch_lock.json")
 
+def get_current_est_pht_times():
+    now_utc = datetime.now(timezone.utc)
+    now_est = now_utc.astimezone(ZoneInfo("America/New_York"))
+    now_pht = now_utc.astimezone(ZoneInfo("Asia/Manila"))
+    return now_est, now_pht
+
 def log(msg: str):
-    ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S PHT")
+    now_est, now_pht = get_current_est_pht_times()
+    ts = f"{now_est.strftime('%Y-%m-%d %H:%M:%S %Z')} | {now_pht.strftime('%Y-%m-%d %H:%M:%S')} PHT"
     line = f"[{ts}] {msg}"
     print(line)
-    with open(LOG_FILE, "a", encoding="utf-8") as f:
-        f.write(line + "\n")
+    try:
+        with open(LOG_FILE, "a", encoding="utf-8") as f:
+            f.write(line + "\n")
+    except Exception:
+        pass
 
 def get_current_pht_time():
     """Returns current datetime in Philippine Time (UTC+8)."""
-    return datetime.now(timezone(timedelta(hours=8)))
+    return datetime.now(ZoneInfo("Asia/Manila"))
 
 def is_already_dispatched_today(force: bool = False) -> bool:
     """
@@ -123,36 +134,43 @@ def run_scheduled_briefing(force: bool = False):
     except Exception as e:
         log(f"Warning: Sheet sync encountered exception: {e}")
 
-    # 2. Live multi-source scan across top competitors (News + YouTube + Forums)
+    # 2. Live multi-source scan across ALL competitors (News + YouTube + Forums)
     try:
-        log("Scanning latest news, videos, and forum signals for key competitors...")
         comps = get_all_monitored_competitors()
-        priority_comps = [c["name"] for c in comps[:6]]
-        for cname in priority_comps:
+        all_comp_names = []
+        seen = set()
+        for c in comps:
+            cname = (c.get("name") or "").strip()
+            if cname and cname.lower() not in seen:
+                seen.add(cname.lower())
+                all_comp_names.append(cname)
+
+        log(f"Expanded Scraper Coverage: Scanning latest news, videos, and forum signals across all {len(all_comp_names)} competitors...")
+        for cname in all_comp_names:
             # 2a. Verified News RSS
             try:
                 news = fetch_competitor_news(cname, limit=2)
                 if news:
                     save_signals_to_db(news, cname)
-            except Exception as ne:
-                log(f"Notice: News scan for {cname} skipped: {ne}")
+            except Exception:
+                pass
 
             # 2b. YouTube Video Intelligence (low-quota search, order='date')
             try:
-                vids = search_youtube_videos(f"{cname} roof", limit=2)
+                vids = search_youtube_videos(f"{cname} roof", limit=1)
                 if vids:
                     save_signals_to_db(vids, cname)
-            except Exception as ve:
-                log(f"Notice: Video scan for {cname} skipped: {ve}")
+            except Exception:
+                pass
 
             # 2c. Community Forum & Reddit Signals
             try:
-                reddit_posts = fetch_reddit_mentions(cname, limit=2)
+                reddit_posts = fetch_reddit_mentions(cname, limit=1)
                 if reddit_posts:
                     save_signals_to_db(reddit_posts, cname)
-            except Exception as re_err:
+            except Exception:
                 pass
-        log(f"Multi-source intelligence scan completed across {len(priority_comps)} priority rivals.")
+        log(f"Multi-source intelligence scan completed across all {len(all_comp_names)} competitors.")
     except Exception as e:
         log(f"Warning: Intelligence scan encountered exception: {e}")
 

@@ -4,7 +4,7 @@ Tracks keyword interest and search demand using Google Trends (pytrends)
 and provides quick SERP research links without paid APIs.
 """
 import urllib.parse
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 import pandas as pd
 
 

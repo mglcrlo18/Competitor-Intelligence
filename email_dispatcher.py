@@ -12,6 +12,7 @@ Supports:
 import os
 import re
 import smtplib
+import email.utils
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
@@ -130,7 +131,8 @@ def send_headless_email(
         if cc_list:
             msg["Cc"] = ", ".join(cc_list)
         msg["Subject"] = subject
-        msg["Date"] = datetime.now().strftime("%a, %d %b %Y %H:%M:%S +0800")
+        msg["Date"] = email.utils.formatdate(usegmt=True)
+        msg["Message-ID"] = email.utils.make_msgid(domain="gonano.com")
 
         msg.attach(MIMEText(plain_text, "plain", "utf-8"))
         if html_content:

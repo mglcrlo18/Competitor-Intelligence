@@ -15,7 +15,8 @@ Engineered with production-grade email table architecture:
 import sqlite3
 import os
 import urllib.parse
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 from pathlib import Path
 from typing import Dict, Any, List
 from db_manager import (
@@ -46,16 +47,20 @@ def truncate_words(text: str, max_words: int = 200) -> str:
     return " ".join(words)
 
 def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors", cc_recipients: str = "") -> Dict[str, str]:
-    now = datetime.now()
-    timestamp_pht = now.strftime("%Y-%m-%d %H%M PHT")
-    timestamp_display = now.strftime("%Y-%m-%d %H:%M PHT")
+    now_utc = datetime.now(timezone.utc)
+    now_est = now_utc.astimezone(ZoneInfo("America/New_York"))
+    now_pht = now_utc.astimezone(ZoneInfo("Asia/Manila"))
+
+    timestamp_badge = f"{now_est.strftime('%Y-%m-%d %H:%M %Z')} / {now_pht.strftime('%Y-%m-%d %H:%M')} PHT"
+    timestamp_pht = timestamp_badge
+    timestamp_display = timestamp_badge
 
     conn = get_connection()
     cursor = conn.cursor()
 
     # Strictly source news from 7 days before present date up to present date
-    cutoff_date = (now - timedelta(days=7)).strftime("%Y-%m-%d")
-    today_date = now.strftime("%Y-%m-%d")
+    cutoff_date = (now_pht - timedelta(days=7)).strftime("%Y-%m-%d")
+    today_date = now_pht.strftime("%Y-%m-%d")
 
     cursor.execute("""
     SELECT competitor, platform, title, snippet, timestamp, url

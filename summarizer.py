@@ -9,8 +9,8 @@ from typing import Dict, Any, List, Optional
 import httpx
 import time
 
-# Default Gemini API key from environment or fallback
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AQ.Ab8RN6J_w4DRW8fb-62_voFT9jeqCFrY6UydrwARB4A-FzAT6g")
+# Default Gemini API key from environment
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
 SYSTEM_COMPETITOR_PROMPT = """You are an elite Competitive Intelligence Strategist and Market Research Director for GoNano (a leader in nanotechnology-based roof and building materials protection).
 Your role is to critically analyze competitor moves, signals, press releases, advertisements, and news, and evaluate their direct threat and strategic implications against GoNano.

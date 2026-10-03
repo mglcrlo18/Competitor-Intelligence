@@ -27,7 +27,7 @@ DEFAULT_CC_LIST = [
     "jason@gonano.com"
 ]
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AQ.Ab8RN6J_w4DRW8fb-62_voFT9jeqCFrY6UydrwARB4A-FzAT6g")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
 
 def get_all_pending_competitor_requests() -> List[Dict[str, Any]]:
@@ -135,18 +135,27 @@ def extract_text_from_file_bytes(file_bytes: bytes, filename: str) -> str:
 
 
 def analyze_document_with_gemini_3_pro(
-    file_bytes: bytes,
-    filename: str,
+    file_bytes: Optional[bytes] = None,
+    filename: str = "document.txt",
     target_competitor: str = "",
-    api_key: Optional[str] = None
+    api_key: Optional[str] = None,
+    document_text: str = "",
+    competitor_name: str = "",
+    requester_name: str = "",
+    specific_instructions: str = ""
 ) -> Dict[str, Any]:
     """
     Invokes Gemini 3.1 Pro (via Gemini API) to perform technical and commercial analysis
-    of an uploaded competitor document, then automatically records it in competitor_store.db.
+    of an uploaded competitor document or text, then automatically records it in competitor_store.db.
     """
     key = api_key or os.getenv("GEMINI_API_KEY") or GEMINI_API_KEY
-    doc_text = extract_text_from_file_bytes(file_bytes, filename)
-    target_name = target_competitor.strip() or "Competitor"
+    if document_text:
+        doc_text = document_text.strip()
+    elif file_bytes:
+        doc_text = extract_text_from_file_bytes(file_bytes, filename)
+    else:
+        doc_text = ""
+    target_name = (competitor_name or target_competitor or "Competitor").strip()
 
     prompt = f"""You are Gemini 3.1 Pro acting as GoNano's Chief Scientific Officer & Lead Competitive Intelligence Analyst.
 Analyze the following uploaded competitor document for '{target_name}'.
@@ -293,12 +302,14 @@ def dispatch_analysis_to_requester(
     competitor_name: str,
     requester_name: str,
     requester_email: str,
-    uploaded_file_bytes: bytes,
-    filename: str,
+    uploaded_file_bytes: Optional[bytes] = None,
+    filename: str = "report.txt",
     cc_emails: Optional[List[str]] = None,
     executive_notes: str = "",
     gemini_summary: str = "",
-    request_id: Optional[str] = None
+    request_id: Optional[str] = None,
+    analysis_results: Optional[Dict[str, Any]] = None,
+    additional_cc: Optional[List[str]] = None
 ) -> Dict[str, Any]:
     """
     Transmits completed competitor analysis report to the requester
@@ -309,6 +320,10 @@ def dispatch_analysis_to_requester(
     from email.mime.text import MIMEText
     from email.mime.base import MIMEBase
     from email import encoders
+
+    cc_list = additional_cc if additional_cc is not None else (cc_emails if cc_emails is not None else DEFAULT_CC_LIST.copy())
+    if not gemini_summary and analysis_results:
+        gemini_summary = analysis_results.get("full_markdown", "")
 
     try:
         from email_dispatcher import get_smtp_config, log_entry

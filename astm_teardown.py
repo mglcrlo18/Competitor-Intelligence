@@ -5,7 +5,7 @@ Benchmarks physical, chemical, and engineering properties of roofing technologie
 against industry testing standards (ASTM D3462, ASTM D3161, UL 2218, UL 790).
 Incorporates verified testing credentials and flags uncertified topical formulations.
 """
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 import pandas as pd
 
 ASTM_LABORATORY_BENCHMARKS = [
@@ -83,6 +83,6 @@ ASTM_LABORATORY_BENCHMARKS = [
     }
 ]
 
-def get_astm_teardown_df() -> pd.DataFrame:
+def get_astm_teardown_df(competitor: Optional[str] = None) -> pd.DataFrame:
     """Returns structured ASTM testing teardown dataframe."""
     return pd.DataFrame(ASTM_LABORATORY_BENCHMARKS)

@@ -4,12 +4,13 @@ Competitor "Red Team" Strategic War Room Simulator.
 Simulates rival executive decision-making (CEO/CRO persona) in response to GoNano market moves,
 uncovering competitor counter-tactics and structural vulnerabilities.
 """
+import os
 from typing import Dict, Any, Optional
 import httpx
 
-GEMINI_API_KEY = "AQ.Ab8RN6J_w4DRW8fb-62_voFT9jeqCFrY6UydrwARB4A-FzAT6g"
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
-def simulate_rival_counter_attack(competitor_name: Optional[str] = None, gonano_move: Optional[str] = None, api_key: str = GEMINI_API_KEY) -> str:
+def simulate_rival_counter_attack(competitor_name: Optional[str] = None, gonano_move: Optional[str] = None, api_key: str = "") -> str:
     """
     Prompts Gemini to simulate the rival executive leadership's counter-strategy.
     """

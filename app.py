@@ -426,14 +426,7 @@ def render_circular_gauge(score: float, max_score: float, title: str, subtitle: 
 # -----------------------------------------------------------------------------
 # Check query parameters for session persistence across refreshes & new tabs
 if "authenticated_executive" not in st.session_state:
-    if st.query_params.get("session_auth") == "gonano_active":
-        st.session_state.authenticated_executive = {
-            "name": st.query_params.get("u_name", "Miguel Gonzales"),
-            "email": st.query_params.get("u_email", "miguel.gonzales@gonano.com"),
-            "role": "Competitor Analysis Specialist"
-        }
-    else:
-        st.session_state.authenticated_executive = None
+    st.session_state.authenticated_executive = None
 
 if not st.session_state.authenticated_executive:
     st.markdown(f"""
@@ -464,8 +457,8 @@ if not st.session_state.authenticated_executive:
                     clean_email = (exec_email or "").strip().lower()
                     clean_pin = (exec_pin or "").strip()
                     
-                    is_demo = (clean_email in ["000", "demo", "demo@gonano.com"] and clean_pin in ["d#m0", "000", "demo"])
-                    valid_pins = ["GONANO-EXEC-2026", "GoNano#Exec", "GoNano#2026", "gonano-exec-2026", "d#m0"]
+                    configured_pin = os.getenv("GONANO_EXEC_PASSWORD", "GoNano#Exec2026")
+                    valid_pins = [configured_pin, "GoNano#Exec2026", "GONANO-EXEC-2026"]
                     is_authorized = clean_email.endswith("@gonano.com") or clean_email in [
                         "miguel.gonzales@gonano.com",
                         "mcbgonzales@outlook.com",
@@ -476,13 +469,10 @@ if not st.session_state.authenticated_executive:
                         st.error("Please enter your User.")
                     elif not clean_pin:
                         st.error("Please enter your Password.")
-                    elif not (is_demo or (is_authorized and clean_pin in valid_pins)):
+                    elif not (is_authorized and clean_pin in valid_pins):
                         st.error("Access Denied: Invalid credentials. Terminal restricted strictly to authorized GoNano executive leadership.")
                     else:
-                        if is_demo:
-                            name_part = "Demo Executive"
-                            role_part = "GoNano Evaluator"
-                        elif clean_email in ["miguel.gonzales@gonano.com", "mcbgonzales@outlook.com", "gonzalesmiguelcarlo@gmail.com"]:
+                        if clean_email in ["miguel.gonzales@gonano.com", "mcbgonzales@outlook.com", "gonzalesmiguelcarlo@gmail.com"]:
                             name_part = "Miguel Gonzales"
                             role_part = "Competitor Analysis Specialist"
                         else:
@@ -582,12 +572,15 @@ with st.sidebar.expander("Add Custom Competitor"):
             st.rerun()
 
 # User identity card in sidebar foot
+import html
+exec_name_safe = html.escape(str(exec_user.get('name', 'Executive')))
+exec_email_safe = html.escape(str(exec_user.get('email', '')))
 st.sidebar.markdown("<div style='height: 14px;'></div>", unsafe_allow_html=True)
 st.sidebar.markdown(f"""
 <div style="background: rgba(255,255,255,0.05); border-radius: 18px; padding: 14px; margin-bottom: 12px;">
-    <div style="font-size: 13px; font-weight: 700; color: #FFFFFF;">{exec_user['name']}</div>
+    <div style="font-size: 13px; font-weight: 700; color: #FFFFFF;">{exec_name_safe}</div>
     <div style="font-size: 10px; color: #9499B4; font-weight:600; text-transform:uppercase; letter-spacing:0.04em;">Competitor Analysis Specialist</div>
-    <div style="font-size: 10px; color: #8583F2; margin-top: 3px;">{exec_user['email']}</div>
+    <div style="font-size: 10px; color: #8583F2; margin-top: 3px;">{exec_email_safe}</div>
 </div>
 """, unsafe_allow_html=True)
 

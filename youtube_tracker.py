@@ -4,16 +4,19 @@ Official YouTube Competitive Intelligence Tracker.
 Uses the official YouTube Data API v3 for 100% accurate metrics and views,
 replacing the fragile HTML scraper and faked metrics.
 """
+import os
 import urllib.parse
 from typing import Dict, List, Any
 import httpx
 
-YOUTUBE_API_KEY = "AIzaSyA9yjDujnKqELiry5HhIqbmRpEjr_KO4mA"
+YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY", "")
 
 def search_youtube_videos(query: str, limit: int = 15) -> List[Dict[str, Any]]:
     """
     Searches YouTube for videos related to a competitor or keyword using official API.
     """
+    if not YOUTUBE_API_KEY:
+        return []
     encoded_query = urllib.parse.quote(query)
     url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&q={encoded_query}&type=video&order=date&maxResults={limit}&key={YOUTUBE_API_KEY}"
     
