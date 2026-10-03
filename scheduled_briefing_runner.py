@@ -187,8 +187,9 @@ def run_scheduled_briefing(force: bool = False):
     html_content = report["html"]
     timestamp = report["timestamp"]
 
-    # 5. Subject: Competitor Updates as of [Date and Time]
-    subject = f"Competitor Updates as of {timestamp}"
+    # 5. Subject: Competitor Updates as of [Just the Date DD/MM/YYYY]
+    date_ddmmyyyy = report.get("date_ddmmyyyy") or get_current_pht_time().strftime("%d/%m/%Y")
+    subject = f"Competitor Updates as of {date_ddmmyyyy}"
 
     log(f"Dispatching headless email from {from_addr} to {recipient} (CC: {cc_emails})...")
     result = send_headless_email(

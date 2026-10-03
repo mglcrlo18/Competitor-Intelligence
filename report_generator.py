@@ -54,6 +54,7 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
     timestamp_badge = f"{now_est.strftime('%Y-%m-%d %H:%M %Z')} / {now_pht.strftime('%Y-%m-%d %H:%M')} PHT"
     timestamp_pht = timestamp_badge
     timestamp_display = timestamp_badge
+    date_ddmmyyyy = now_pht.strftime("%d/%m/%Y")
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -468,5 +469,7 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
     return {
         "plain_text": plain_text,
         "html": html,
-        "timestamp": timestamp_pht
+        "timestamp": timestamp_pht,
+        "date_ddmmyyyy": date_ddmmyyyy,
+        "subject": f"Competitor Updates as of {date_ddmmyyyy}"
     }
