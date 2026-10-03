@@ -84,8 +84,8 @@ def _extract_direct_url_from_bing(link: str) -> str:
 def _fetch_bing_news(query_str: str, limit: int = 25) -> List[Dict[str, Any]]:
     """Fetches direct articles via Bing News RSS with optimized parameters."""
     query = urllib.parse.quote(query_str.strip())
-    # Advanced Bing RSS parameters: count=100 maximizes payload, freshness=Day for delta updates
-    rss_url = f"https://www.bing.com/news/search?q={query}&format=rss&count=100&freshness=Day"
+    # Advanced Bing RSS parameters: count=100 maximizes payload, freshness=Week for 7-day rolling window
+    rss_url = f"https://www.bing.com/news/search?q={query}&format=rss&count=100&freshness=Week"
     
     try:
         rss_text = fetch_rss_feed(rss_url)
@@ -146,7 +146,8 @@ def _fetch_bing_news(query_str: str, limit: int = 25) -> List[Dict[str, Any]]:
 def _fetch_google_news_fallback(query_str: str, limit: int = 25) -> List[Dict[str, Any]]:
     """Fallback Google News RSS with batchexecute RPC URL resolution via googlenewsdecoder."""
     query = urllib.parse.quote(query_str.strip())
-    rss_url = f"https://news.google.com/rss/search?q={query}&hl=en-US&gl=US&ceid=US:en"
+    # Scoped strictly to the 7-day rolling window
+    rss_url = f"https://news.google.com/rss/search?q={query}+when:7d&hl=en-US&gl=US&ceid=US:en"
     
     try:
         rss_text = fetch_rss_feed(rss_url)
