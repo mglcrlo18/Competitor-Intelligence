@@ -458,7 +458,7 @@ if not st.session_state.authenticated_executive:
                 exec_email = st.text_input("User", placeholder="User", key="e_login_email")
                 exec_pin = st.text_input("Password", type="password", placeholder="Password", key="e_login_pin")
                 
-                submit_exec = st.form_submit_button("Sign In to Terminal", use_container_width=True, type="primary")
+                submit_exec = st.form_submit_button("Sign In to Terminal", width="stretch", type="primary")
 
                 if submit_exec:
                     clean_email = (exec_email or "").strip().lower()
@@ -561,7 +561,7 @@ if side_search.strip():
 active_target = st.session_state.active_target
 if active_target:
     st.sidebar.caption(f"Active Subject: **{active_target}**")
-    if st.sidebar.button("Reset Subject", use_container_width=True):
+    if st.sidebar.button("Reset Subject", width="stretch"):
         st.session_state.active_target = None
         st.rerun()
 else:
@@ -591,7 +591,7 @@ st.sidebar.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-if st.sidebar.button("Sign Out Session", use_container_width=True):
+if st.sidebar.button("Sign Out Session", width="stretch"):
     st.session_state.authenticated_executive = None
     st.query_params.clear()
     st.rerun()
@@ -660,7 +660,7 @@ if selected_nav == "Overview":
             st.markdown('<p class="head-copy">Continuous market surveillance, empirical technical audits, and executive briefing synthesis.</p>', unsafe_allow_html=True)
         with head_c2:
             st.markdown("<div style='text-align:right; margin-top:10px;'>", unsafe_allow_html=True)
-            if st.button("Execute Intelligence Scan", type="primary", use_container_width=True):
+            if st.button("Execute Intelligence Scan", type="primary", width="stretch"):
                 with st.spinner("Ingesting verified market signals..."):
                     v = search_youtube_videos(lookup_target, limit=4)
                     r = fetch_reddit_mentions(lookup_target, limit=4)
@@ -744,7 +744,7 @@ if selected_nav == "Overview":
                         alt.Tooltip("friction_num:Q", title="Friction Rate (%)", format=".1f")
                     ]
                 ).properties(height=340).interactive()
-                st.altair_chart(scatter, use_container_width=True)
+                st.altair_chart(scatter, width="stretch")
             else:
                 st.info("Synchronizing competitor quadrant metrics...")
             st.markdown("</div>", unsafe_allow_html=True)
@@ -829,7 +829,7 @@ elif selected_nav == "Intelligence Workspace":
                     <small>{desc}</small>
                 </div>
                 """, unsafe_allow_html=True)
-                if st.button(f"Open {title}", key=f"btn_tile_{key}", use_container_width=True):
+                if st.button(f"Open {title}", key=f"btn_tile_{key}", width="stretch"):
                     st.session_state.workspace_drilldown = key
                     st.rerun()
 
@@ -1062,7 +1062,7 @@ elif selected_nav == "Intelligence Workspace":
                 st.caption("Empirical teardowns comparing ASTM D3462 (tear resistance), ASTM D3161 (wind uplift), and UL 2218 (Class 4 impact).")
 
                 astm_df = get_astm_teardown_df(lookup_target)
-                st.dataframe(astm_df, hide_index=True, use_container_width=True)
+                st.dataframe(astm_df, hide_index=True, width="stretch")
 
             except Exception as tab_err:
                 st.error(f"Intelligence Module Advisory: Encountered a non-fatal exception ({type(tab_err).__name__}: {tab_err}). The rest of the terminal remains fully functional.")
@@ -1146,7 +1146,7 @@ elif selected_nav == "Intelligence Workspace":
                         "Subject": r.get("subject", ""),
                         "Requested By": r.get("requested_by", ""),
                                             })
-                st.dataframe(pd.DataFrame(t_df_list), hide_index=True, use_container_width=True)
+                st.dataframe(pd.DataFrame(t_df_list), hide_index=True, width="stretch")
 
             except Exception as tab_err:
                 st.error(f"Intelligence Module Advisory: Encountered a non-fatal exception ({type(tab_err).__name__}: {tab_err}). The rest of the terminal remains fully functional.")
@@ -1288,7 +1288,7 @@ elif selected_nav == "Risk Framework":
         st.markdown("---")
         st.markdown(f"##### Enterprise Risk Register ({p_count} Monitored Entities)")
         erm_df = generate_erm_kpi_table()
-        st.dataframe(erm_df, hide_index=True, use_container_width=True)
+        st.dataframe(erm_df, hide_index=True, width="stretch")
 
     except Exception as tab_err:
         st.error(f"Intelligence Module Advisory: Encountered a non-fatal exception ({type(tab_err).__name__}: {tab_err}). The rest of the terminal remains fully functional.")
@@ -1308,7 +1308,7 @@ elif selected_nav == "Monitoring & Signals":
             feed_type = st.radio("Channel Filter", ["All Channels", "YouTube Videos Only", "Reddit Discussions", "Active Ads"], horizontal=True)
         with col_sig2:
             st.markdown("<div style='text-align:right;'>", unsafe_allow_html=True)
-            if st.button("Trigger Ingestion Sweep", type="primary", use_container_width=True):
+            if st.button("Trigger Ingestion Sweep", type="primary", width="stretch"):
                 with st.spinner("Scraping live public endpoints..."):
                     v = search_youtube_videos(lookup_target, limit=5)
                     r = fetch_reddit_mentions(lookup_target, limit=5)
@@ -1444,7 +1444,7 @@ elif selected_nav == "C-Suite Request Desk":
                     }
                     for r in pending_reqs
                 ]),
-                use_container_width=True,
+                width="stretch",
                 hide_index=True
             )
         else:
@@ -1517,7 +1517,7 @@ elif selected_nav == "C-Suite Request Desk":
         st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
 
         # SEPARATION: Action 1 - Generate Gemini 3.1 Pro Teardown
-        if st.button("Generate Gemini 3.1 Pro Teardown", type="primary", use_container_width=True):
+        if st.button("Generate Gemini 3.1 Pro Teardown", type="primary", width="stretch"):
             combined_text = (pasted_text_input or extracted_file_text).strip()
             if not competitor_input.strip():
                 st.error("Please provide a Competitor Name.")
@@ -1573,7 +1573,7 @@ elif selected_nav == "C-Suite Request Desk":
             </div>
             """, unsafe_allow_html=True)
 
-            if st.button("Dispatch Briefing Email to Leadership & Requester", type="primary", use_container_width=True):
+            if st.button("Dispatch Briefing Email to Leadership & Requester", type="primary", width="stretch"):
                 with st.spinner("Dispatching briefing email via Google Workspace SMTP relay..."):
                     dispatch_res = dispatch_analysis_to_requester(
                         request_id=meta_data.get("request_id") if meta_data.get("request_id") else None,
@@ -1617,7 +1617,7 @@ elif selected_nav == "Executive Exports":
                 data=csv_bytes,
                 file_name=f"GoNano_Competitor_Audit_{target_slug}.csv",
                 mime="text/csv",
-                use_container_width=True
+                width="stretch"
             )
 
         with exp_col2:
@@ -1634,7 +1634,7 @@ elif selected_nav == "Executive Exports":
                 data=xls_str.encode("utf-8"),
                 file_name=f"GoNano_Executive_Spreadsheet_{target_slug}.xls",
                 mime="application/vnd.ms-excel",
-                use_container_width=True
+                width="stretch"
             )
 
         with exp_col3:
@@ -1651,7 +1651,7 @@ elif selected_nav == "Executive Exports":
                 data=memo_str.encode("utf-8"),
                 file_name=f"GoNano_Executive_Memo_{target_slug}.md",
                 mime="text/markdown",
-                use_container_width=True
+                width="stretch"
             )
 
         st.markdown("---")
