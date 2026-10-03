@@ -297,25 +297,38 @@ def add_custom_competitor(name: str, domain: str, category: str, notes: str = ""
     return True
 
 def save_signals_to_db(signals_list: List[Dict[str, Any]], competitor: str):
-    """Saves scraped signals safely to SQLite database."""
+    """Saves scraped signals safely to SQLite database with URL resolution and deduplication."""
     if not signals_list:
         return
     conn = get_connection()
     cursor = conn.cursor()
     for s in signals_list:
+        raw_url = (s.get("url") or s.get("link") or "#").strip()
+        title = (s.get("title") or "").strip()
+        if not title:
+            continue
+        # Avoid duplicate signals by URL or title+competitor
+        if raw_url and raw_url != "#":
+            cursor.execute("SELECT id FROM signals WHERE competitor = ? AND (url = ? OR title = ?)", (competitor, raw_url, title))
+        else:
+            cursor.execute("SELECT id FROM signals WHERE competitor = ? AND title = ?", (competitor, title))
+        if cursor.fetchone():
+            continue
+
+        platform = s.get("source") or s.get("platform") or "Web"
         cursor.execute("""
         INSERT INTO signals (competitor, platform, channel_badge, author, title, snippet, sentiment, polarity, url, timestamp)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             competitor,
-            s.get("source", "Web"),
-            s.get("channel_badge", s.get("source", "Web")),
+            platform,
+            s.get("channel_badge", platform),
             s.get("author", s.get("channel", "Unknown")),
-            s.get("title", ""),
-            s.get("snippet", ""),
+            title,
+            s.get("snippet", s.get("summary", "")),
             s.get("sentiment", "Neutral"),
             s.get("polarity", 0.0),
-            s.get("url", "#"),
+            raw_url,
             s.get("published", s.get("timestamp", datetime.now().strftime("%Y-%m-%d")))
         ))
     conn.commit()

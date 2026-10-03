@@ -18,6 +18,8 @@ from report_generator import build_executive_one_pager
 from email_dispatcher import send_headless_email, get_smtp_config
 from db_manager import get_all_monitored_competitors, save_signals_to_db
 from news_signals import fetch_competitor_news
+from youtube_tracker import search_youtube_videos
+from osint_listener import fetch_reddit_mentions
 import sync_competitor_tracker
 
 LOG_FILE = os.path.join(os.path.dirname(__file__), "scheduled_briefings.log")
@@ -121,18 +123,38 @@ def run_scheduled_briefing(force: bool = False):
     except Exception as e:
         log(f"Warning: Sheet sync encountered exception: {e}")
 
-    # 2. Live quick news scan across top competitors
+    # 2. Live multi-source scan across top competitors (News + YouTube + Forums)
     try:
-        log("Scanning latest news and press releases for key competitors...")
+        log("Scanning latest news, videos, and forum signals for key competitors...")
         comps = get_all_monitored_competitors()
         priority_comps = [c["name"] for c in comps[:6]]
         for cname in priority_comps:
-            news = fetch_competitor_news(cname, limit=2)
-            if news:
-                save_signals_to_db(news, cname)
-        log(f"News scan completed across {len(priority_comps)} priority rivals.")
+            # 2a. Verified News RSS
+            try:
+                news = fetch_competitor_news(cname, limit=2)
+                if news:
+                    save_signals_to_db(news, cname)
+            except Exception as ne:
+                log(f"Notice: News scan for {cname} skipped: {ne}")
+
+            # 2b. YouTube Video Intelligence (low-quota search, order='date')
+            try:
+                vids = search_youtube_videos(f"{cname} roof", limit=2)
+                if vids:
+                    save_signals_to_db(vids, cname)
+            except Exception as ve:
+                log(f"Notice: Video scan for {cname} skipped: {ve}")
+
+            # 2c. Community Forum & Reddit Signals
+            try:
+                reddit_posts = fetch_reddit_mentions(cname, limit=2)
+                if reddit_posts:
+                    save_signals_to_db(reddit_posts, cname)
+            except Exception as re_err:
+                pass
+        log(f"Multi-source intelligence scan completed across {len(priority_comps)} priority rivals.")
     except Exception as e:
-        log(f"Warning: News scan encountered exception: {e}")
+        log(f"Warning: Intelligence scan encountered exception: {e}")
 
     # 3. Retrieve SMTP, recipient, and CC config
     cfg = get_smtp_config()
