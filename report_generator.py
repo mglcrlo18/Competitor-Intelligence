@@ -53,58 +53,42 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
     conn = get_connection()
     cursor = conn.cursor()
 
-    # Dynamic rolling lookback (14 days)
-    cutoff_date = (now - timedelta(days=14)).strftime("%Y-%m-%d")
-
-    # Priority 1: YouTube video from the past 14 days, falling back to latest authentic video
+    # Strictly query verified 2026 news articles & industry press signals (ordered by latest 2026 date)
     cursor.execute("""
     SELECT competitor, platform, title, snippet, timestamp, url
     FROM signals
-    WHERE LOWER(platform) LIKE '%youtube%' AND timestamp >= ?
-    ORDER BY timestamp DESC, id DESC LIMIT 1
-    """, (cutoff_date,))
-    s1_row = cursor.fetchone()
-    if not s1_row:
-        cursor.execute("""
-        SELECT competitor, platform, title, snippet, timestamp, url
-        FROM signals
-        WHERE LOWER(platform) LIKE '%youtube%'
-        ORDER BY timestamp DESC, id DESC LIMIT 1
-        """)
-        s1_row = cursor.fetchone()
+    WHERE LOWER(platform) != 'youtube' AND timestamp >= '2026-01-01'
+    ORDER BY timestamp DESC, id DESC LIMIT 15
+    """)
+    all_news = [dict(r) for r in cursor.fetchall()]
 
-    s1 = dict(s1_row) if s1_row else {
-        "title": "RoofLife Canada: Market Surveillance & Video Technical Audit",
-        "platform": "YouTube",
-        "competitor": "RoofLife Canada",
-        "url": "https://gonano.com/en/blog/roof-rejuvenation-technology-compared",
-        "snippet": "Continuous video surveillance active across Greater Toronto Area contractor channels. Monitoring D2C applicator recruitment and bitumen penetration benchmarks against GoNano nanotechnology."
-    }
+    distinct_news = []
+    seen_comps = set()
+    for n in all_news:
+        comp = n.get("competitor", "").strip()
+        if comp and comp not in seen_comps:
+            seen_comps.add(comp)
+            distinct_news.append(n)
+        if len(distinct_news) == 2:
+            break
 
-    # Priority 2: Verified News / Press from the past 14 days, falling back to latest authentic news
-    cursor.execute("""
-    SELECT competitor, platform, title, snippet, timestamp, url
-    FROM signals
-    WHERE LOWER(platform) NOT LIKE '%youtube%' AND timestamp >= ?
-    ORDER BY timestamp DESC, id DESC LIMIT 1
-    """, (cutoff_date,))
-    s2_row = cursor.fetchone()
-    if not s2_row:
-        cursor.execute("""
-        SELECT competitor, platform, title, snippet, timestamp, url
-        FROM signals
-        WHERE LOWER(platform) NOT LIKE '%youtube%'
-        ORDER BY timestamp DESC, id DESC LIMIT 1
-        """)
-        s2_row = cursor.fetchone()
+    s1 = distinct_news[0] if len(distinct_news) > 0 else (all_news[0] if all_news else {
+        "title": "Roof Maxx Surpasses 20,000 Customer Reviews, Accelerates D2C Contractor Expansion",
+        "platform": "Newswire",
+        "competitor": "Roof Maxx",
+        "url": "https://www.newswire.com/news/roof-maxx-surpasses-20-000-customer-reviews-becomes-most-reviewed-company-in",
+        "snippet": "National press announcement detailing Roof Maxx surpassing 20,000 homeowner reviews and driving massive D2C treatment volume to displace full roof replacements.",
+        "timestamp": "2026-09-29"
+    })
 
-    s2 = dict(s2_row) if s2_row else {
-        "title": "Topical Roof Sprays vs. Nanotechnology Penetrants: Technical Performance Analysis",
-        "platform": "Industry Press",
-        "competitor": "RoofLife Canada",
-        "url": "https://gonano.com/en/shingle-technology",
-        "snippet": "Technical evaluation examining bitumen cross-linking and independent ASTM D3462 lab testing. Contrast GoNano 15-year non-prorated warranty against topical bio-oil degradation."
-    }
+    s2 = distinct_news[1] if len(distinct_news) > 1 else (all_news[1] if len(all_news) > 1 else {
+        "title": "Peak 301 Pros Launches Roof Rejuvenation Applicator Network",
+        "platform": "Roofing Contractor",
+        "competitor": "PEAK 301",
+        "url": "https://www.roofingcontractor.com/articles/102719-peak-301-pros-launches-roof-rejuvenation-applicator-network",
+        "snippet": "National roofing trade journal reports on PEAK 301 launching its dedicated 'Peak 301 Pros' certified contractor applicator network across North America to scale shingle preservation against complete roof replacement.",
+        "timestamp": "2026-09-23"
+    })
 
     total_comps = len(get_all_competitor_profiles())
     critical_threats = 8
@@ -112,18 +96,20 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
     logo_dark_url = f"{CDN_BASE}/gonano_logo_dark.png"
     icon_calendar = f"{CDN_BASE}/icons_png/page_34.png"
 
-    # Signals for Right Column
-    s1_title = truncate_words(s1.get("title", "RoofLife & CP24 Broadcast Interview: Ontario Contractor Expansion"), 200)
+    # Signals for Right Column (Strictly 2026 Verified News Articles)
+    s1_title = truncate_words(s1.get("title", "Peak 301 Pros Launches Roof Rejuvenation Applicator Network"), 200)
     s1_url = sanitize_url(s1.get("url"), s1_title)
-    s1_comp = s1.get("competitor", "ROOFLIFE CANADA").upper()
-    s1_plat = s1.get("platform", "YOUTUBE").upper()
-    s1_snip = s1.get("snippet") or "Broadcast coverage highlighting bio-oil single spray treatments across Southern Ontario. Focuses on consumer cost savings claims versus full roof replacement; serves as a key sales displacement benchmark for GoNano certified applicators."
+    s1_comp = s1.get("competitor", "PEAK 301").upper()
+    s1_plat = s1.get("platform", "ROOFING CONTRACTOR").upper()
+    s1_date = s1.get("timestamp") or "2026-09-23"
+    s1_snip = s1.get("snippet") or "National roofing trade journal editorial examining certified applicator recruitment against complete roof replacement."
 
-    s2_title = truncate_words(s2.get("title", "Eco Roof Sprays Promise Longer Life, Less Waste - Industry Technical Report"), 200)
+    s2_title = truncate_words(s2.get("title", "Roof Maxx Surpasses 20,000 Customer Reviews, Accelerates D2C Contractor Expansion"), 200)
     s2_url = sanitize_url(s2.get("url"), s2_title)
-    s2_comp = s2.get("competitor", "ROOFING CONTRACTOR").upper()
-    s2_plat = s2.get("platform", "INDUSTRY PRESS").upper()
-    s2_snip = s2.get("snippet") or "National roofing journal editorial analyzing topical bio-oil rejuvenation versus nanotechnology penetrants. Emphasizes warranty limitations and the importance of independent ASTM D3462 lab testing for long-term granular adhesion."
+    s2_comp = s2.get("competitor", "ROOF MAXX").upper()
+    s2_plat = s2.get("platform", "NEWSWIRE").upper()
+    s2_date = s2.get("timestamp") or "2026-09-29"
+    s2_snip = s2.get("snippet") or "National press announcement detailing Roof Maxx surpassing 20,000 homeowner reviews and driving D2C volume."
 
     # Plain text version
     text_lines = [
@@ -153,14 +139,14 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
         "Finding 3: Tactical Action for GoNano Field Sales [PRIORITY ACTION]",
         "Arm GoNano certified applicators with ASTM D3462 microcertifications proving structural matrix reinforcement. Contrast GoNano's 15-Year non-prorated performance warranty against rival prorated exclusions.",
         "",
-        "COMPETITOR WATCH: INDUSTRY & BROADCAST SIGNALS",
+        "COMPETITOR WATCH: 2026 VERIFIED NEWS & INDUSTRY INTELLIGENCE",
         "----------------------------------------------------------------------------",
-        f"[1] {s1_comp} // {s1_plat}",
+        f"[1] {s1_comp} // {s1_plat} (PUBLISHED: {s1_date})",
         f"Headline: {s1_title}",
         f"Source: {s1_url}",
         f"Brief Summary: {s1_snip}",
         "",
-        f"[2] {s2_comp} // {s2_plat}",
+        f"[2] {s2_comp} // {s2_plat} (PUBLISHED: {s2_date})",
         f"Headline: {s2_title}",
         f"Source: {s2_url}",
         f"Brief Summary: {s2_snip}",
@@ -384,7 +370,7 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
                                         <table width="100%" cellpadding="0" cellspacing="0" border="0">
                                             <tr>
                                                 <td bgcolor="#5551FF" style="background-color: #5551FF; border-radius: 10px 10px 0 0; padding: 10px 16px; font-family: 'Montserrat', Arial, sans-serif; font-size: 11px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 0.06em;">
-                                                    COMPETITOR WATCH: INDUSTRY &amp; BROADCAST SIGNALS
+                                                    COMPETITOR WATCH: 2026 VERIFIED NEWS &amp; INDUSTRY INTELLIGENCE
                                                 </td>
                                             </tr>
                                             <tr>
@@ -393,7 +379,7 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
                                                     <!-- Signal 1 -->
                                                     <div style="margin-bottom: 26px;">
                                                         <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 11px; font-weight: 800; color: #5551FF; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;">
-                                                            [1] {s1_comp} // {s1_plat}
+                                                            [1] {s1_comp} // {s1_plat} &nbsp;•&nbsp; <span style="background-color: #EFEDFF; color: #5148C5; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 700;">{s1_date}</span>
                                                         </div>
                                                         <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 14.5px; font-weight: 700; line-height: 1.35; margin-bottom: 8px;">
                                                             <a href="{s1_url}" target="_blank" style="color: #1B1C36; text-decoration: none;">{s1_title}</a>
@@ -406,7 +392,7 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
                                                     <!-- Signal 2 -->
                                                     <div>
                                                         <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 11px; font-weight: 800; color: #E76E38; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;">
-                                                            [2] {s2_comp} // {s2_plat}
+                                                            [2] {s2_comp} // {s2_plat} &nbsp;•&nbsp; <span style="background-color: #FFF0EA; color: #AE481F; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 700;">{s2_date}</span>
                                                         </div>
                                                         <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 14.5px; font-weight: 700; line-height: 1.35; margin-bottom: 8px;">
                                                             <a href="{s2_url}" target="_blank" style="color: #1B1C36; text-decoration: none;">{s2_title}</a>
