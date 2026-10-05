@@ -370,7 +370,7 @@ def render_paid_apis_and_aeo_tab():
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <div>
                 <span class="capsule-pill capsule-blue" style="font-size:10px; margin-bottom:8px; display:inline-block;">
-                    <span class="bead"></span>CEO-APPROVED INFRASTRUCTURE ROADMAP
+                    <span class='bead'></span>CEO-APPROVED INFRASTRUCTURE ROADMAP
                 </span>
                 <div style="font-size:20px; font-weight:800; letter-spacing:0.02em;">Commercial Data Services & AEO Radar</div>
                 <div style="font-size:12px; color:#94A3B8; margin-top:4px;">
@@ -394,7 +394,7 @@ def render_paid_apis_and_aeo_tab():
     )
 
     if "1. AEO" in aeo_view:
-        st.markdown("#### 🎯 Answer Engine Optimization (AEO/GEO) Probe")
+        st.markdown("#### <span class='capsule-pill capsule-blue' style='font-size:11px;'><span class='bead'></span>AEO / GEO</span> Answer Engine Optimization Probe")
         st.caption("Probe live generative answer engines (ChatGPT, Google AI Overviews, Perplexity, Gemini) to measure AI Share of Voice (AI-SOV) and citation authority.")
 
         col_input, col_eng = st.columns([3, 1.2])
@@ -410,7 +410,7 @@ def render_paid_apis_and_aeo_tab():
                 ["Perplexity Sonar (Online)", "Google Gemini Search Grounding", "DataForSEO Google AI Overviews"]
             )
 
-        if st.button("🚀 Execute Live Generative Probe", type="primary", width="stretch"):
+        if st.button("Execute Live Generative Probe", type="primary", width="stretch"):
             with st.spinner(f"Querying {engine_choice} and auditing grounding citations..."):
                 audit_res = run_aeo_prompt_probe(selected_prompt, engine_choice)
                 st.success(f"Audit completed! Verdict: **{audit_res['verdict']}** (Sentiment: {audit_res['sentiment']})")
@@ -431,13 +431,13 @@ def render_paid_apis_and_aeo_tab():
                         Extracted Citation Sources ({len(audit_res['citations'])} URLs Cited):
                     </div>
                     <div style="display:flex; flex-direction:column; gap:6px;">
-                        {"".join([f"<div style='font-size:12px;'><a href='{c}' target='_blank' style='color:#675CE7; font-weight:600;'>🔗 {c}</a></div>" for c in audit_res['citations']])}
+                        {"".join([f"<div style='font-size:12px;'><a href='{c}' target='_blank' style='color:#675CE7; font-weight:600;'><span style='color:#675CE7; font-weight:700;'>•</span> {c}</a></div>" for c in audit_res['citations']])}
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
 
         st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
-        st.markdown("##### 📜 Recent Generative Search Audits")
+        st.markdown("##### <span class='capsule-pill capsule-blue' style='font-size:10px;'><span class='bead'></span>AUDIT LOG</span> Recent Generative Search Audits")
         recent = get_recent_aeo_audits(5)
         if recent:
             for r in recent:
@@ -446,7 +446,7 @@ def render_paid_apis_and_aeo_tab():
                 <div class="mention-card">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <span class="capsule-pill {badge_class}" style="font-size:9.5px;">
-                            <span class="bead"></span>{r['recommendation_verdict']}
+                            <span class='bead'></span>{r['recommendation_verdict']}
                         </span>
                         <span style="font-size:11px; color:#94A3B8;">{r['created_at']}</span>
                     </div>
@@ -458,7 +458,7 @@ def render_paid_apis_and_aeo_tab():
             st.info("No AEO audits stored yet. Click 'Execute Live Generative Probe' above to run the first audit.")
 
     else:
-        st.markdown("#### 📡 CEO-Approved Commercial Data APIs Registry")
+        st.markdown("#### <span class='capsule-pill capsule-blue' style='font-size:11px;'><span class='bead'></span>INTELLIGENCE REGISTRY</span> CEO-Approved Commercial Data APIs")
         st.caption("Active configuration status, published unit pricing, and integration contracts across all 10 capability domains.")
 
         grid_cols = st.columns(2)

@@ -462,6 +462,26 @@ def get_marketing_gaps(competitor: Optional[str] = None) -> List[Dict[str, Any]]
     conn.close()
     return rows
 
+
+def purge_expired_cached_reviews(max_age_days: int = 30) -> int:
+    """
+    Enforces compliance with Google Maps Platform Data Retention Terms of Service (Section 3.2.3).
+    Automatically purges cached third-party review records and location metadata older than 30 days.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cutoff_date = (datetime.now() - timedelta(days=max_age_days)).strftime("%Y-%m-%d %H:%M:%S")
+    
+    cursor.execute("""
+    DELETE FROM signals 
+    WHERE (platform LIKE '%review%' OR channel_badge LIKE '%review%' OR title LIKE '%Rating%')
+      AND created_at < ?
+    """, (cutoff_date,))
+    deleted_count = cursor.rowcount
+    conn.commit()
+    conn.close()
+    return deleted_count
+
 def get_erm_risks(competitor: Optional[str] = None) -> List[Dict[str, Any]]:
     conn = get_connection()
     cursor = conn.cursor()
