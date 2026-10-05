@@ -1670,3 +1670,14 @@ elif selected_nav == "Executive Exports":
 
     except Exception as tab_err:
         st.error(f"Intelligence Module Advisory: Encountered a non-fatal exception ({type(tab_err).__name__}: {tab_err}). The rest of the terminal remains fully functional.")
+
+
+# -----------------------------------------------------------------------------
+# SECTION: COMMERCIAL DATA APIS & AEO GENERATIVE SEARCH RADAR
+# -----------------------------------------------------------------------------
+try:
+    from paid_apis_radar import render_paid_apis_and_aeo_tab
+    st.markdown("<div style='height:30px;'></div>", unsafe_allow_html=True)
+    render_paid_apis_and_aeo_tab()
+except Exception as tab_err:
+    st.error(f"Intelligence Module Advisory: Encountered a non-fatal exception ({type(tab_err).__name__}: {tab_err}). The rest of the terminal remains fully functional.")
