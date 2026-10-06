@@ -811,7 +811,8 @@ elif selected_nav == "Intelligence Workspace":
             ("Territory Audit", "Regional market penetration and climate vulnerability mapping.", "territory"),
                         ("Domain & Sheet Tracker", "Integrated enterprise domain risks and Google Sheets live roster.", "tracker"),
             ("OSINT Stream", "Multi-source feed with in-app video embeds, Reddit discussions, and Meta Ads.", "osint"),
-            ("Red Team Simulator", "Roleplay as rival executive leadership to stress-test GoNano offensive moves.", "redteam")
+            ("Red Team Simulator", "Roleplay as rival executive leadership to stress-test GoNano offensive moves.", "redteam"),
+            ("Commercial APIs & AEO Radar", "Enterprise data connectors, pricing models, and generative answer engine probe.", "aeo")
         ]
 
         for i, (title, desc, key) in enumerate(modules):
@@ -1204,6 +1205,14 @@ elif selected_nav == "Intelligence Workspace":
                         </div>
                         """, unsafe_allow_html=True)
 
+            except Exception as tab_err:
+                st.error(f"Intelligence Module Advisory: Encountered a non-fatal exception ({type(tab_err).__name__}: {tab_err}). The rest of the terminal remains fully functional.")
+
+        # 12. COMMERCIAL DATA APIS & AEO RADAR
+        elif drill == "aeo":
+            try:
+                from paid_apis_radar import render_paid_apis_and_aeo_tab
+                render_paid_apis_and_aeo_tab()
             except Exception as tab_err:
                 st.error(f"Intelligence Module Advisory: Encountered a non-fatal exception ({type(tab_err).__name__}: {tab_err}). The rest of the terminal remains fully functional.")
 
