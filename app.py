@@ -517,7 +517,8 @@ nav_options = [
     "Monitoring & Signals",
     "Prioritized Alerts",
     "C-Suite Request Desk",
-    "Executive Exports"
+    "Executive Exports",
+    "Commercial APIs & AEO Radar"
 ]
 
 if "current_nav_view" not in st.session_state:
@@ -1672,12 +1673,12 @@ elif selected_nav == "Executive Exports":
         st.error(f"Intelligence Module Advisory: Encountered a non-fatal exception ({type(tab_err).__name__}: {tab_err}). The rest of the terminal remains fully functional.")
 
 
-# -----------------------------------------------------------------------------
-# SECTION: COMMERCIAL DATA APIS & AEO GENERATIVE SEARCH RADAR
-# -----------------------------------------------------------------------------
-try:
-    from paid_apis_radar import render_paid_apis_and_aeo_tab
-    st.markdown("<div style='height:30px;'></div>", unsafe_allow_html=True)
-    render_paid_apis_and_aeo_tab()
-except Exception as tab_err:
-    st.error(f"Intelligence Module Advisory: Encountered a non-fatal exception ({type(tab_err).__name__}: {tab_err}). The rest of the terminal remains fully functional.")
+# =============================================================================
+# VIEW 8: COMMERCIAL DATA APIS & AEO GENERATIVE SEARCH RADAR
+# =============================================================================
+elif selected_nav == "Commercial APIs & AEO Radar":
+    try:
+        from paid_apis_radar import render_paid_apis_and_aeo_tab
+        render_paid_apis_and_aeo_tab()
+    except Exception as tab_err:
+        st.error(f"Intelligence Module Advisory: Encountered a non-fatal exception ({type(tab_err).__name__}: {tab_err}). The rest of the terminal remains fully functional.")
