@@ -39,8 +39,8 @@ COMMERCIAL_DATA_SERVICES: Dict[str, Dict[str, Any]] = {
     "1. Meta Ad Monitoring": {
         "provider": "SearchApi.io / Apify",
         "category": "Creative & Ad-Spend Surveillance",
-        "pricing_tier": "0–00 / month (10,000–35,000 requests)",
-        "unit_rate": "~.85–.00 per 1,000 searches",
+        "pricing_tier": "$40–$100 / month (10,000–35,000 requests)",
+        "unit_rate": "~$2.85–$4.00 per 1,000 searches",
         "env_var": "SEARCHAPI_API_KEY",
         "fallback_env": "APIFY_API_TOKEN",
         "capabilities": "Daily scraping of competitor Facebook & Instagram ads, active headlines, video hooks, and offer longevity.",
@@ -52,7 +52,7 @@ COMMERCIAL_DATA_SERVICES: Dict[str, Dict[str, Any]] = {
     "2. Paid News Feeds": {
         "provider": "NewsAPI.ai (Event Registry) / NewsCatcher",
         "category": "Press & Event Intelligence",
-        "pricing_tier": "0 / month (5,000 NLP-clustered event tokens)",
+        "pricing_tier": "$90 / month (5,000 NLP-clustered event tokens)",
         "unit_rate": "Flat monthly token allowance with archive multipliers",
         "env_var": "NEWSAPI_AI_KEY",
         "fallback_env": "NEWSCATCHER_API_KEY",
@@ -65,8 +65,8 @@ COMMERCIAL_DATA_SERVICES: Dict[str, Dict[str, Any]] = {
     "3. Search & Ad-Spend Intelligence": {
         "provider": "SpyFu API / SEMrush",
         "category": "PPC & Organic Search Radar",
-        "pricing_tier": "9 / month (Pro+AI includes 0/mo API credit)",
-        "unit_rate": "/bin/sh.20–.00 per 1,000 rows returned",
+        "pricing_tier": "$79 / month (Pro+AI includes $40/mo API credit)",
+        "unit_rate": "$0.20–$3.00 per 1,000 rows returned",
         "env_var": "SPYFU_API_KEY",
         "fallback_env": "SEMRUSH_API_KEY",
         "capabilities": "Shows which competitors rank and bid on key roofing searches, their estimated ad spend and traffic trends.",
@@ -79,8 +79,8 @@ COMMERCIAL_DATA_SERVICES: Dict[str, Dict[str, Any]] = {
     "4. Reviews & Dealer Reputation": {
         "provider": "Outscraper / Google Places API (New)",
         "category": "Local Reputation & Dealer Audits",
-        "pricing_tier": "Pay-as-you-go (.00 / 1,000 reviews; 500 free)",
-        "unit_rate": "/bin/sh.003 per review with full text and sentiment",
+        "pricing_tier": "Pay-as-you-go ($3.00 / 1,000 reviews; 500 free)",
+        "unit_rate": "$0.003 per review with full text and sentiment",
         "env_var": "OUTSCRAPER_API_KEY",
         "fallback_env": "GOOGLE_PLACES_API_KEY",
         "capabilities": "Track star ratings, review counts, and customer complaint themes across competitors and regional applicators.",
@@ -92,7 +92,7 @@ COMMERCIAL_DATA_SERVICES: Dict[str, Dict[str, Any]] = {
     "5. Website Change Alerts": {
         "provider": "ScrapingBee / Visualping API",
         "category": "Stealth DOM & Price Diff Radar",
-        "pricing_tier": "9 / month (250,000 API credits, JS rendering)",
+        "pricing_tier": "$49 / month (250,000 API credits, JS rendering)",
         "unit_rate": "5 credits per headless JS page render",
         "env_var": "SCRAPINGBEE_API_KEY",
         "fallback_env": "VISUALPING_API_KEY",
@@ -105,7 +105,7 @@ COMMERCIAL_DATA_SERVICES: Dict[str, Dict[str, Any]] = {
     "6. Social Listening": {
         "provider": "Agorapulse Listening (formerly Mention) / Brandwatch",
         "category": "Public Forum & Contractor Sentiment",
-        "pricing_tier": "19–49 / month (Base + Listening Add-on)",
+        "pricing_tier": "$119–$149 / month (Base + Listening Add-on)",
         "unit_rate": "Volume-based tracking per thousand mentions",
         "env_var": "AGORAPULSE_API_KEY",
         "fallback_env": "BRANDWATCH_API_KEY",
@@ -118,7 +118,7 @@ COMMERCIAL_DATA_SERVICES: Dict[str, Dict[str, Any]] = {
     "7. Commercial AI Inference": {
         "provider": "Google Gemini Paid Tier / OpenAI GPT-4o",
         "category": "Generative Teardowns & Summarization",
-        "pricing_tier": "/bin/sh.075 / 1M input (Gemini 1.5 Flash); /bin/sh.15 / 1M (GPT-4o-mini)",
+        "pricing_tier": "$0.075 / 1M input (Gemini 1.5 Flash); $0.15 / 1M (GPT-4o-mini)",
         "unit_rate": "Token-metered pay-as-you-go",
         "env_var": "GEMINI_API_KEY",
         "fallback_env": "OPENAI_API_KEY",
@@ -131,7 +131,7 @@ COMMERCIAL_DATA_SERVICES: Dict[str, Dict[str, Any]] = {
     "8. Firmographics & Expansion": {
         "provider": "Apollo.io API / Crunchbase API",
         "category": "Corporate Intelligence & Executive Tracking",
-        "pricing_tier": "9 / user / month (Professional API tier)",
+        "pricing_tier": "$79 / user / month (Professional API tier)",
         "unit_rate": "Credit-based organizational enrichment",
         "env_var": "APOLLO_API_KEY",
         "fallback_env": "CRUNCHBASE_API_KEY",
@@ -144,8 +144,8 @@ COMMERCIAL_DATA_SERVICES: Dict[str, Dict[str, Any]] = {
     "9. Always-On Cloud Infrastructure": {
         "provider": "Render Blueprint / Google Cloud Run",
         "category": "Containerized Daemon Hosting & DB",
-        "pricing_tier": "~1–5 / month (Web Service + Worker + Postgres)",
-        "unit_rate": "/mo per 512MB RAM instance; /mo managed DB",
+        "pricing_tier": "~$21–$35 / month (Web Service + Worker + Postgres)",
+        "unit_rate": "$7/mo per 512MB RAM instance; $7/mo managed DB",
         "env_var": "RENDER_API_KEY",
         "fallback_env": "GCP_SERVICE_ACCOUNT_KEY",
         "capabilities": "Keeps the dashboard and 24-hour background scraping daemons running on time without requiring a local laptop.",
@@ -157,8 +157,8 @@ COMMERCIAL_DATA_SERVICES: Dict[str, Dict[str, Any]] = {
     "10. AEO & Generative Search Radar": {
         "provider": "Perplexity Sonar / DataForSEO Google AI Overviews",
         "category": "Answer Engine Optimization (AEO/GEO)",
-        "pricing_tier": "~5–5 / month (30 prompts tracked weekly across 5 LLMs)",
-        "unit_rate": ".00 / 1k queries (Perplexity); /bin/sh.001 / query (DataForSEO)",
+        "pricing_tier": "~$15–$45 / month (30 prompts tracked weekly across 5 LLMs)",
+        "unit_rate": "$5.00 / 1k queries (Perplexity); $0.001 / query (DataForSEO)",
         "env_var": "PERPLEXITY_API_KEY",
         "fallback_env": "DATAFORSEO_API_KEY",
         "capabilities": "Measures AI Share of Voice (AI-SOV), tracks citation domains, and flags prompts where rivals are recommended over GoNano.",
@@ -178,6 +178,8 @@ def init_aeo_tables():
     """Initializes tables for tracking generative answer engine optimization."""
     conn = get_connection()
     cursor = conn.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL;")
+    cursor.execute("PRAGMA synchronous=NORMAL;")
     
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS aeo_audits (
@@ -360,7 +362,7 @@ def run_aeo_prompt_probe(prompt: str, engine: str = "Perplexity Sonar") -> Dict[
         elif has_cost:
             response_text = (
                 f"Commercial pricing, value analysis, and market feasibility for **'{clean_prompt}'**: "
-                "Asphalt roof rejuvenation typically costs between **/bin/sh.95 and .45 per square foot** (,500 to ,500 for an average residential roof), representing a 70% to 80% savings compared to complete roof replacement (2,000–0,000). "
+                "Asphalt roof rejuvenation typically costs between **$1.95 and $3.45 per square foot** ($2,500 to $6,500 for an average residential roof), representing a 70% to 80% savings compared to complete roof replacement ($12,000–$20,000). "
                 f"While products like **{competitor_detected}** provide an entry-level price point, their 5-year warranty cycles necessitate recurrent applications that increase lifetime ownership costs. "
                 "**GoNano's** nanotechnology treatment provides an extended 10-to-15 year non-prorated structural warranty. "
                 "For property managers and homeowners, GoNano delivers a substantially lower annualized cost per year of roof extension."
