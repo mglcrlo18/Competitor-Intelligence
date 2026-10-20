@@ -66,7 +66,11 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
     cursor.execute("""
     SELECT competitor, platform, title, snippet, timestamp, url
     FROM signals
-    WHERE LOWER(platform) != 'youtube' AND timestamp >= ? AND timestamp <= ?
+    WHERE LOWER(platform) != 'youtube'
+      AND timestamp >= ? AND timestamp <= ?
+      AND url NOT LIKE '%news.google.com/rss/%'
+      AND LOWER(title) NOT LIKE '%flooring%'
+      AND LOWER(title) NOT LIKE '%hardwood%'
     ORDER BY timestamp DESC, id DESC LIMIT 15
     """, (cutoff_date, today_date))
     all_news = [dict(r) for r in cursor.fetchall()]
@@ -105,20 +109,28 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
     logo_dark_url = f"{CDN_BASE}/gonano_logo_dark.png"
     icon_calendar = f"{CDN_BASE}/icons_png/page_34.png"
 
+    import re as _re
+    def _clean_text(val: str) -> str:
+        if not val:
+            return ""
+        txt = _re.sub(r"<[^>]+>", " ", str(val))
+        txt = txt.replace("&nbsp;", " ").replace("&amp;", "&").replace("&quot;", '"')
+        return " ".join(txt.split())
+
     # Signals for Right Column (Strictly 7-Day Window: 7 Days Before Present to Present Date)
-    s1_title = truncate_words(s1.get("title", "How Raising Prices Can Offset Customer Acquisition Costs"), 200)
+    s1_title = truncate_words(_clean_text(s1.get("title", "How Raising Prices Can Offset Customer Acquisition Costs")), 200)
     s1_url = sanitize_url(s1.get("url"), s1_title)
     s1_comp = s1.get("competitor", "ROOF MAXX").upper()
     s1_plat = s1.get("platform", "ENTREPRENEUR").upper()
     s1_date = s1.get("timestamp") or today_date
-    s1_snip = s1.get("snippet") or "Analysis examining competitor customer acquisition economics and contractor pricing resilience."
+    s1_snip = _clean_text(s1.get("snippet")) or "Analysis examining competitor customer acquisition economics and contractor pricing resilience."
 
-    s2_title = truncate_words(s2.get("title", "Roof Maxx Surpasses 20,000 Customer Reviews, Accelerates D2C Contractor Expansion"), 200)
+    s2_title = truncate_words(_clean_text(s2.get("title", "Roof Maxx Surpasses 20,000 Customer Reviews, Accelerates D2C Contractor Expansion")), 200)
     s2_url = sanitize_url(s2.get("url"), s2_title)
     s2_comp = s2.get("competitor", "ROOF MAXX").upper()
     s2_plat = s2.get("platform", "NEWSWIRE").upper()
     s2_date = s2.get("timestamp") or cutoff_date
-    s2_snip = s2.get("snippet") or "National press announcement detailing Roof Maxx surpassing 20,000 homeowner reviews and driving D2C volume."
+    s2_snip = _clean_text(s2.get("snippet")) or "National press announcement detailing Roof Maxx surpassing 20,000 homeowner reviews and driving D2C volume."
 
     # Plain text version
     text_lines = [
