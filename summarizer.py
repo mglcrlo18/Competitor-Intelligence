@@ -8,6 +8,9 @@ import json
 from typing import Dict, Any, List, Optional
 import httpx
 import time
+from dotenv import load_dotenv
+
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 # Default Gemini API key from environment
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")

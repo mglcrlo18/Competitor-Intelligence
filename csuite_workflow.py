@@ -18,6 +18,9 @@ from typing import List, Dict, Any, Optional
 import urllib.request
 
 from db_manager import get_connection
+from dotenv import load_dotenv
+
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 DEFAULT_CC_LIST = [
     "joel@gonano.com",

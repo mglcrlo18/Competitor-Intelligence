@@ -4,7 +4,7 @@ Automated Scheduled Runner for GoNano Competitor Intelligence Briefings.
 Triggered automatically at 00:00 H PHT (Midnight).
 Includes:
 - Distributed Idempotency Guard (dispatch_lock.json) preventing duplicate dispatches
-- Live competitive signal scan
+- Live competitive signal scan (bounded parallel ThreadPoolExecutor)
 - Google Sheets tracker synchronization
 - 1-Page executive brief generation (Updates on News, Strategic Findings)
 - Headless email dispatch from miguel.gonzales@gonano.com to fixed distribution
@@ -13,8 +13,13 @@ import os
 import sys
 import json
 import subprocess
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
+from dotenv import load_dotenv
+
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+
 from report_generator import build_executive_one_pager
 from email_dispatcher import send_headless_email, get_smtp_config
 from db_manager import get_all_monitored_competitors, save_signals_to_db
@@ -116,6 +121,32 @@ def record_dispatch_lock(source: str):
         except Exception as e:
             log(f"Notice: Local lockfile written, remote git sync skipped ({e}).")
 
+def _scan_single_competitor(cname: str):
+    """Worker function to scan a single competitor across News, YouTube, and Reddit."""
+    collected = []
+    try:
+        news = fetch_competitor_news(cname, limit=2)
+        if news:
+            collected.extend(news)
+    except Exception:
+        pass
+
+    try:
+        vids = search_youtube_videos(f"{cname} roof", limit=1)
+        if vids:
+            collected.extend(vids)
+    except Exception:
+        pass
+
+    try:
+        reddit_posts = fetch_reddit_mentions(cname, limit=1)
+        if reddit_posts:
+            collected.extend(reddit_posts)
+    except Exception:
+        pass
+
+    return cname, collected
+
 def run_scheduled_briefing(force: bool = False):
     # 0. Distributed Deduplication Pre-Flight Check
     if is_already_dispatched_today(force=force):
@@ -134,43 +165,41 @@ def run_scheduled_briefing(force: bool = False):
     except Exception as e:
         log(f"Warning: Sheet sync encountered exception: {e}")
 
-    # 2. Live multi-source scan across ALL competitors (News + YouTube + Forums)
+    # 2. Live multi-source scan across ALL competitors (Bounded Parallel Scan)
     try:
         comps = get_all_monitored_competitors()
+        priority_rivals = [
+            "Roof Maxx", "PEAK301", "FreshRoof", "RoofLife Canada",
+            "Roof Rejuvenate", "UglyRoof", "Bright Green Roof", "Nanoclad",
+            "Nanoroof", "Shingle Magic", "Spray-Net", "Ever Roof"
+        ]
         all_comp_names = []
         seen = set()
+        for pname in priority_rivals:
+            seen.add(pname.lower())
+            all_comp_names.append(pname)
         for c in comps:
             cname = (c.get("name") or "").strip()
             if cname and cname.lower() not in seen:
                 seen.add(cname.lower())
                 all_comp_names.append(cname)
 
-        log(f"Expanded Scraper Coverage: Scanning latest news, videos, and forum signals across all {len(all_comp_names)} competitors...")
-        for cname in all_comp_names:
-            # 2a. Verified News RSS
+        log(f"Expanded Scraper Coverage: Scanning latest news, videos, and forum signals across {len(all_comp_names)} competitors (parallel workers=8, budget=90s)...")
+        scanned_count = 0
+        with ThreadPoolExecutor(max_workers=8) as executor:
+            future_to_comp = {executor.submit(_scan_single_competitor, cname): cname for cname in all_comp_names}
             try:
-                news = fetch_competitor_news(cname, limit=2)
-                if news:
-                    save_signals_to_db(news, cname)
-            except Exception:
-                pass
-
-            # 2b. YouTube Video Intelligence (low-quota search, order='date')
-            try:
-                vids = search_youtube_videos(f"{cname} roof", limit=1)
-                if vids:
-                    save_signals_to_db(vids, cname)
-            except Exception:
-                pass
-
-            # 2c. Community Forum & Reddit Signals
-            try:
-                reddit_posts = fetch_reddit_mentions(cname, limit=1)
-                if reddit_posts:
-                    save_signals_to_db(reddit_posts, cname)
-            except Exception:
-                pass
-        log(f"Multi-source intelligence scan completed across all {len(all_comp_names)} competitors.")
+                for future in as_completed(future_to_comp, timeout=90.0):
+                    try:
+                        cname, items = future.result(timeout=5.0)
+                        if items:
+                            save_signals_to_db(items, cname)
+                        scanned_count += 1
+                    except Exception:
+                        pass
+            except TimeoutError:
+                log(f"Notice: Parallel scraper reached 90s time budget after completing {scanned_count}/{len(all_comp_names)} competitors; proceeding to report generation.")
+        log(f"Multi-source intelligence scan completed ({scanned_count}/{len(all_comp_names)} competitors processed).")
     except Exception as e:
         log(f"Warning: Intelligence scan encountered exception: {e}")
 
@@ -217,4 +246,6 @@ def run_scheduled_briefing(force: bool = False):
 
 if __name__ == "__main__":
     force_run = "--force" in sys.argv
-    run_scheduled_briefing(force=force_run)
+    res = run_scheduled_briefing(force=force_run)
+    if os.getenv("GITHUB_ACTIONS") and res.get("status") not in ("success", "skipped"):
+        sys.exit(1)

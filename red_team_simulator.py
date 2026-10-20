@@ -7,6 +7,9 @@ uncovering competitor counter-tactics and structural vulnerabilities.
 import os
 from typing import Dict, Any, Optional
 import httpx
+from dotenv import load_dotenv
+
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
@@ -34,7 +37,8 @@ As the rival leadership, respond in a rigorous, adversarial corporate war-room b
 4. Internal Vulnerability Confession: Confidentially, what is the single biggest operational or chemical flaw in your business model that this GoNano move exposes?
 """
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+    key = api_key or os.getenv("GEMINI_API_KEY") or GEMINI_API_KEY
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={key}"
     payload = {
         "contents": [{
             "parts": [{"text": prompt}]

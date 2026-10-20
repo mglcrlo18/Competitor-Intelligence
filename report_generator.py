@@ -87,7 +87,7 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
         "competitor": "Roof Maxx",
         "url": "https://www.entrepreneur.com/building-a-business/raising-your-prices-can-help-you-fight-rising-customer-acquisition-costs-but-only-if-youre-careful",
         "snippet": "Roof Maxx leadership analysis on surging homeowner demand for roof replacement alternatives, evaluating contractor pricing resilience and customer acquisition economics across US dealerships.",
-        "timestamp": (now - timedelta(days=1)).strftime("%Y-%m-%d")
+        "timestamp": (now_pht - timedelta(days=1)).strftime("%Y-%m-%d")
     })
 
     s2 = distinct_news[1] if len(distinct_news) > 1 else (all_news[1] if len(all_news) > 1 else {
@@ -96,7 +96,7 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
         "competitor": "Roof Maxx",
         "url": "https://www.newswire.com/news/roof-maxx-surpasses-20-000-customer-reviews-becomes-most-reviewed-company-in",
         "snippet": "National press announcement detailing Roof Maxx surpassing 20,000 homeowner reviews and driving massive D2C treatment volume to displace full roof replacements.",
-        "timestamp": (now - timedelta(days=4)).strftime("%Y-%m-%d")
+        "timestamp": (now_pht - timedelta(days=4)).strftime("%Y-%m-%d")
     })
 
     total_comps = len(get_all_competitor_profiles())

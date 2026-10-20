@@ -33,8 +33,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Scheduled Intelligence Briefing & Dispatch Email
+      - name: Mask Dynamic Secrets & Run Scheduled Intelligence Briefing
         env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           SMTP_HOST: ${{ secrets.SMTP_HOST || 'smtp.gmail.com' }}
@@ -44,9 +46,14 @@ jobs:
           CC_EMAILS: ${{ secrets.CC_EMAILS || 'ryan@gonano.com, mathieu.vallieres@gonano.com, jason@gonano.com, alamin.abuhajjeh@gonano.com, cody.loeffler@gonano.com, john.silvernail@gonano.com' }}
           META_GRAPH_API_TOKEN: ${{ secrets.META_GRAPH_API_TOKEN }}
         run: |
+          [ -n "$GEMINI_API_KEY" ] && echo "::add-mask::$GEMINI_API_KEY" || true
+          [ -n "$YOUTUBE_API_KEY" ] && echo "::add-mask::$YOUTUBE_API_KEY" || true
+          [ -n "$SMTP_PASSWORD" ] && echo "::add-mask::$SMTP_PASSWORD" || true
+          [ -n "$META_GRAPH_API_TOKEN" ] && echo "::add-mask::$META_GRAPH_API_TOKEN" || true
           python scheduled_briefing_runner.py
 
       - name: Commit Updated Database & Dispatch Lock (State Persistence)
+        if: always()
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"

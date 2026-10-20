@@ -8,6 +8,9 @@ import os
 import urllib.parse
 from typing import Dict, List, Any
 import httpx
+from dotenv import load_dotenv
+
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY", "")
 
@@ -15,10 +18,11 @@ def search_youtube_videos(query: str, limit: int = 15) -> List[Dict[str, Any]]:
     """
     Searches YouTube for videos related to a competitor or keyword using official API.
     """
-    if not YOUTUBE_API_KEY:
+    api_key = os.getenv("YOUTUBE_API_KEY") or YOUTUBE_API_KEY
+    if not api_key:
         return []
     encoded_query = urllib.parse.quote(query)
-    url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&q={encoded_query}&type=video&order=date&maxResults={limit}&key={YOUTUBE_API_KEY}"
+    url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&q={encoded_query}&type=video&order=date&maxResults={limit}&key={api_key}"
     
     videos = []
     try:

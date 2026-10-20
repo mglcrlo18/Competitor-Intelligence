@@ -28,8 +28,11 @@ import urllib.parse
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 import streamlit as st
+from dotenv import load_dotenv
 
 from db_manager import get_connection
+
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 # -----------------------------------------------------------------------------
 # 1. COMMERCIAL DATA SERVICES REGISTRY & PRICING SPECIFICATIONS
