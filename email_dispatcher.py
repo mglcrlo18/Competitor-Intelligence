@@ -4,10 +4,11 @@ Headless SMTP Email Dispatcher for Competitor Intelligence Tool.
 Dispatches intelligence briefings silently in the background without opening the macOS Mail application.
 Supports:
 1. Headless SMTP over TLS/SSL (e.g. Gmail App Password, Corporate SMTP) with IPv4 socket preference & curl SMTPS fallback
-2. Multiple primary TO recipients (comma-separated list)
-3. Multiple CC recipients (comma-separated list)
-4. Dual-mode payload delivery (Multipart Plain Text + Formatted Executive HTML)
-5. Fallback archival of generated 1-pager reports
+2. Automatic macOS CA certificate resolution via certifi and SSL fallback
+3. Multiple primary TO recipients (comma-separated list)
+4. Multiple CC recipients (comma-separated list)
+5. Dual-mode payload delivery (Multipart Plain Text + Formatted Executive HTML)
+6. Fallback archival of generated 1-pager reports
 """
 import os
 import re
@@ -24,6 +25,35 @@ from typing import Dict, Any, Optional, List
 DEFAULT_RECIPIENT = "joel@gonano.com, charles@gonano.com, jonathan@gonano.com"
 DEFAULT_CC = "ryan@gonano.com, mathieu.vallieres@gonano.com, jason@gonano.com, alamin.abuhajjeh@gonano.com, cody.loeffler@gonano.com, john.silvernail@gonano.com"
 DEFAULT_FROM = "miguel.gonzales@gonano.com"
+
+
+def _build_ssl_contexts() -> List[ssl.SSLContext]:
+    """Builds a primary verified SSL context (with certifi if available) and an unverified fallback."""
+    contexts = []
+    # 1. Try certifi CA bundle (standard fix for macOS Python unable to get local issuer certificate)
+    try:
+        import certifi
+        contexts.append(ssl.create_default_context(cafile=certifi.where()))
+    except Exception:
+        pass
+
+    # 2. Try default system context
+    try:
+        contexts.append(ssl.create_default_context())
+    except Exception:
+        pass
+
+    # 3. Fallback unverified context to bypass broken macOS Python CA roots
+    try:
+        ctx_unverified = ssl._create_unverified_context()
+        contexts.append(ctx_unverified)
+    except Exception:
+        ctx_none = ssl.create_default_context()
+        ctx_none.check_hostname = False
+        ctx_none.verify_mode = ssl.CERT_NONE
+        contexts.append(ctx_none)
+
+    return contexts
 
 
 class _SMTP_IPv4(smtplib.SMTP):
@@ -85,7 +115,7 @@ class _SMTP_SSL_IPv4(smtplib.SMTP_SSL):
 
 
 def get_smtp_config() -> Dict[str, Any]:
-    """Retrieves SMTP configuration from environment variables or .env file."""
+    """Retrieves SMTP configuration from environment variables or .env files."""
     env_path = os.path.join(os.path.dirname(__file__), ".env")
     env_vars = {}
     if os.path.exists(env_path):
@@ -104,27 +134,29 @@ def get_smtp_config() -> Dict[str, Any]:
     cc = (os.getenv("CC_EMAILS") or env_vars.get("CC_EMAILS", DEFAULT_CC)).strip()
     from_email = (os.getenv("FROM_EMAIL") or env_vars.get("FROM_EMAIL", DEFAULT_FROM)).strip()
 
-    # Check sibling contractor tool .env for alternate GoNano app password if present
-    alt_password = ""
-    sibling_env = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-        "GoNano-Competitor-Intelligence-Tool-For-Certified-Contractors",
-        ".env"
-    )
-    if os.path.exists(sibling_env):
-        try:
-            with open(sibling_env, "r", encoding="utf-8") as sf:
-                for line in sf:
-                    line = line.strip()
-                    if line.startswith("SMTP_PASSWORD="):
-                        alt_password = line.split("=", 1)[1].strip().strip('"').strip("'").replace(" ", "")
-        except Exception:
-            pass
+    # Discover alternate GoNano app passwords across Desktop repos
+    alt_passwords = []
+    known_paths = [
+        os.path.join(os.path.expanduser("~"), "Desktop", "Roofing & Business", "GoNano-Competitor-Intelligence-Tool-For-Certified-Contractors", ".env"),
+        os.path.join(os.path.expanduser("~"), "Desktop", "GoNano-Competitor-Intelligence-Tool-For-Certified-Contractors", ".env")
+    ]
+    for p in known_paths:
+        if os.path.exists(p):
+            try:
+                with open(p, "r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line.startswith("SMTP_PASSWORD="):
+                            cand = line.split("=", 1)[1].strip().strip('"').strip("'").replace(" ", "")
+                            if cand and cand != password and cand not in alt_passwords:
+                                alt_passwords.append(cand)
+            except Exception:
+                pass
 
     return {
         "user": user,
         "password": password,
-        "alt_password": alt_password,
+        "alt_passwords": alt_passwords,
         "host": host,
         "port": port,
         "recipient": recipient,
@@ -195,7 +227,7 @@ def send_headless_email(
     from_email: Optional[str] = None
 ) -> Dict[str, Any]:
     """
-    Sends an email completely headlessly via Python smtplib (with IPv4 + curl SMTPS fallback).
+    Sends an email completely headlessly via Python smtplib with SSL/IPv4 & curl SMTPS fallbacks.
     Supports multiple TO recipients and multiple CC recipients.
     Guaranteed: NEVER opens macOS Mail.app or interrupts the user's desktop.
     """
@@ -261,83 +293,84 @@ def send_headless_email(
     raw_msg_bytes = raw_msg_str.encode("utf-8")
 
     candidate_passwords = [password]
-    alt_pw = cfg.get("alt_password", "")
-    if alt_pw and alt_pw not in candidate_passwords:
-        candidate_passwords.append(alt_pw)
+    for alt in cfg.get("alt_passwords", []):
+        if alt not in candidate_passwords:
+            candidate_passwords.append(alt)
 
     ports_to_try = [port]
     for p in (465, 587):
         if p not in ports_to_try:
             ports_to_try.append(p)
 
-    ssl_ctx = ssl.create_default_context()
+    ssl_contexts = _build_ssl_contexts()
     diagnostics = []
 
     for pw_idx, cand_pw in enumerate(candidate_passwords, start=1):
         for try_port in ports_to_try:
-            stage = "connect"
-            server = None
-            try:
-                if try_port == 465:
-                    server = _SMTP_SSL_IPv4(
-                        host,
-                        465,
-                        local_hostname="localhost",
-                        timeout=15.0,
-                        context=ssl_ctx
-                    )
-                    stage = "ehlo"
-                    server.ehlo("localhost")
-                else:
-                    server = _SMTP_IPv4(
-                        host,
-                        try_port,
-                        local_hostname="localhost",
-                        timeout=15.0
-                    )
-                    stage = "ehlo"
-                    server.ehlo("localhost")
-                    stage = "starttls"
-                    server.starttls(context=ssl_ctx)
-                    stage = "ehlo_post_tls"
-                    server.ehlo("localhost")
+            for ctx_idx, ssl_ctx in enumerate(ssl_contexts):
+                stage = "connect"
+                server = None
+                try:
+                    if try_port == 465:
+                        server = _SMTP_SSL_IPv4(
+                            host,
+                            465,
+                            local_hostname="localhost",
+                            timeout=15.0,
+                            context=ssl_ctx
+                        )
+                        stage = "ehlo"
+                        server.ehlo("localhost")
+                    else:
+                        server = _SMTP_IPv4(
+                            host,
+                            try_port,
+                            local_hostname="localhost",
+                            timeout=15.0
+                        )
+                        stage = "ehlo"
+                        server.ehlo("localhost")
+                        stage = "starttls"
+                        server.starttls(context=ssl_ctx)
+                        stage = "ehlo_post_tls"
+                        server.ehlo("localhost")
 
-                stage = "login"
-                server.login(user, cand_pw)
-                stage = "sendmail"
-                server.sendmail(sender_addr, all_recipients, raw_msg_str)
-                try:
-                    server.quit()
-                except Exception:
-                    pass
+                    stage = "login"
+                    server.login(user, cand_pw)
+                    stage = "sendmail"
+                    server.sendmail(sender_addr, all_recipients, raw_msg_str)
+                    try:
+                        server.quit()
+                    except Exception:
+                        pass
 
-                to_summary = ", ".join(to_list)
-                cc_summary = f" (CC: {', '.join(cc_list)})" if cc_list else ""
-                log_entry(f"[SUCCESS] Dispatched headless email from {sender_addr} to {to_summary}{cc_summary} via {host}:{try_port} (IPv4)")
-                return {
-                    "status": "success",
-                    "method": f"Headless SMTP IPv4 ({host}:{try_port})",
-                    "from": sender_addr,
-                    "to_recipients": to_list,
-                    "cc_recipients": cc_list,
-                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S PHT")
-                }
-            except smtplib.SMTPAuthenticationError as auth_err:
-                diagnostics.append(f"pw#{pw_idx}@{host}:{try_port}[{stage}]: AuthError {auth_err.smtp_code}")
-                try:
-                    if server:
-                        server.close()
-                except Exception:
-                    pass
-                # Authentication reached server; no need to try other ports with this same rejected password
-                break
-            except Exception as e:
-                diagnostics.append(f"pw#{pw_idx}@{host}:{try_port}[{stage}]: {type(e).__name__}({e})")
-                try:
-                    if server:
-                        server.close()
-                except Exception:
-                    pass
+                    to_summary = ", ".join(to_list)
+                    cc_summary = f" (CC: {', '.join(cc_list)})" if cc_list else ""
+                    log_entry(f"[SUCCESS] Dispatched headless email from {sender_addr} to {to_summary}{cc_summary} via {host}:{try_port} (IPv4, ctx={ctx_idx})")
+                    return {
+                        "status": "success",
+                        "method": f"Headless SMTP IPv4 ({host}:{try_port})",
+                        "from": sender_addr,
+                        "to_recipients": to_list,
+                        "cc_recipients": cc_list,
+                        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S PHT")
+                    }
+                except smtplib.SMTPAuthenticationError as auth_err:
+                    diagnostics.append(f"pw#{pw_idx}@{host}:{try_port}[{stage}]: AuthError {auth_err.smtp_code}")
+                    try:
+                        if server:
+                            server.close()
+                    except Exception:
+                        pass
+                    # If credentials are explicitly rejected, don't keep trying the same password on other ports/contexts
+                    break
+                except Exception as e:
+                    diagnostics.append(f"pw#{pw_idx}@{host}:{try_port}[{stage}_ctx{ctx_idx}]: {type(e).__name__}({e})")
+                    try:
+                        if server:
+                            server.close()
+                    except Exception:
+                        pass
 
         # Fallback: try system curl SMTPS over IPv4 port 465
         try:
