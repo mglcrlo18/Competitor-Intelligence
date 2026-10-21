@@ -2,8 +2,8 @@ name: GoNano Weekly Competitor Intelligence Briefing
 
 on:
   schedule:
-    # 00:00 H PHT (UTC+8) Monday corresponds to 16:00 UTC Sunday
-    - cron: '0 16 * * 0'
+    # 00:00 H PHT (UTC+8) Tuesday corresponds to 16:00 UTC Monday
+    - cron: '0 16 * * 1'
   workflow_dispatch: # Allows manual trigger from GitHub UI anytime
     inputs:
       to_email:
