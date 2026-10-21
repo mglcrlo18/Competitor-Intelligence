@@ -6,11 +6,11 @@
     <string>com.gonano.competitor.weekly_briefing</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/macbook/Desktop/competitor_intelligence_app/venv/bin/python</string>
-        <string>/Users/macbook/Desktop/competitor_intelligence_app/scheduled_briefing_runner.py</string>
+        <string>/Users/macbook/Desktop/Development &amp; Automation/competitor_intelligence_app/venv/bin/python</string>
+        <string>/Users/macbook/Desktop/Development &amp; Automation/competitor_intelligence_app/scheduled_briefing_runner.py</string>
     </array>
     <key>WorkingDirectory</key>
-    <string>/Users/macbook/Desktop/competitor_intelligence_app</string>
+    <string>/Users/macbook/Desktop/Development &amp; Automation/competitor_intelligence_app</string>
     <key>StartCalendarInterval</key>
     <dict>
         <key>Weekday</key>
@@ -21,9 +21,9 @@
         <integer>0</integer>
     </dict>
     <key>StandardOutPath</key>
-    <string>/Users/macbook/Desktop/competitor_intelligence_app/briefing_stdout.log</string>
+    <string>/Users/macbook/Desktop/Development &amp; Automation/competitor_intelligence_app/briefing_stdout.log</string>
     <key>StandardErrorPath</key>
-    <string>/Users/macbook/Desktop/competitor_intelligence_app/briefing_stderr.log</string>
+    <string>/Users/macbook/Desktop/Development &amp; Automation/competitor_intelligence_app/briefing_stderr.log</string>
     <key>RunAtLoad</key>
     <false/>
 </dict>
