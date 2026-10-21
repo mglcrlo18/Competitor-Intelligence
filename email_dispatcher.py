@@ -138,15 +138,27 @@ def send_headless_email(
         if html_content:
             msg.attach(MIMEText(html_content, "html", "utf-8"))
 
-        if port == 465:
-            server = smtplib.SMTP_SSL(host, port, timeout=15.0)
-        else:
-            server = smtplib.SMTP(host, port, timeout=15.0)
-            server.ehlo()
-            server.starttls()
-            server.ehlo()
-
-        server.login(user, password)
+        server = None
+        # Try primary configured port
+        try:
+            if port == 465:
+                server = smtplib.SMTP_SSL(host, port, timeout=20.0)
+            else:
+                server = smtplib.SMTP(host, port, timeout=20.0)
+                server.ehlo()
+                server.starttls()
+                server.ehlo()
+            server.login(user, password)
+        except Exception as primary_err:
+            # Fallback to direct SSL on port 465 if port 587 was blocked or dropped
+            if port != 465 and "gmail.com" in host.lower():
+                try:
+                    server = smtplib.SMTP_SSL(host, 465, timeout=20.0)
+                    server.login(user, password)
+                except Exception as fallback_err:
+                    raise fallback_err
+            else:
+                raise primary_err
         
         # Deliver to all unique TO + CC recipients
         to_lower = [t.lower() for t in to_list]
