@@ -1,32 +1,39 @@
 """
 report_generator.py
-Executive Intelligence Briefing Generator for GoNano Leadership.
-Engineered with production-grade email table architecture:
-- 100% inline CSS and nested HTML tables for bulletproof rendering in Gmail, Outlook, and Apple Mail.
-- Clean typography and card layout with ZERO bulky icon containers (matching UI Redesign Concept.png).
-- Direct GoNano logo header with date badge.
-- Side-by-side metric cards (69 & 8) with large bold typography and zero icon discs.
-- Left column: Executive Summary & Tactical Playbook with HIGH THREAT and PRIORITY ACTION pills.
-- Right column: Competitor Watch with YouTube and Industry Press signals.
-- Bottom: Full-width Executive Action Takeaway callout banner.
-- QA brand palette compliant: #1B1C36, #675CE7, #8583F2, #E76E38, #5551FF.
-- Author: Miguel Gonzales, Competitor Analysis Specialist.
+Weekly Competitor Updates email for GoNano leadership.
+
+Everything in the email comes from data the scan collected this week:
+- Metric cards: tracked competitors (test rows excluded) and news items that passed the relevance check.
+- Left column: a factual summary of what the scan found, and where to find more.
+- Right column: up to four news items. An item is kept only when it names a tracked competitor
+  and is about roofing; test entries are never shown.
+- No fixed findings, no product or warranty claims, and no placeholder news. If nothing passes
+  the check, the email says so.
+
+Email HTML uses inline CSS and nested tables so it renders in Gmail, Outlook and Apple Mail.
+Brand palette: #1B1C36, #675CE7, #8583F2, #E76E38, #5551FF.
+Author: Miguel Gonzales, Competitor Analysis Specialist.
 """
-import sqlite3
+import html as _html
 import os
+import re
 import urllib.parse
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
-from pathlib import Path
 from typing import Dict, Any, List
-from db_manager import (
-    get_connection,
-    get_all_competitor_profiles,
-    get_tracker_reports,
-    get_marketing_gaps
-)
+from db_manager import get_connection, get_all_competitor_profiles
 
 CDN_BASE = "https://cdn.jsdelivr.net/gh/mglcrlo18/GoNano-Competitor-Intelligence-Tool-For-Certified-Contractors@main/assets"
+MAX_NEWS_ITEMS = 4
+
+# Rows that are QA fixtures or working notes, not competitors.
+_TEST_NAME_RE = re.compile(r"(^|[^a-z])qa([^a-z]|$)|qa_|test|verification|competitor analysis|imposter", re.I)
+# The item must be about roofing (English or French terms).
+_ROOF_RE = re.compile(r"\b(roof\w*|shingle\w*|rejuven\w*|toit\w*|bardeau\w*|coating\w*|seal(?:ant|er)\w*)\b", re.I)
+# Name fragments too generic to identify a competitor on their own.
+_GENERIC = {"roof", "roofs", "roofing", "coating", "coatings", "nano", "quebec", "canada", "florida",
+            "usa", "inc", "llc", "the", "solutions", "your brand"}
+
 
 def sanitize_url(raw_url: str, fallback_title: str = "") -> str:
     if not raw_url or str(raw_url).strip() in ["#", "", "about:blank", "javascript:void(0)", "None"]:
@@ -38,6 +45,7 @@ def sanitize_url(raw_url: str, fallback_title: str = "") -> str:
         return cleaned
     return f"https://www.google.com/search?q={urllib.parse.quote(fallback_title.strip() or 'GoNano')}"
 
+
 def truncate_words(text: str, max_words: int = 200) -> str:
     if not text:
         return ""
@@ -46,147 +54,222 @@ def truncate_words(text: str, max_words: int = 200) -> str:
         return " ".join(words[:max_words]) + "..."
     return " ".join(words)
 
+
+def _clean_text(val: str) -> str:
+    if not val:
+        return ""
+    txt = re.sub(r"<[^>]+>", " ", str(val))
+    txt = txt.replace("&nbsp;", " ").replace("&amp;", "&").replace("&quot;", '"')
+    return " ".join(txt.split())
+
+
+def is_test_entry(name: str) -> bool:
+    """True for QA fixtures and working-note rows such as 'QA_Verification_Brand_2026'."""
+    return bool(_TEST_NAME_RE.search(name or ""))
+
+
+def name_variants(name: str) -> List[str]:
+    """Distinctive ways a competitor can be named, e.g. 'NoxNano (Noxor)' -> NoxNano, Noxor."""
+    raw = str(name or "")
+    parts = re.split(r"[/()\[\],]| - ", raw)
+    candidates = {p.strip() for p in parts if p.strip()}
+    base = re.sub(r"\(.*?\)", "", raw).strip()
+    if base:
+        candidates.add(base)
+    out = []
+    for c in candidates:
+        c = " ".join(c.split())
+        if len(c) >= 4 and c.lower() not in _GENERIC:
+            out.append(c)
+    return sorted(out, key=len, reverse=True)
+
+
+def mentions_competitor(name: str, text: str) -> bool:
+    low = (text or "").lower()
+    for v in name_variants(name):
+        if re.search(r"(?<![a-z0-9])" + re.escape(v.lower()) + r"(?![a-z0-9])", low):
+            return True
+    return False
+
+
+def is_relevant_item(item: Dict[str, Any]) -> bool:
+    """Keep an item only when it names its competitor and is about roofing."""
+    comp = str(item.get("competitor") or "").strip()
+    if not comp or is_test_entry(comp):
+        return False
+    text = f"{_clean_text(item.get('title'))} {_clean_text(item.get('snippet'))}"
+    if not mentions_competitor(comp, text):
+        return False
+    # Look for roofing words outside the brand name itself ("Roof Maxx" alone does not make a story about roofing).
+    rest = text
+    for v in name_variants(comp):
+        rest = re.sub(re.escape(v), " ", rest, flags=re.I)
+    return bool(_ROOF_RE.search(rest))
+
+
+def select_news(rows: List[Dict[str, Any]], limit: int = MAX_NEWS_ITEMS) -> Dict[str, Any]:
+    """Filter scan rows to relevant, de-duplicated items, one per competitor first."""
+    relevant, seen_titles = [], set()
+    for r in rows:
+        if not is_relevant_item(r):
+            continue
+        key = re.sub(r"\W+", " ", _clean_text(r.get("title")).lower()).strip()
+        if not key or key in seen_titles:
+            continue
+        seen_titles.add(key)
+        relevant.append(r)
+    picked, used = [], set()
+    for r in relevant:  # one item per competitor first
+        c = r["competitor"].strip()
+        if c not in used:
+            used.add(c)
+            picked.append(r)
+        if len(picked) == limit:
+            break
+    for r in relevant:  # then fill remaining slots
+        if len(picked) == limit:
+            break
+        if r not in picked:
+            picked.append(r)
+    return {"items": picked, "relevant": relevant, "dropped": max(0, len(rows) - len(relevant))}
+
+
+def _e(s: Any) -> str:
+    return _html.escape(str(s or ""), quote=True)
+
+
 def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors", cc_recipients: str = "") -> Dict[str, str]:
     now_utc = datetime.now(timezone.utc)
     now_est = now_utc.astimezone(ZoneInfo("America/New_York"))
     now_pht = now_utc.astimezone(ZoneInfo("Asia/Manila"))
 
     timestamp_badge = f"{now_est.strftime('%Y-%m-%d %H:%M %Z')} / {now_pht.strftime('%Y-%m-%d %H:%M')} PHT"
-    timestamp_pht = timestamp_badge
-    timestamp_display = timestamp_badge
     date_ddmmyyyy = now_pht.strftime("%d/%m/%Y")
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    # Strictly source news from 7 days before present date up to present date
     cutoff_date = (now_pht - timedelta(days=7)).strftime("%Y-%m-%d")
     today_date = now_pht.strftime("%Y-%m-%d")
 
+    # News scanned in the last 7 days (YouTube and Google News redirect links excluded as before)
+    conn = get_connection()
+    cursor = conn.cursor()
     cursor.execute("""
     SELECT competitor, platform, title, snippet, timestamp, url
     FROM signals
     WHERE LOWER(platform) != 'youtube'
       AND timestamp >= ? AND timestamp <= ?
       AND url NOT LIKE '%news.google.com/rss/%'
-      AND LOWER(title) NOT LIKE '%flooring%'
-      AND LOWER(title) NOT LIKE '%hardwood%'
-    ORDER BY timestamp DESC, id DESC LIMIT 15
+    ORDER BY timestamp DESC, id DESC LIMIT 400
     """, (cutoff_date, today_date))
-    all_news = [dict(r) for r in cursor.fetchall()]
+    rows = [dict(r) for r in cursor.fetchall()]
+    conn.close()
 
-    distinct_news = []
-    seen_comps = set()
-    for n in all_news:
-        comp = n.get("competitor", "").strip()
-        if comp and comp not in seen_comps:
-            seen_comps.add(comp)
-            distinct_news.append(n)
-        if len(distinct_news) == 2:
-            break
+    news = select_news(rows)
+    items = news["items"]
+    n_relevant = len(news["relevant"])
+    comps_named = sorted({r["competitor"].strip() for r in news["relevant"]})
+    dropped = news["dropped"]
 
-    s1 = distinct_news[0] if len(distinct_news) > 0 else (all_news[0] if all_news else {
-        "title": "How Raising Prices Can Offset Customer Acquisition Costs",
-        "platform": "Entrepreneur",
-        "competitor": "Roof Maxx",
-        "url": "https://www.entrepreneur.com/building-a-business/raising-your-prices-can-help-you-fight-rising-customer-acquisition-costs-but-only-if-youre-careful",
-        "snippet": "Roof Maxx leadership analysis on surging homeowner demand for roof replacement alternatives, evaluating contractor pricing resilience and customer acquisition economics across US dealerships.",
-        "timestamp": (now_pht - timedelta(days=1)).strftime("%Y-%m-%d")
-    })
+    tracked = [p for p in get_all_competitor_profiles()
+               if p.get("name") and not is_test_entry(p["name"]) and "your brand" not in p["name"].lower()]
+    total_comps = len(tracked)
 
-    s2 = distinct_news[1] if len(distinct_news) > 1 else (all_news[1] if len(all_news) > 1 else {
-        "title": "Roof Maxx Surpasses 20,000 Customer Reviews, Accelerates D2C Contractor Expansion",
-        "platform": "Newswire",
-        "competitor": "Roof Maxx",
-        "url": "https://www.newswire.com/news/roof-maxx-surpasses-20-000-customer-reviews-becomes-most-reviewed-company-in",
-        "snippet": "National press announcement detailing Roof Maxx surpassing 20,000 homeowner reviews and driving massive D2C treatment volume to displace full roof replacements.",
-        "timestamp": (now_pht - timedelta(days=4)).strftime("%Y-%m-%d")
-    })
-
-    total_comps = len(get_all_competitor_profiles())
-    critical_threats = 8
-
+    dashboard_url = (os.getenv("DASHBOARD_URL") or "").strip()
     logo_dark_url = f"{CDN_BASE}/gonano_logo_dark.png"
     icon_calendar = f"{CDN_BASE}/icons_png/page_34.png"
+    window = f"{cutoff_date} to {today_date}"
 
-    import re as _re
-    def _clean_text(val: str) -> str:
-        if not val:
-            return ""
-        txt = _re.sub(r"<[^>]+>", " ", str(val))
-        txt = txt.replace("&nbsp;", " ").replace("&amp;", "&").replace("&quot;", '"')
-        return " ".join(txt.split())
+    # ---- factual summary lines ----
+    if n_relevant:
+        s_found = (f"{n_relevant} news item{'s' if n_relevant != 1 else ''} about "
+                   f"{len(comps_named)} tracked competitor{'s' if len(comps_named) != 1 else ''} passed the check for {window}.")
+        s_named = "Named: " + ", ".join(comps_named[:8]) + ("." if len(comps_named) <= 8 else f", and {len(comps_named) - 8} more.")
+    else:
+        s_found = f"No news item about a tracked competitor passed the check for {window}."
+        s_named = "The scan will run again next week."
+    s_dropped = (f"{dropped} other item{'s' if dropped != 1 else ''} from the scan {'were' if dropped != 1 else 'was'} left out "
+                 "because they did not name a tracked competitor or were not about roofing." if dropped else "")
 
-    # Signals for Right Column (Strictly 7-Day Window: 7 Days Before Present to Present Date)
-    s1_title = truncate_words(_clean_text(s1.get("title", "How Raising Prices Can Offset Customer Acquisition Costs")), 200)
-    s1_url = sanitize_url(s1.get("url"), s1_title)
-    s1_comp = s1.get("competitor", "ROOF MAXX").upper()
-    s1_plat = s1.get("platform", "ENTREPRENEUR").upper()
-    s1_date = s1.get("timestamp") or today_date
-    s1_snip = _clean_text(s1.get("snippet")) or "Analysis examining competitor customer acquisition economics and contractor pricing resilience."
-
-    s2_title = truncate_words(_clean_text(s2.get("title", "Roof Maxx Surpasses 20,000 Customer Reviews, Accelerates D2C Contractor Expansion")), 200)
-    s2_url = sanitize_url(s2.get("url"), s2_title)
-    s2_comp = s2.get("competitor", "ROOF MAXX").upper()
-    s2_plat = s2.get("platform", "NEWSWIRE").upper()
-    s2_date = s2.get("timestamp") or cutoff_date
-    s2_snip = _clean_text(s2.get("snippet")) or "National press announcement detailing Roof Maxx surpassing 20,000 homeowner reviews and driving D2C volume."
-
-    # Plain text version
+    # ---- plain text ----
     text_lines = [
         "============================================================================",
         "GONANO // WEEKLY COMPETITOR UPDATES",
-        "EXECUTIVE INTELLIGENCE BRIEFING // MARKET RISK",
         "============================================================================",
-        f"DATE: {timestamp_display}",
-        f"MONITORED COMPETITOR PROFILES: {total_comps}",
-        f"HIGH THREAT RIVALS UNDER SURVEILLANCE: {critical_threats}",
-        "AUTHOR: Miguel Gonzales, Competitor Analysis Specialist",
+        f"DATE: {timestamp_badge}",
+        f"TRACKED COMPETITORS: {total_comps}",
+        f"NEWS ITEMS THAT PASSED THE CHECK THIS WEEK: {n_relevant}",
         "----------------------------------------------------------------------------",
         "",
-        "1. SIGNIFICANT MARKET SIGNALS & EXECUTIVE SUMMARY",
+        "1. THIS WEEK AT A GLANCE",
         "----------------------------------------------------------------------------",
-        "Executive Synthesis: Active monitoring across North American roofing markets indicates escalating D2C and contractor recruitment campaigns. Rival players are aggressively leveraging local broadcast segments and paid social media funnels to market their products against complete roof replacement.",
-        "Concurrently, field contractor reports reveal accelerating customer friction regarding early coating washouts during freeze-thaw cycles and warranty claim disputes.",
+        s_found,
+        s_named,
+    ]
+    if s_dropped:
+        text_lines.append(s_dropped)
+    text_lines += [
         "",
-        "2. STRATEGIC FINDINGS & TACTICAL PLAYBOOK",
+        "2. WHERE TO FIND MORE",
         "----------------------------------------------------------------------------",
-        "Finding 1: Bio-Oil Market Saturation vs. Waste Reduction [HIGH THREAT]",
-        "Rival firms continue pushing aggressive D2C video funnels undercutting roof replacement. However, field contractor and homeowner data shows substantial warranty claim rejections citing pre-existing conditions and granular loss.",
+        "In the Competitor Report Tracker (Google Sheets)" + (f", {dashboard_url}" if dashboard_url else "") + ":",
+        "- News: approved news items",
+        "- Ad Activity: active ads by brand",
+        "- Coverage: GoNano locations and competitor dealers by state and province",
+        "Full competitor profiles are emailed separately as they are completed.",
         "",
-        "Finding 2: Climate Stress Evaporation [HIGH THREAT]",
-        "Bio-oils swell surface bitumen without cross-linking to the fiberglass mat. In summer heat and freeze-thaw cycles, volatile plant oils evaporate within 12-18 months. Insurance adjusters are declining policies on aging shingle roofs treated with bio-oils.",
-        "",
-        "Finding 3: Tactical Action for GoNano Field Sales [PRIORITY ACTION]",
-        "Arm GoNano certified applicators with ASTM D3462 microcertifications proving structural matrix reinforcement. Contrast GoNano's 15-Year non-prorated performance warranty against rival prorated exclusions.",
-        "",
-        f"COMPETITOR WATCH: 7-DAY VERIFIED NEWS & INDUSTRY INTELLIGENCE ({cutoff_date} to {today_date})",
+        f"COMPETITOR NEWS ({window})",
         "----------------------------------------------------------------------------",
-        f"[1] {s1_comp} // {s1_plat} (PUBLISHED: {s1_date})",
-        f"Headline: {s1_title}",
-        f"Source: {s1_url}",
-        f"Brief Summary: {s1_snip}",
-        "",
-        f"[2] {s2_comp} // {s2_plat} (PUBLISHED: {s2_date})",
-        f"Headline: {s2_title}",
-        f"Source: {s2_url}",
-        f"Brief Summary: {s2_snip}",
-        "",
-        "EXECUTIVE ACTION TAKEAWAY",
-        "----------------------------------------------------------------------------",
-        "Neutralize bio-oil replacement displacement with certified performance proof and a defensible long-term warranty story.",
-        "Lead with ASTM D3462 Tested. Back it with 15-Year Non-Prorated.",
-        "",
+    ]
+    if items:
+        for i, r in enumerate(items, 1):
+            title = truncate_words(_clean_text(r.get("title")), 60)
+            text_lines += [
+                f"[{i}] {r['competitor'].strip().upper()} // {str(r.get('platform') or 'Source').upper()} ({r.get('timestamp') or ''})",
+                f"Headline: {title}",
+                f"Source: {sanitize_url(r.get('url'), title)}",
+                f"Summary: {truncate_words(_clean_text(r.get('snippet')), 60)}",
+                "",
+            ]
+    else:
+        text_lines += ["No verified competitor news this week.", ""]
+    text_lines += [
+        "News is matched automatically by competitor name and roofing terms. Open the source before quoting it.",
         "============================================================================",
         "CONFIDENTIAL: FOR INTERNAL GONANO LEADERSHIP ONLY",
         "Prepared by: Miguel Gonzales, Competitor Analysis Specialist",
-        "============================================================================"
+        "============================================================================",
     ]
     plain_text = "\n".join(text_lines)
 
-    # -------------------------------------------------------------------------
-    # CLEAN ICON-FREE EMAIL HTML (MATCHING UI REDESIGN CONCEPT.PNG)
-    # -------------------------------------------------------------------------
+    # ---- HTML pieces ----
+    font = "font-family: 'Montserrat', Arial, Helvetica, sans-serif;"
+    if items:
+        news_blocks = []
+        for i, r in enumerate(items, 1):
+            title = truncate_words(_clean_text(r.get("title")), 60)
+            url = sanitize_url(r.get("url"), title)
+            colour = "#5551FF" if i % 2 else "#E76E38"
+            news_blocks.append(f"""
+                                                    <div style="margin-bottom: 22px;">
+                                                        <div style="{font} font-size: 11px; font-weight: 800; color: {colour}; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;">
+                                                            [{i}] {_e(r['competitor'].strip())} // {_e(r.get('platform') or 'Source')} &nbsp;&bull;&nbsp; {_e(r.get('timestamp') or '')}
+                                                        </div>
+                                                        <div style="{font} font-size: 14px; font-weight: 700; line-height: 1.35; margin-bottom: 6px;">
+                                                            <a href="{_e(url)}" target="_blank" style="color: #1B1C36; text-decoration: none;">{_e(title)}</a>
+                                                        </div>
+                                                        <div style="{font} font-size: 12px; line-height: 1.5; color: #596078;">
+                                                            <strong>Summary:</strong> {_e(truncate_words(_clean_text(r.get('snippet')), 60))}
+                                                        </div>
+                                                    </div>""")
+        news_html = "".join(news_blocks)
+    else:
+        news_html = f"""
+                                                    <div style="{font} font-size: 13px; line-height: 1.6; color: #1B1C36;">
+                                                        No verified competitor news this week.
+                                                    </div>"""
+
+    tracker_label = (f'<a href="{_e(dashboard_url)}" target="_blank" style="color: #5551FF; font-weight: 700;">Competitor Report Tracker</a>'
+                     if dashboard_url else "<strong>Competitor Report Tracker</strong> (Google Sheets)")
+    dropped_html = f'<p style="margin: 0; color: #596078;">{_e(s_dropped)}</p>' if s_dropped else ""
+
     html = f"""<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -202,12 +285,12 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
         a {{ text-decoration: none; color: #1B1C36; }}
     </style>
 </head>
-<body bgcolor="#EEF1F6" style="margin: 0; padding: 24px 0; background-color: #EEF1F6; font-family: 'Montserrat', Arial, Helvetica, sans-serif;">
+<body bgcolor="#EEF1F6" style="margin: 0; padding: 24px 0; background-color: #EEF1F6; {font}">
     <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#EEF1F6" style="background-color: #EEF1F6; margin: 0; padding: 24px 0;">
         <tr>
             <td align="center" valign="top">
                 <table width="780" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFFFFF" style="width: 780px; max-width: 780px; background-color: #FFFFFF; border-radius: 26px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); padding: 34px 38px;">
-                    
+
                     <!-- 1. HEADER ROW: LOGO & DATE -->
                     <tr>
                         <td valign="top" style="padding-bottom: 10px;">
@@ -222,8 +305,8 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
                                                 <td valign="middle" style="padding-right: 6px;">
                                                     <img src="{icon_calendar}" width="16" height="16" alt="Date" style="display: block; width: 16px; height: 16px;" />
                                                 </td>
-                                                <td valign="middle" style="font-family: 'Montserrat', Arial, sans-serif; font-size: 12px; font-weight: 600; color: #596078; white-space: nowrap;">
-                                                    {timestamp_pht}
+                                                <td valign="middle" style="{font} font-size: 12px; font-weight: 600; color: #596078; white-space: nowrap;">
+                                                    {timestamp_badge}
                                                 </td>
                                             </tr>
                                         </table>
@@ -233,55 +316,47 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
                         </td>
                     </tr>
 
-                    <!-- 2. HEADLINE & SUBTITLE -->
+                    <!-- 2. HEADLINE -->
                     <tr>
                         <td valign="top" style="padding-bottom: 22px;">
-                            <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 46px; font-weight: 700; color: #5551FF; letter-spacing: -0.04em; line-height: 1.12; margin: 0 0 6px 0;">
+                            <div style="{font} font-size: 46px; font-weight: 700; color: #5551FF; letter-spacing: -0.04em; line-height: 1.12; margin: 0 0 6px 0;">
                                 Weekly Competitor Updates
                             </div>
-                            <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 13px; font-weight: 800; color: #1B1C36; letter-spacing: 0.12em; text-transform: uppercase; margin: 0;">
-                                EXECUTIVE INTELLIGENCE BRIEFING // MARKET RISK
+                            <div style="{font} font-size: 13px; font-weight: 800; color: #1B1C36; letter-spacing: 0.12em; text-transform: uppercase; margin: 0;">
+                                WHAT THE SCAN FOUND THIS WEEK
                             </div>
                         </td>
                     </tr>
 
-                    <!-- 3. TOP TWO METRIC CARDS (CLEAN TYPOGRAPHY, NO ICONS) -->
+                    <!-- 3. METRIC CARDS -->
                     <tr>
                         <td valign="top" style="padding-bottom: 24px;">
                             <table width="100%" cellpadding="0" cellspacing="0" border="0">
                                 <tr>
-                                    <!-- Left Metric: 69 Profiles -->
-                                    <td width="48%" valign="top" bgcolor="#FFFFFF" style="background-color: #FFFFFF; border: 1px solid #EBEFFA; border-radius: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); padding: 18px 24px;">
+                                    <td width="48%" valign="top" bgcolor="#FFFFFF" style="background-color: #FFFFFF; border: 1px solid #EBEFFA; border-radius: 20px; padding: 18px 24px;">
                                         <table width="100%" cellpadding="0" cellspacing="0" border="0">
                                             <tr>
                                                 <td width="70" valign="middle">
-                                                    <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 44px; font-weight: 800; color: #5551FF; line-height: 1.0;">
-                                                        {total_comps}
-                                                    </div>
+                                                    <div style="{font} font-size: 44px; font-weight: 800; color: #5551FF; line-height: 1.0;">{total_comps}</div>
                                                 </td>
                                                 <td valign="middle" style="padding-left: 8px;">
-                                                    <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 11px; font-weight: 800; color: #1B1C36; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.35;">
-                                                        MONITORED<br />COMPETITOR PROFILES
+                                                    <div style="{font} font-size: 11px; font-weight: 800; color: #1B1C36; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.35;">
+                                                        TRACKED<br />COMPETITORS
                                                     </div>
                                                 </td>
                                             </tr>
                                         </table>
                                     </td>
-
                                     <td width="4%">&nbsp;</td>
-
-                                    <!-- Right Metric: 8 High Threat -->
-                                    <td width="48%" valign="top" bgcolor="#FFFFFF" style="background-color: #FFFFFF; border: 1px solid #FDEEE6; border-radius: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); padding: 18px 24px;">
+                                    <td width="48%" valign="top" bgcolor="#FFFFFF" style="background-color: #FFFFFF; border: 1px solid #FDEEE6; border-radius: 20px; padding: 18px 24px;">
                                         <table width="100%" cellpadding="0" cellspacing="0" border="0">
                                             <tr>
-                                                <td width="50" valign="middle">
-                                                    <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 44px; font-weight: 800; color: #E76E38; line-height: 1.0;">
-                                                        {critical_threats}
-                                                    </div>
+                                                <td width="70" valign="middle">
+                                                    <div style="{font} font-size: 44px; font-weight: 800; color: #E76E38; line-height: 1.0;">{n_relevant}</div>
                                                 </td>
                                                 <td valign="middle" style="padding-left: 8px;">
-                                                    <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 11px; font-weight: 800; color: #E76E38; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.35;">
-                                                        HIGH THREAT RIVALS<br />UNDER SURVEILLANCE
+                                                    <div style="{font} font-size: 11px; font-weight: 800; color: #E76E38; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.35;">
+                                                        VERIFIED NEWS ITEMS<br />THIS WEEK
                                                     </div>
                                                 </td>
                                             </tr>
@@ -292,137 +367,62 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
                         </td>
                     </tr>
 
-                    <!-- 4. TWO-COLUMN MAIN GRID (NO ICONS IN CONTENT) -->
+                    <!-- 4. TWO-COLUMN GRID -->
                     <tr>
                         <td valign="top" style="padding-bottom: 24px;">
                             <table width="100%" cellpadding="0" cellspacing="0" border="0">
                                 <tr>
-                                    <!-- ================= LEFT COLUMN ================= -->
+                                    <!-- LEFT COLUMN -->
                                     <td width="48%" valign="top">
-                                        
-                                        <!-- Card A: 1. SIGNIFICANT MARKET SIGNALS -->
                                         <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 22px;">
                                             <tr>
-                                                <td bgcolor="#5551FF" style="background-color: #5551FF; border-radius: 10px 10px 0 0; padding: 10px 16px; font-family: 'Montserrat', Arial, sans-serif; font-size: 11px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 0.06em;">
-                                                    1. SIGNIFICANT MARKET SIGNALS &amp; EXECUTIVE SUMMARY
+                                                <td bgcolor="#5551FF" style="background-color: #5551FF; border-radius: 10px 10px 0 0; padding: 10px 16px; {font} font-size: 11px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 0.06em;">
+                                                    1. THIS WEEK AT A GLANCE
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td bgcolor="#FFFFFF" style="background-color: #FFFFFF; border: 1px solid #EBEFFA; border-top: none; border-radius: 0 0 18px 18px; padding: 20px 22px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
-                                                    <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 12.5px; line-height: 1.6; color: #1B1C36;">
-                                                        <p style="margin: 0 0 12px 0;"><strong>Executive Synthesis:</strong> Active monitoring across North American roofing markets indicates escalating D2C and contractor recruitment campaigns. Rival players are aggressively leveraging local broadcast segments and paid social media funnels to market their products against complete roof replacement.</p>
-                                                        <p style="margin: 0;">Concurrently, field contractor reports reveal accelerating customer friction regarding early coating washouts during freeze-thaw cycles and warranty claim disputes.</p>
+                                                <td bgcolor="#FFFFFF" style="background-color: #FFFFFF; border: 1px solid #EBEFFA; border-top: none; border-radius: 0 0 18px 18px; padding: 20px 22px;">
+                                                    <div style="{font} font-size: 12.5px; line-height: 1.6; color: #1B1C36;">
+                                                        <p style="margin: 0 0 10px 0;">{_e(s_found)}</p>
+                                                        <p style="margin: 0 0 10px 0;">{_e(s_named)}</p>
+                                                        {dropped_html}
                                                     </div>
                                                 </td>
                                             </tr>
                                         </table>
 
-                                        <!-- Card B: 2. STRATEGIC FINDINGS & TACTICAL PLAYBOOK -->
                                         <table width="100%" cellpadding="0" cellspacing="0" border="0">
                                             <tr>
-                                                <td bgcolor="#5551FF" style="background-color: #5551FF; border-radius: 10px 10px 0 0; padding: 10px 16px; font-family: 'Montserrat', Arial, sans-serif; font-size: 11px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 0.06em;">
-                                                    2. STRATEGIC FINDINGS &amp; TACTICAL PLAYBOOK
+                                                <td bgcolor="#5551FF" style="background-color: #5551FF; border-radius: 10px 10px 0 0; padding: 10px 16px; {font} font-size: 11px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 0.06em;">
+                                                    2. WHERE TO FIND MORE
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td bgcolor="#FFFFFF" style="background-color: #FFFFFF; border: 1px solid #EBEFFA; border-top: none; border-radius: 0 0 18px 18px; padding: 20px 22px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
-                                                    
-                                                    <!-- Finding 1 -->
-                                                    <div style="margin-bottom: 18px;">
-                                                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                                                            <tr>
-                                                                <td valign="middle" style="font-family: 'Montserrat', Arial, sans-serif; font-size: 12px; font-weight: 700; color: #E76E38;">
-                                                                    Finding 1: Bio-Oil Market Saturation vs. Waste Reduction
-                                                                </td>
-                                                                <td align="right" valign="middle" style="padding-left: 6px;">
-                                                                    <span style="background-color: #E76E38; color: #FFFFFF; font-family: 'Montserrat', Arial, sans-serif; font-size: 8.5px; font-weight: 800; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; white-space: nowrap; display: inline-block;">HIGH THREAT</span>
-                                                                </td>
-                                                            </tr>
-                                                        </table>
-                                                        <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 11.5px; line-height: 1.5; color: #596078; margin-top: 5px;">
-                                                            Rival firms continue pushing aggressive D2C video funnels undercutting roof replacement. However, field contractor and homeowner data shows substantial warranty claim rejections citing pre-existing conditions and granular loss.
-                                                        </div>
+                                                <td bgcolor="#FFFFFF" style="background-color: #FFFFFF; border: 1px solid #EBEFFA; border-top: none; border-radius: 0 0 18px 18px; padding: 20px 22px;">
+                                                    <div style="{font} font-size: 12.5px; line-height: 1.6; color: #1B1C36;">
+                                                        <p style="margin: 0 0 8px 0;">{tracker_label}:</p>
+                                                        <p style="margin: 0 0 4px 0;"><strong>News:</strong> approved news items</p>
+                                                        <p style="margin: 0 0 4px 0;"><strong>Ad Activity:</strong> active ads by brand</p>
+                                                        <p style="margin: 0 0 10px 0;"><strong>Coverage:</strong> GoNano locations and competitor dealers by state and province</p>
+                                                        <p style="margin: 0; color: #596078;">Full competitor profiles are emailed separately as they are completed.</p>
                                                     </div>
-
-                                                    <!-- Finding 2 -->
-                                                    <div style="margin-bottom: 18px;">
-                                                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                                                            <tr>
-                                                                <td valign="middle" style="font-family: 'Montserrat', Arial, sans-serif; font-size: 12px; font-weight: 700; color: #E76E38;">
-                                                                    Finding 2: Climate Stress Evaporation
-                                                                </td>
-                                                                <td align="right" valign="middle" style="padding-left: 6px;">
-                                                                    <span style="background-color: #E76E38; color: #FFFFFF; font-family: 'Montserrat', Arial, sans-serif; font-size: 8.5px; font-weight: 800; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; white-space: nowrap; display: inline-block;">HIGH THREAT</span>
-                                                                </td>
-                                                            </tr>
-                                                        </table>
-                                                        <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 11.5px; line-height: 1.5; color: #596078; margin-top: 5px;">
-                                                            Bio-oils swell surface bitumen without cross-linking to the fiberglass mat. In summer heat and freeze-thaw cycles, volatile plant oils evaporate within 12-18 months. Insurance adjusters are declining policies on aging shingle roofs treated with bio-oils.
-                                                        </div>
-                                                    </div>
-
-                                                    <!-- Finding 3 -->
-                                                    <div>
-                                                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                                                            <tr>
-                                                                <td valign="middle" style="font-family: 'Montserrat', Arial, sans-serif; font-size: 12px; font-weight: 700; color: #E76E38;">
-                                                                    Finding 3: Tactical Action for GoNano Field Sales
-                                                                </td>
-                                                                <td align="right" valign="middle" style="padding-left: 6px;">
-                                                                    <span style="background-color: #E76E38; color: #FFFFFF; font-family: 'Montserrat', Arial, sans-serif; font-size: 8.5px; font-weight: 800; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; white-space: nowrap; display: inline-block;">PRIORITY ACTION</span>
-                                                                </td>
-                                                            </tr>
-                                                        </table>
-                                                        <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 11.5px; line-height: 1.5; color: #596078; margin-top: 5px;">
-                                                            Arm GoNano certified applicators with ASTM D3462 microcertifications proving structural matrix reinforcement. Contrast GoNano's 15-Year non-prorated performance warranty against rival prorated exclusions.
-                                                        </div>
-                                                    </div>
-
                                                 </td>
                                             </tr>
                                         </table>
-
                                     </td>
 
                                     <td width="4%">&nbsp;</td>
 
-                                    <!-- ================= RIGHT COLUMN ================= -->
+                                    <!-- RIGHT COLUMN -->
                                     <td width="48%" valign="top">
                                         <table width="100%" cellpadding="0" cellspacing="0" border="0">
                                             <tr>
-                                                <td bgcolor="#5551FF" style="background-color: #5551FF; border-radius: 10px 10px 0 0; padding: 10px 16px; font-family: 'Montserrat', Arial, sans-serif; font-size: 11px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 0.06em;">
-                                                    COMPETITOR WATCH: 7-DAY VERIFIED NEWS &amp; INDUSTRY INTELLIGENCE ({cutoff_date} to {today_date})
+                                                <td bgcolor="#5551FF" style="background-color: #5551FF; border-radius: 10px 10px 0 0; padding: 10px 16px; {font} font-size: 11px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 0.06em;">
+                                                    COMPETITOR NEWS ({window})
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td bgcolor="#FFFFFF" style="background-color: #FFFFFF; border: 1px solid #EBEFFA; border-top: none; border-radius: 0 0 18px 18px; padding: 24px 22px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); min-height: 480px;">
-                                                    
-                                                    <!-- Signal 1 -->
-                                                    <div style="margin-bottom: 26px;">
-                                                        <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 11px; font-weight: 800; color: #5551FF; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;">
-                                                            [1] {s1_comp} // {s1_plat} &nbsp;•&nbsp; <span style="background-color: #EFEDFF; color: #5148C5; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 700;">{s1_date}</span>
-                                                        </div>
-                                                        <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 14.5px; font-weight: 700; line-height: 1.35; margin-bottom: 8px;">
-                                                            <a href="{s1_url}" target="_blank" style="color: #1B1C36; text-decoration: none;">{s1_title}</a>
-                                                        </div>
-                                                        <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 12px; line-height: 1.5; color: #596078;">
-                                                            <strong>Brief Summary:</strong> {s1_snip}
-                                                        </div>
-                                                    </div>
-
-                                                    <!-- Signal 2 -->
-                                                    <div>
-                                                        <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 11px; font-weight: 800; color: #E76E38; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;">
-                                                            [2] {s2_comp} // {s2_plat} &nbsp;•&nbsp; <span style="background-color: #FFF0EA; color: #AE481F; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 700;">{s2_date}</span>
-                                                        </div>
-                                                        <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 14.5px; font-weight: 700; line-height: 1.35; margin-bottom: 8px;">
-                                                            <a href="{s2_url}" target="_blank" style="color: #1B1C36; text-decoration: none;">{s2_title}</a>
-                                                        </div>
-                                                        <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 12px; line-height: 1.5; color: #596078;">
-                                                            <strong>Brief Summary:</strong> {s2_snip}
-                                                        </div>
-                                                    </div>
-
+                                                <td bgcolor="#FFFFFF" style="background-color: #FFFFFF; border: 1px solid #EBEFFA; border-top: none; border-radius: 0 0 18px 18px; padding: 22px 22px 4px 22px;">{news_html}
                                                 </td>
                                             </tr>
                                         </table>
@@ -432,38 +432,18 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
                         </td>
                     </tr>
 
-                    <!-- 5. EXECUTIVE ACTION TAKEAWAY -->
-                    <tr>
-                        <td valign="top" style="padding-bottom: 24px;">
-                            <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                                <tr>
-                                    <td bgcolor="#E76E38" style="background-color: #E76E38; border-radius: 10px 10px 0 0; padding: 10px 16px; font-family: 'Montserrat', Arial, sans-serif; font-size: 11.5px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 0.08em;">
-                                        EXECUTIVE ACTION TAKEAWAY
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td bgcolor="#FFF5ED" style="background-color: #FFF5ED; border: 1px solid #FDEEE6; border-top: none; border-radius: 0 0 18px 18px; padding: 18px 22px;">
-                                        <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 13.5px; font-weight: 700; color: #1B1C36; line-height: 1.5; margin-bottom: 8px;">
-                                            Neutralize bio-oil replacement displacement with certified performance proof and a defensible long-term warranty story.
-                                        </div>
-                                        <div style="font-family: 'Montserrat', Arial, sans-serif; font-size: 13px; font-weight: 800; color: #E76E38;">
-                                            Lead with ASTM D3462 Tested. Back it with 15-Year Non-Prorated.
-                                        </div>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-
-                    <!-- 6. FOOTER ROW -->
+                    <!-- 5. FOOTER -->
                     <tr>
                         <td valign="top" style="border-top: 1px solid #EBEFFA; padding-top: 16px;">
+                            <div style="{font} font-size: 10.5px; line-height: 1.5; color: #7A819B; margin-bottom: 10px;">
+                                News is matched automatically by competitor name and roofing terms. Open the source before quoting it.
+                            </div>
                             <table width="100%" cellpadding="0" cellspacing="0" border="0">
                                 <tr>
-                                    <td align="left" valign="middle" style="font-family: 'Montserrat', Arial, sans-serif; font-size: 11px; font-weight: 700; color: #5551FF;">
+                                    <td align="left" valign="middle" style="{font} font-size: 11px; font-weight: 700; color: #5551FF;">
                                         Prepared by: Miguel Gonzales,<br />Competitor Analysis Specialist
                                     </td>
-                                    <td align="right" valign="middle" style="font-family: 'Montserrat', Arial, sans-serif; font-size: 10.5px; font-weight: 600; color: #7A819B; letter-spacing: 0.04em;">
+                                    <td align="right" valign="middle" style="{font} font-size: 10.5px; font-weight: 600; color: #7A819B; letter-spacing: 0.04em;">
                                         CONFIDENTIAL: FOR INTERNAL GONANO LEADERSHIP ONLY
                                     </td>
                                 </tr>
@@ -481,7 +461,7 @@ def build_executive_one_pager(competitor_focus: str = "All Monitored Competitors
     return {
         "plain_text": plain_text,
         "html": html,
-        "timestamp": timestamp_pht,
+        "timestamp": timestamp_badge,
         "date_ddmmyyyy": date_ddmmyyyy,
-        "subject": f"Competitor Updates as of {date_ddmmyyyy}"
+        "subject": f"Competitor Updates as of {date_ddmmyyyy}",
     }
